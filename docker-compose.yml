@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  web:
+    build: .
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "blog.wsgi:application"]
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_SETTINGS_MODULE=blog.settings.prod
+
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=blogdb
+      - POSTGRES_USER=bloguser
+      - POSTGRES_PASSWORD=blogpass
+
+volumes:
+  postgres_data:

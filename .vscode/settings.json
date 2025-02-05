@@ -1,0 +1,13 @@
+{
+  "cSpell.languageSettings": [
+    {
+      "languageId": [],
+      "words": [
+        "Truncator",
+        "asgi",
+        "wsgi",
+        "gunicorn"
+      ]
+    }
+  ]
+}
