@@ -21,29 +21,41 @@ from pydantic import PositiveInt, WrapValidator
 from pydantic_core import PydanticUseDefault
 
 from .auth import TimeBaseAuth
-from .models import Author, Category, Guest, Post, Tag
+from .models import Author, Category, Comment, Guest, Post, Tag
 from .schemas import (
+    CategoryResponseSchema,
+    CommentIdsSchema,
+    CommentSchema,
+    GuestLoginSchema,
+    GuestSchema,
+    IdSchema,
     LoginSchema,
     MessageSchema,
+    NewCommentSchema,
+    PostIdsForSitemap,
     PostsCardsSchema,
     PostsSchema,
+    RenderSchema,
     TokenSchema,
-    renderSchema,
-    CategoryResponseSchema,
 )
 
 api = NinjaAPI()
 
 
-@api.get("/posts", response={200: PostsCardsSchema, 400: MessageSchema})
+@api.get(
+    "/posts", response={200: PostsCardsSchema, 400: MessageSchema, 404: MessageSchema}
+)
 def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     offset = (page - 1) * size  # 起点
     total = Post.objects.count()
 
+    if total == 0:
+        return 404, {"message": "Empty"}
+
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    posts = Post.objects.all().filter(is_deleted=False)[offset : offset + size]
+    posts = Post.objects.all()[offset : offset + size]
     return 200, {
         "posts": list(posts),
         "pagination": {
@@ -54,7 +66,7 @@ def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     }
 
 
-@api.get("/posts/ids")
+@api.get("/post/ids")
 def get_all_post_ids(request):
     # QuerySet的values_list()方法与values类似
     # 不过返回的是一个元组而非字典
@@ -63,12 +75,19 @@ def get_all_post_ids(request):
     return {"ids": list(Post.objects.values_list("id", flat=True))}
 
 
-@api.get("/post/{int:post_id}", response=PostsSchema)
+@api.get("/post/{int:post_id}", response={200: PostsSchema, 404: MessageSchema})
 def get_post(request, post_id: int):
-    post = Post.objects.get(pk=post_id)
-    return post
+    try:
+        post = Post.objects.get(pk=post_id)
+        return post
+    except Post.DoesNotExist:
+        return 404, {"message": "Not found"}
 
-@api.get("/post/")
+
+@api.get("/post/sitemap", response=PostIdsForSitemap)
+def get_all_post_ids_for_sitemap(request):
+    posts = Post.objects.values("id", "slug", "update_at")
+    return PostIdsForSitemap(root=list(posts))
 
 
 @api.get(
@@ -101,47 +120,60 @@ def category_get_post(
         return 404, {"message": f"Category 'id={category_id}' not found"}
 
 
-@api.post("/login", response=TokenSchema)
-def login(request, payload: LoginSchema):
-    def create_token(user):
-        exp = datetime.datetime.now() + datetime.timedelta(days=1)
-        return jwt.encode(
-            {"user_id": user.id, "exp": exp}, "secret-key", algorithm="HS256"
-        )
-
-    # user = authenticate(username=payload.username, password=payload.password)
-    guest = None
-
+# 从id获取评论
+@api.get("/comment/{int:comment_id}", response={200: CommentSchema, 404: MessageSchema})
+def get_comment(request, comment_id: int):
     try:
-        guest = Guest.objects.get(email=payload.email, provider=payload.provider)
-    except Guest.DoesNotExist:
-        return api.create_response(
-            request, {"detail": "Invalid credentials"}, status=401
-        )
-
-    if guest.password != payload.password:
-        return api.create_response(
-            request, {"detail": "Invalid credentials"}, status=401
-        )
-
-    token = create_token(guest)
-    return {"access_token": token}
+        comment = Comment.objects.get(pk=comment_id)
+        return comment
+    except:
+        return {"message": "Not found"}
 
 
-@api.post("/auth/callback")
-def auth_callback(request):
-    data = request.POST
+# 从文章获取评论id
+@api.get(
+    "/comment/post/{int:post_id}",
+    response={200: CommentIdsSchema, 404: MessageSchema},
+)
+def get_comment_from_post(request, post_id: int):
+    try:
+        post = Post.objects.get(pk=post_id)
+        comments = post.comment.all()
+        return 200, {"ids": [i.id for i in comments]}
+    except Post.DoesNotExist:
+        return 404, {"message", "Post not found"}
 
-    # guest
 
-
-@api.get("/front-server-api/test", auth=TimeBaseAuth())
+@api.get("/front/test", auth=TimeBaseAuth())
 def front_server_api(request):
     return {"status": "authenticated"}
 
 
-@api.post("/front-server-api/render", auth=TimeBaseAuth())
-def render(request, body: renderSchema):
+@api.post("/front/guest/login", auth=TimeBaseAuth(), response=IdSchema)
+def guest_login(request, body: GuestLoginSchema):
+    guest, created = Guest.objects.get_or_create(
+        name=body.name,
+        unique_id=f"{body.provider}-{body.provider_id}",
+    )
+    return guest
+
+
+@api.post("/front/comment/new", auth=TimeBaseAuth(), response=MessageSchema)
+def new_comment(request, body: NewCommentSchema):
+    try:
+        post = Post.objects.get(pk=body.post_id)
+        guest = Guest.objects.get(unique_id=body.unique_id)
+
+        Comment.objects.create(content=body.content, post=post, guest=guest)
+        return 200, {"message": "Comment created successfully"}
+    except Post.DoesNotExist:
+        return 404, {"message": "Post not found"}
+    except Guest.DoesNotExist:
+        return 404, {"message": "Guest not found"}
+
+
+@api.post("/front/render", auth=TimeBaseAuth())
+def render(request, body: RenderSchema):
     post = Post.objects.get(pk=body.id)
     fields = body.dict(exclude={"id"})
     # print(fields)
@@ -160,30 +192,6 @@ def render(request, body: renderSchema):
 
     if fields.get("meta_description") is not None:
         post.meta_description = fields.get("meta_description")
-
-    # try:
-    #     Author.objects.get(name=fields.get("author"))
-    # except Author.DoesNotExist:
-    #     new_author = Author(name=fields.get("author"))
-    #     new_author.save()
-    # post.author = Author.objects.get(name=fields.get("author"))
-
-    # try:
-    #     Category.objects.get(name=fields.get("category"))
-    # except Category.DoesNotExist:
-    #     new_category = Category(name=fields.get("category"))
-    #     new_category.save()
-    # post.category = Category.objects.get(name=fields.get("category"))
-
-    # new_tags = []
-    # for tag in fields.get("tags"):
-    #     try:
-    #         Tag.objects.get(tag)
-    #     except Tag.DoesNotExist:
-    #         new_tag = Tag(name=tag)
-    #         new_tag.save()
-    #     new_tags.append(Tag.objects.get(name=tag))
-    # post.tags = new_tags
 
     # 改为便捷的get_or_create()
     # 处理作者

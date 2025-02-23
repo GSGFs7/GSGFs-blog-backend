@@ -3,41 +3,34 @@ from django.utils import timezone
 from django.utils.text import Truncator, slugify
 
 
-# 假删除
-class SoftDeleteModel(models.Model):
-    is_deleted = models.BooleanField(default=False)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
+class BaseModel(models.Model):
     # django 的元数据选项 表示这是一个用于模板的抽象基类 不会创建数据表 只能由于继承
     # https://docs.djangoproject.com/zh-hans/5.1/topics/db/models/#abstract-base-classes
     class Meta:
         abstract = True
 
     # 重写delete方法
-    def delete(self, using=None, keep_parents=False):
-        self.is_deleted = True
-        self.deleted_at = timezone.now()
-        self.save()
-
-    def hard_delete(self):
-        super().delete()
+    # def delete(self, using=None, keep_parents=False):
+    #     self.is_deleted = True
+    #     self.deleted_at = timezone.now()
+    #     self.save()
 
 
-class Tag(SoftDeleteModel):
+class Tag(BaseModel):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
 
-class Category(SoftDeleteModel):
+class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
 
-class Author(SoftDeleteModel):
+class Author(BaseModel):
     name = models.CharField(max_length=50, unique=True)
     email = models.EmailField()
 
@@ -45,7 +38,7 @@ class Author(SoftDeleteModel):
         return self.name
 
 
-class Post(SoftDeleteModel):
+class Post(BaseModel):
     # 基础信息
     title = models.CharField(max_length=50)
     content = models.TextField()
@@ -130,14 +123,17 @@ class Post(SoftDeleteModel):
         return super().save(force_insert, force_update, using, update_fields)
 
 
-class Guest(SoftDeleteModel):
+class Guest(BaseModel):
     class Providers(models.TextChoices):
         github = "github", "github"
         google = "google", "google"
         myself = "myself", "myself"
+        osu = "osu", "osu"
 
-    name = models.CharField(max_length=50, unique=True)
-    email = models.EmailField(unique=True)
+    name = models.CharField(max_length=50)
+    # unique_id 就是 "provider" + "-" + "provider_id"
+    unique_id = models.CharField(max_length=50, unique=True, db_index=True)  # 添加索引
+    email = models.EmailField()
     password = models.CharField(max_length=128)
     provider = models.CharField(choices=Providers, max_length=10, default="myself")
     is_admin = models.BooleanField(default=False)
@@ -152,3 +148,14 @@ class Guest(SoftDeleteModel):
 
     def __str__(self):
         return self.name
+
+
+class Comment(BaseModel):
+    content = models.TextField(max_length=10000)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
+    guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="comment")
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.content[:10]

@@ -1,28 +1,66 @@
-version: "3"
-
 services:
-  web:
-    build: .
-    command: ["gunicorn", "--bind", "0.0.0.0:8000", "blog.wsgi:application"]
-    volumes:
-      - .:/app
+  django-web:
+    build:
+      context: .
+      dockerfile: dockerfile
+    # image: django
+    container_name: django
+    working_dir: /app
+    # 会导致找不到文件
+    # volumes:
+    #   - .:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
-      - DJANGO_SETTINGS_MODULE=blog.settings.prod
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DJANGO_LOGLEVEL: ${DJANGO_LOGLEVEL}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DATABASE_ENGINE: ${DATABASE_ENGINE}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+    networks:
+      - app-network
+    # watch 配置
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - .git/
+            - .vevn
+            - __pycache__/
+        - action: rebuild
+          path: requirements.txt
 
   db:
-    image: postgres:latest
+    image: postgres:17
+    container_name: blog-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=blogdb
-      - POSTGRES_USER=bloguser
-      - POSTGRES_PASSWORD=blogpass
+    # 不开放数据库端口
+    # ports:
+    #   - "5432:5432"
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
