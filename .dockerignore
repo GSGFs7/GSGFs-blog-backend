@@ -1,0 +1,32 @@
+# git
+.git
+.gitignore
+
+# docker
+.dockerignore
+dockerfile
+docker-compose.yml
+
+# python
+__pycache__/
+
+# IDE
+.vscode/
+
+# 虚拟环境
+.venv/
+
+# 数据库
+*.sqlite3
+
+# 测试
+testapp/
+
+# docker镜像导出
+django.tar.zst
+
+# 开发环境
+.env
+
+# 工具脚本
+export.sh

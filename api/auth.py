@@ -1,3 +1,5 @@
+import json
+import base64
 import hashlib
 import hmac
 import time
@@ -7,64 +9,70 @@ from django.conf import settings
 from ninja.security import HttpBearer
 
 
-class AuthBearer(HttpBearer):
+class Auth(HttpBearer):
     def authenticate(self, request, token):
         try:
-            payload = jwt.decode(token, "secret-key", algorithms=["HS256"])
-            return payload
-        except:
+            # 解码 token
+            decoded_token = base64.b64decode(token).decode("utf-8")
+            token_data = json.loads(decoded_token)
+
+            # 获取数据
+            timestamp = token_data["timestamp"]
+            nonce = token_data["nonce"]
+            signature = token_data["signature"]
+
+            # 验证时间戳
+            current_time = int(time.time() * 1000)  # ms
+            if current_time - timestamp > 60000:  # 一分钟
+                return None
+
+            # 复现签名
+            message = f"{timestamp}.{nonce}"
+            expected_signature = hmac.new(
+                settings.API_KEY.encode(), message.encode(), hashlib.sha256
+            ).hexdigest()
+
+            if hmac.compare_digest(signature, expected_signature):
+                return True
+            else:
+                return None
+        except Exception as e:
+            print(f"Authentication error: {e}")
             return None
-
-
-# class TimeBaseAuth(HttpBearer):
-#     def authenticate(self, request, token):
-#         try:
-#             # 分离时间戳和签名
-#             decoded = base64.b64decode(token).decode()
-#             timestamp, signatrue = decoded.split(".")
-
-#             current_time = int(time.time())
-
-#             # 验证时间是否在5分钟内
-#             if current_time - int(timestamp) > 300:
-#                 return None
-
-#             # 验证签名
-#             expect_signature = self.generate_signature(timestamp)
-#             if hmac.compare_digest(signatrue, expect_signature):
-#                 print(signatrue)
-#                 return True
-#         except:
-#             return None
-
-#     @staticmethod
-#     def generate_signature(timestamp):
-#         message = str(timestamp).encode()
-#         return hmac.new(
-#             settings.API_KEY.encode(),
-#             message,
-#             hashlib.sha256,
-#         ).hexdigest()
 
 
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
-            current_time = int(time.time() / 100)
-            # print(token, current_time)
+            # 解码 token
+            decoded_token = base64.b64decode(token).decode("utf-8")
+            toke_data = json.loads(decoded_token)
 
-            if token == self.generate_signature(current_time):
+            # 获取时间和消息
+            current_time = int(time.time() / 10)  # 10s
+            message = str(toke_data["message"])
+            client_signature = str(toke_data["signature"])
+
+            # 生成服务器端签名
+            server_signature = self.generate_signature(current_time, message)
+            server_signature1 = self.generate_signature(current_time - 1, message)
+
+            # 验证
+            if hmac.compare_digest(client_signature, server_signature):
                 return True
-            if token == self.generate_signature(current_time - 1):
+            if hmac.compare_digest(client_signature, server_signature1):
                 return True
-        except:
+            return None
+        except Exception as e:
+            print(f"Authentication error: {e}")
             return None
 
     @staticmethod
-    def generate_signature(timestamp):
-        message = str(timestamp).encode()
-        return hmac.new(
+    def generate_signature(timestamp: int, message: str) -> str:
+        hmac_obj = hmac.new(
             settings.API_KEY.encode(),
-            message,
+            str(timestamp).encode(),
             hashlib.sha256,
-        ).hexdigest()
+        )
+        hmac_obj.update(message.encode())
+        return hmac_obj.hexdigest()

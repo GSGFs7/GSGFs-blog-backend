@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 载入 .env
+# 载入 .env 就算没有也不会出问题
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
@@ -25,13 +25,35 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = bool(os.environ.get("DEBUG", default=False) == "True")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
+# 关闭 SLL 重定向, 交由由外部 Nginx 处理
+SECURE_SSL_REDIRECT = False
+
+# CDN 和代理配置
+USE_X_FORWARDED_HOST = True  # 信任头部设置
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# csrf配置
+CSRF_TRUSTED_ORIGINS = [
+    "https://api.gsgfs.moe",
+]
+
+# 安全设置
+# SECURE_SSL_REDIRECT = True  # 强制 HTTPS
+SESSION_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 cookie
+CSRF_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 CSRF cookie
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 31536000  # 1年
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Application definition
 
@@ -55,6 +77,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # 提供静态文件
     "debug_toolbar.middleware.DebugToolbarMiddleware",  # 一个debug包的中间件 中间件的顺序很重要
 ]
 
@@ -84,14 +107,23 @@ WSGI_APPLICATION = "blog.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "ENGINE": "django.db.backends.{}".format(
+            os.getenv("DATABASE_ENGINE", "sqlite3")
+        ),
+        "NAME": os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
+        "USER": os.getenv("DATABASE_USERNAME", "user"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
+        "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
+        "PORT": os.getenv("DATABASE_PORT", 5432),
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 
 # Password validation
@@ -129,6 +161,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+# python manage.py collectstatic --noinput 收集静态文件
+
+# whitenoise的压缩和缓存支持
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -137,9 +179,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # debug包所需的内部ip列表
 INTERNAL_IPS = [
-    # ...
     "127.0.0.1",
-    # ...
 ]
 
 API_KEY = os.getenv("API_KEY")

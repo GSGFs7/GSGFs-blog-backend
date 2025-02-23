@@ -1,13 +1,15 @@
 {
-  "cSpell.languageSettings": [
-    {
-      "languageId": [],
-      "words": [
-        "Truncator",
-        "asgi",
-        "wsgi",
-        "gunicorn"
-      ]
-    }
+  "cSpell.words": [
+    "asgi",
+    "dotenv",
+    "gunicorn",
+    "LOGLEVEL",
+    "pycache",
+    "testapp",
+    "Truncator",
+    "venv",
+    "vevn",
+    "wsgi",
+    "zstd"
   ]
 }

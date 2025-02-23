@@ -1,13 +1,9 @@
 from django.contrib import admin
 
-from .models import Post, Guest
+from .models import Post, Guest, Comment
 
 
 class PostAdmin(admin.ModelAdmin):
-    readonly_fields = (
-        "created_at",
-        "update_at",
-    )
     fieldsets = [
         (
             None,
@@ -42,3 +38,4 @@ class PostAdmin(admin.ModelAdmin):
 
 admin.site.register(Post, PostAdmin)
 admin.site.register(Guest)
+admin.site.register(Comment)
