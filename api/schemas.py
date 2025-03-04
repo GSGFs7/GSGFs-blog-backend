@@ -20,8 +20,14 @@ class CommentSchema(Schema):
     content: str
     post_id: int
     guest_id: int
+    guest_name: str
     created_at: datetime.datetime
     update_at: datetime.datetime
+
+    # 从关联的 guest 获取name
+    @staticmethod
+    def resolve_guest_name(obj):
+        return obj.guest.name
 
 
 class CommentIdsSchema(Schema):
@@ -42,7 +48,6 @@ class PostsSchema(Schema):
     status: str
     tags: Optional[List[TagsSchema]] = None
     title: str
-    update_at: datetime.datetime
     view_count: int
     # comment_id: Optional[List[int]] = None  # 单独获取
 

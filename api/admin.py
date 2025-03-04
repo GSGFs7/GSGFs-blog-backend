@@ -19,7 +19,7 @@ class PostAdmin(admin.ModelAdmin):
                 ]
             },
         ),
-        ("Date information", {"fields": ["created_at", "update_at"]}),
+        ("Date information", {"fields": ["update_at"]}),
         (
             "Meta data",
             {
@@ -34,6 +34,11 @@ class PostAdmin(admin.ModelAdmin):
             },
         ),
     ]
+
+    readonly_fields = ["update_at"]  # 将 update_at 设为只读
+    list_display = ["title", "author", "created_at", "update_at"]  # 在列表中显示日期
+    list_filter = ["status", "category", "author"]  # 添加过滤器
+    search_fields = ["title", "content"]  # 添加搜索功能
 
 
 admin.site.register(Post, PostAdmin)

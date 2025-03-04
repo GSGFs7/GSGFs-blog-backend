@@ -32,7 +32,7 @@ DEBUG = bool(os.environ.get("DEBUG", default=False) == "True")
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
-# 关闭 SLL 重定向, 交由由外部 Nginx 处理
+# 关闭 SSL 重定向, 交由由外部 Nginx 处理
 SECURE_SSL_REDIRECT = False
 
 # CDN 和代理配置
@@ -41,9 +41,7 @@ USE_X_FORWARDED_PORT = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # csrf配置
-CSRF_TRUSTED_ORIGINS = [
-    "https://api.gsgfs.moe",
-]
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS").split(",")
 
 # 安全设置
 # SECURE_SSL_REDIRECT = True  # 强制 HTTPS
@@ -125,6 +123,22 @@ DATABASES = {
 #     }
 # }
 
+
+# redis的配置, 暂时不需要
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://redis:6379/1",  # 使用1号数据库
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#             "IGNORE_EXCEPTIONS": True,
+#         },
+#     }
+# }
+
+# SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
+# SESSION_CACHE_ALIAS = "default"
+# CACHE_TTL = 60 * 15  # 缓存超时时间
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

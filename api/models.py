@@ -43,7 +43,7 @@ class Post(BaseModel):
     title = models.CharField(max_length=50)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
     # 渲染后的内容
     content_html = models.TextField(null=True, blank=True)
@@ -155,7 +155,7 @@ class Comment(BaseModel):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="comment")
     created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.content[:10]
