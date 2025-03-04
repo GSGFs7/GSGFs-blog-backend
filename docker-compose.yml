@@ -58,8 +58,21 @@ services:
     networks:
       - app-network
 
+  # redis:
+  #   image: redis:7
+  #   container_name: blog-redis
+  #   # ports:
+  #   #   - "6379:6379"
+  #   volumes:
+  #     - redis_date:/data
+  #   networks:
+  #     - app-network
+
 volumes:
   postgres_data:
+    # external: true # 防止 docker compose down --volumes 删除这个卷
+    name: postgres_data
+  # redis_date: # 真的需要保存吗
 
 networks:
   app-network:

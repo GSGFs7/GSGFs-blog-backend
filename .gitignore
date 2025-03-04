@@ -7,3 +7,4 @@ testapp
 deploy.sh
 django.tar.zst
 staticfiles
+backups
