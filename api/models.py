@@ -119,7 +119,8 @@ class Post(BaseModel):
         if not self.slug:
             self.slug = slugify(self.title)
         if not self.meta_description:
-            self.meta_description = Truncator(self.content).chars(150, html=True)
+            # 有个小bug(不是我的问题), 需要再次确认小于160个
+            self.meta_description = Truncator(self.content).chars(150, html=True)[:160] 
         return super().save(force_insert, force_update, using, update_fields)
 
 
@@ -136,7 +137,10 @@ class Guest(BaseModel):
     email = models.EmailField()
     password = models.CharField(max_length=128)
     provider = models.CharField(choices=Providers, max_length=10, default="myself")
+    provider_id = models.IntegerField()
+    avatar = models.URLField(max_length=200)
     is_admin = models.BooleanField(default=False)
+    last_visit = models.DateTimeField(auto_now=True)
     as_author = models.ForeignKey(
         Author,
         on_delete=models.SET_NULL,
@@ -156,6 +160,13 @@ class Comment(BaseModel):
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="comment")
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
+
+    # 用户信息
+    user_agent = models.CharField(max_length=100, blank=True, default="unknown")
+    OS = models.CharField(max_length=100, blank=True, default="unknown")
+    platform = models.CharField(max_length=100, blank=True, default="unknown")
+    browser = models.CharField(max_length=100, blank=True, default="unknown")
+    browser_version = models.CharField(max_length=100, blank=True, default="unknown")
 
     def __str__(self):
         return self.content[:10]

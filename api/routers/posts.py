@@ -1,4 +1,6 @@
 from ninja import Router
+from django.core.cache import cache
+from django.conf import settings
 from pydantic import PositiveInt
 
 from ..models import Post
@@ -43,6 +45,18 @@ def get_all_post_ids(request):
 
 @router.get("/{int:post_id}", response={200: PostsSchema, 404: MessageSchema})
 def get_post(request, post_id: int):
+    # cache_key = f"post:{post_id}"
+    # post_data = cache.get(cache_key)
+
+    # if not post_data:
+    #     try:
+    #         post = Post.objects.get(pk=post_id)
+    #         cache.set(cache_key, post, settings.CACHE_TTL)
+    #         return post
+    #     except Post.DoesNotExist:
+    #         return 404, {"message": "Not found"}
+    # return post_data
+
     try:
         post = Post.objects.get(pk=post_id)
         return post

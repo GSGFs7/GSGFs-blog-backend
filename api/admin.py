@@ -19,7 +19,6 @@ class PostAdmin(admin.ModelAdmin):
                 ]
             },
         ),
-        ("Date information", {"fields": ["update_at"]}),
         (
             "Meta data",
             {

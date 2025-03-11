@@ -8,40 +8,67 @@ from api.schemas import (
     MessageSchema,
     NewCommentSchema,
     RenderSchema,
+    GuestSchema,
 )
 
-router = Router()
+router = Router(auth=TimeBaseAuth())
 
 
-@router.get("/test", auth=TimeBaseAuth())
+@router.get("/test")
 def front_server_api(request):
     return {"status": "authenticated"}
 
 
-@router.post("/guest/login", auth=TimeBaseAuth(), response=IdSchema)
+@router.post("/guest/login", response=IdSchema)
 def guest_login(request, body: GuestLoginSchema):
-    guest, created = Guest.objects.get_or_create(
-        name=body.name,
-        unique_id=f"{body.provider}-{body.provider_id}",
-    )
+    try:
+        guest = Guest.objects.get(unique_id=f"{body.provider}-{body.provider_id}")
+
+        guest.avatar = body.avatar_url
+        guest.name = body.name
+        guest.save()
+    except:
+        guest = Guest.objects.create(
+            unique_id=f"{body.provider}-{body.provider_id}",
+            provider=body.provider,
+            provider_id=body.provider_id,
+            name=body.name,
+            avatar=body.avatar_url,
+        )
     return guest
 
 
-@router.post("/comment/new", auth=TimeBaseAuth(), response=MessageSchema)
+@router.get("/guest/{int:guest_id}", response={200: GuestSchema, 404: MessageSchema})
+def get_guest(request, guest_id: int):
+    try:
+        guest = Guest.objects.get(pk=guest_id)
+        return guest
+    except:
+        return 404, {"message": "Not found"}
+
+
+@router.post("/comment/new", response={200: IdSchema, 404: MessageSchema})
 def new_comment(request, body: NewCommentSchema):
     try:
         post = Post.objects.get(pk=body.post_id)
         guest = Guest.objects.get(unique_id=body.unique_id)
 
-        Comment.objects.create(content=body.content, post=post, guest=guest)
-        return 200, {"message": "Comment created successfully"}
+        comment = Comment.objects.create(content=body.content, post=post, guest=guest)
+        comment.OS = body.metadata.OS
+        comment.user_agent = body.metadata.user_agent
+        comment.browser = body.metadata.browser
+        comment.browser_version = body.metadata.browser_version
+        comment.platform = body.metadata.platform
+        comment.save()
+
+        return 200, {"id": comment.id}
     except Post.DoesNotExist:
         return 404, {"message": "Post not found"}
     except Guest.DoesNotExist:
         return 404, {"message": "Guest not found"}
 
 
-@router.post("/render", auth=TimeBaseAuth())
+@router.post("/render")
 def render(request, body: RenderSchema):
     post = Post.objects.get(pk=body.id)
     fields = body.dict(exclude={"id"})

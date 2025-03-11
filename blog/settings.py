@@ -28,7 +28,7 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG", default=False) == "True")
+DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
@@ -48,7 +48,7 @@ CSRF_TRUSTED_ORIGINS = (
 )
 
 # 安全设置
-# SECURE_SSL_REDIRECT = True  # 强制 HTTPS
+SECURE_SSL_REDIRECT = not DEBUG  # 强制 HTTPS
 SESSION_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 cookie
 CSRF_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 CSRF cookie
 SECURE_BROWSER_XSS_FILTER = True
@@ -132,7 +132,7 @@ DATABASES = {
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://redis:6379/1",  # 使用1号数据库
+#         "LOCATION": "redis://localhost:6379/1",  # 使用1号数据库
 #         "OPTIONS": {
 #             "CLIENT_CLASS": "django_redis.client.DefaultClient",
 #             "IGNORE_EXCEPTIONS": True,
@@ -142,7 +142,7 @@ DATABASES = {
 
 # SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
 # SESSION_CACHE_ALIAS = "default"
-# CACHE_TTL = 60 * 15  # 缓存超时时间
+CACHE_TTL = 60 * 15  # 缓存超时时间
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

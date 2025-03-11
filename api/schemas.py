@@ -23,11 +23,16 @@ class CommentSchema(Schema):
     guest_name: str
     created_at: datetime.datetime
     update_at: datetime.datetime
+    avatar: str
 
     # 从关联的 guest 获取name
     @staticmethod
     def resolve_guest_name(obj):
         return obj.guest.name
+
+    @staticmethod
+    def resolve_avatar(obj):
+        return obj.guest.avatar
 
 
 class CommentIdsSchema(Schema):
@@ -116,7 +121,7 @@ class GuestSchema(Schema):
     id: int
     name: str
     provider: str
-    provider_id: str
+    provider_id: int
     unique_id: str
     email: Optional[str]
 
@@ -125,16 +130,26 @@ class GuestLoginSchema(Schema):
     name: str
     provider: str
     provider_id: int
+    avatar_url: str
 
 
 class IdSchema(Schema):
     id: int
 
 
+class NewCommentMetadataSchema(Schema):
+    user_agent: str
+    platform: str
+    browser: str
+    browser_version: str
+    OS: str
+
+
 class NewCommentSchema(Schema):
     unique_id: str
     content: str
     post_id: int
+    metadata: Optional[NewCommentMetadataSchema]
 
 
 class PostSitemapSchema(Schema):

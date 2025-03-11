@@ -7,9 +7,7 @@ router = Router()
 
 
 # 从id获取评论
-@router.get(
-    "/{int:comment_id}", response={200: CommentSchema, 404: MessageSchema}
-)
+@router.get("/{int:comment_id}", response={200: CommentSchema, 404: MessageSchema})
 def get_comment(request, comment_id: int):
     try:
         comment = Comment.objects.select_related("guest").get(pk=comment_id)
