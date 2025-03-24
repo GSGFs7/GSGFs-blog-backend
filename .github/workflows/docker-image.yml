@@ -3,6 +3,7 @@ name: Docker Image CI
 on:
   push:
     branches: ["main", "dev"]
+    tags: ["v*"]
   pull_request:
     branches: ["main"]
 
@@ -22,9 +23,22 @@ jobs:
           docker save django:latest | zstd -c -T0 --ultra -20 > 'django.tar.zst'
           sha256sum django.tar.zst > django.tar.zst.sha256
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      # - name: Upload artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: docker-image
+      #     path: ./artifacts
+      #     retention-days: 7
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
         with:
-          name: docker-image
-          path: ./artifacts
-          retention-days: 7
+          files: |
+            ./artifacts/django.tar.zst
+            ./artifacts/django.tar.zst.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
