@@ -4,7 +4,13 @@ from django.conf import settings
 from pydantic import PositiveInt
 
 from ..models import Post
-from ..schemas import MessageSchema, PostIdsForSitemap, PostsCardsSchema, PostsSchema
+from ..schemas import (
+    MessageSchema,
+    PostIdsForSitemap,
+    PostsCardsSchema,
+    PostsSchema,
+    IdsSchema,
+)
 
 
 router = Router()
@@ -34,11 +40,11 @@ def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     }
 
 
-@router.get("/ids")
+@router.get("/ids", response=IdsSchema)
 def get_all_post_ids(request):
     # QuerySet的values_list()方法与values类似
     # 不过返回的是一个元组而非字典
-    # flat可以使返回一个值时返回那个值而非一元组
+    # flat可以使返回一个值时返回那个值而非一个一元组
     # print(Post.objects.values_list("id", flat=True))
     return {"ids": list(Post.objects.values_list("id", flat=True))}
 

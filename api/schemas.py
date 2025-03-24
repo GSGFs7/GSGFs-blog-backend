@@ -137,6 +137,10 @@ class IdSchema(Schema):
     id: int
 
 
+class IdsSchema(Schema):
+    ids: List[int]
+
+
 class NewCommentMetadataSchema(Schema):
     user_agent: str
     platform: str

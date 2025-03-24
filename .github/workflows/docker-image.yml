@@ -1,0 +1,50 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: ["main", "dev"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Docker image
+        run: docker buildx build -t django .
+
+      - name: Export Docker image
+        run: |
+          mkdir -p ./artifacts
+          cd ./artifacts
+          docker save django:latest | zstd -c -T0 --ultra -20 > 'django.tar.zst'
+          sha256sum django.tar.zst > django.tar.zst.sha256
+
+      - name: Upload artifacts
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-${{ github.sha }}
+          path: ./artifacts
+          retention-days: 7
+
+      - name: Create Release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/django.tar.zst
+            ./artifacts/django.tar.zst.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
