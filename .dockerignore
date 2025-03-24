@@ -30,3 +30,4 @@ django.tar.zst
 
 # 工具脚本
 export.sh
+upload.py

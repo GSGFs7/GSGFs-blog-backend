@@ -49,6 +49,7 @@ def get_guest(request, guest_id: int):
 
 @router.post("/comment/new", response={200: IdSchema, 404: MessageSchema})
 def new_comment(request, body: NewCommentSchema):
+    print(body)
     try:
         post = Post.objects.get(pk=body.post_id)
         guest = Guest.objects.get(unique_id=body.unique_id)

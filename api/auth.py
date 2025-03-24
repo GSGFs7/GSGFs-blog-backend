@@ -44,18 +44,23 @@ class Auth(HttpBearer):
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
+            print(token)
             # 解码 token
             decoded_token = base64.b64decode(token).decode("utf-8")
-            toke_data = json.loads(decoded_token)
+            token_data = json.loads(decoded_token)
+            print(token_data)
 
             # 获取时间和消息
             current_time = int(time.time() / 10)  # 10s
-            message = str(toke_data["message"])
-            client_signature = str(toke_data["signature"])
+            message = str(token_data["message"])
+            client_signature = str(token_data["signature"])
 
             # 生成服务器端签名
             server_signature = self.generate_signature(current_time, message)
             server_signature1 = self.generate_signature(current_time - 1, message)
+
+            print(server_signature, server_signature1)
+            print(client_signature)
 
             # 验证
             if hmac.compare_digest(client_signature, server_signature):
