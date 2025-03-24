@@ -23,7 +23,7 @@ jobs:
           sha256sum django.tar.zst > django.tar.zst.sha256
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image
           path: ./artifacts
