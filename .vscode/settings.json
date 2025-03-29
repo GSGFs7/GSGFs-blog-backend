@@ -10,7 +10,8 @@
     "Truncator",
     "venv",
     "vevn",
+    "vndb",
     "wsgi",
     "zstd"
-  ]
+  ],
 }

@@ -44,6 +44,7 @@ from ninja import NinjaAPI
 from .routers.categories import router as categories_router
 from .routers.comments import router as comment_router
 from .routers.front import router as front_router
+from .routers.gal import router as gal_router
 from .routers.posts import router as posts_router
 
 api = NinjaAPI()
@@ -51,4 +52,5 @@ api = NinjaAPI()
 api.add_router("/category", categories_router)
 api.add_router("/comment", comment_router)
 api.add_router("/front", front_router)
+api.add_router("/gal", gal_router)
 api.add_router("/post", posts_router)
