@@ -7,8 +7,7 @@ from ..schemas import IdsSchema, MessageSchema, GalPaginationResponse
 
 router = Router()
 
-
-@router.get("/ids", response=IdsSchema)
+@router.get("/", response=IdsSchema)
 def get_gal_ids(request):
     return {"ids": list(Gal.objects.values_list("id", flat=True))}
 

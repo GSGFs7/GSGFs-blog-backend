@@ -6,7 +6,7 @@ from ..schemas import IdsSchema
 router = Router()
 
 
-@router.get("/ids", response=IdsSchema)
+@router.get("/", response=IdsSchema)
 def get_all_page_ids(request):
     return {"ids": list(Page.objects.values_list("id", flat=True))}
 

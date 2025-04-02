@@ -40,7 +40,7 @@ def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     }
 
 
-@router.get("/ids", response=IdsSchema)
+@router.get("/", response=IdsSchema)
 def get_all_post_ids(request):
     # QuerySet的values_list()方法与values类似
     # 不过返回的是一个元组而非字典
