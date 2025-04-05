@@ -6,6 +6,7 @@ from ..models import Gal
 from ..schemas import (
     GalPaginationResponse,
     GalSchema,
+    GalUpdateSchema,
     IdSchema,
     IdsSchema,
     MessageSchema,
@@ -58,7 +59,7 @@ def get_gal_from_id(request, gal_id: int):
     response={200: IdSchema, 400: MessageSchema, 404: MessageSchema},
     auth=TimeBaseAuth(),
 )
-def update_gal(request, gal_id: int, body: GalSchema):
+def update_gal(request, gal_id: int, body: GalUpdateSchema):
     if gal_id != body.id:
         return 400, {"message": "id not match"}
 
