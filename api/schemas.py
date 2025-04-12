@@ -193,11 +193,12 @@ class GalPaginationResponse(Schema):
     gals: List[GalSchema]
     pagination: PaginationSchema
 
+
 class GalUpdateSchema(Schema):
     id: int
     vndb_id: str
     title: Optional[str]
-    title_cn: Optional[str]
+    title_cn: Optional[str] = None
 
     character_score: Optional[float]
     story_score: Optional[float]
