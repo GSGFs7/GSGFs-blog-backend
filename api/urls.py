@@ -48,6 +48,7 @@ from .routers.guest import router as guest_router
 from .routers.heath import router as heath_router
 from .routers.page import router as page_router
 from .routers.post import router as posts_router
+from .routers.root import router as root_router
 
 api = NinjaAPI()
 
@@ -58,3 +59,4 @@ api.add_router("/guest", guest_router)
 api.add_router("/heath", heath_router)
 api.add_router("/page", page_router)
 api.add_router("/post", posts_router)
+api.add_router("/", root_router)
