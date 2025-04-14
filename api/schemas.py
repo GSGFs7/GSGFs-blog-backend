@@ -237,3 +237,8 @@ class ApiStatusSchema(Schema):
     databases: List[DatabaseStatusSchema]
     system: SystemInfoSchema
     dependencies: Dict[str, str]
+
+
+class TokenSchema(Schema):
+    token: str
+    token_type: str

@@ -1,8 +1,10 @@
-import json
 import base64
 import hashlib
 import hmac
+import json
 import time
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
 
 import jwt
 from django.conf import settings
@@ -76,3 +78,42 @@ class TimeBaseAuth(HttpBearer):
         )
         hmac_obj.update(message.encode())
         return hmac_obj.hexdigest()
+
+
+class JWTAuth(HttpBearer):
+    """JWT auth class, lightweight, faster"""
+
+    def authenticate(self, request, token: str) -> Optional[Dict[str, Any]]:
+        """verify JWT and return a payload"""
+
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=["HS256"],
+            )
+
+            exp = payload.get("exp")
+            if exp and int(time.time()) > exp:
+                return None
+
+            return payload
+        except jwt.PyJWTError as e:
+            print(e)
+            return None
+
+    @staticmethod
+    def create_token(expiration_in_mins: int = 60 * 24, **extra_data) -> str:
+        """create a new token"""
+
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=expiration_in_mins)
+
+        payload = {
+            "exp": int(expiration.timestamp()),
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            **extra_data,
+        }
+
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+        return token
