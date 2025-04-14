@@ -13,6 +13,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
     env_file:
       - .env
     environment:
@@ -58,21 +59,27 @@ services:
     networks:
       - app-network
 
-  # redis:
-  #   image: redis:7
-  #   container_name: blog-redis
-  #   # ports:
-  #   #   - "6379:6379"
-  #   volumes:
-  #     - redis_date:/data
-  #   networks:
-  #     - app-network
+  redis:
+    image: redis:7
+    container_name: blog-redis
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_date:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   postgres_data:
     # external: true # 防止 docker compose down --volumes 删除这个卷
     name: postgres_data
-  # redis_date: # 真的需要保存吗
+  redis_date:
 
 networks:
   app-network:

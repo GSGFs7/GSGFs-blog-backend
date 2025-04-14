@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional, Dict
+from typing import Any, Dict, List, Optional
 
 from ninja.schema import Schema
 from pydantic import RootModel
@@ -236,7 +236,7 @@ class ApiStatusSchema(Schema):
     timestamp: str
     databases: List[DatabaseStatusSchema]
     system: SystemInfoSchema
-    dependencies: Dict[str, str]
+    dependencies: Dict[str, Any]
 
 
 class TokenSchema(Schema):

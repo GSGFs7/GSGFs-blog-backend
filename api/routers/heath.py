@@ -1,7 +1,7 @@
 import platform
 import time
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import psutil
 from django.conf import settings
@@ -82,8 +82,24 @@ def check_database_connections() -> List[DatabaseStatusSchema]:
     return result
 
 
-def check_dependencies() -> Dict[str, str]:
+def check_dependencies() -> Dict[str, Any]:
     dependencies = {}
+
+    try:
+        from django.core.cache import cache
+
+        cache_key = "health_check"
+        cache_value = time.time()
+        cache.set(cache_key, cache_value, 10)
+        retrieved = cache.get(cache_key)
+
+        if retrieved == cache_value:
+            dependencies["cache"] = "connected"
+            dependencies["cache_response_time"] = time.time() - float(retrieved)
+        else:
+            dependencies["cache"] = "error: value mismatch"
+    except Exception as e:
+        dependencies["cache"] = f"error:{str(e)}"
 
     return dependencies
 

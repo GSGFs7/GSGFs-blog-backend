@@ -156,22 +156,25 @@ DATABASES = {
 #     }
 # }
 
+redis_host = os.environ.get("REDIS_HOST", "localhost")
+if os.environ.get("DOCKER_ENV", "False") == "True":
+    redis_host = "redis"
 
-# redis的配置, 暂时不需要
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://localhost:6379/1",  # 使用1号数据库
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#             "IGNORE_EXCEPTIONS": True,
-#         },
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{redis_host}:6379/1",  # 使用1号数据库
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+        },
+        "KEY_PREFIX": "django",  # eg. django:1:health_check
+    },
+}
 
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
-# SESSION_CACHE_ALIAS = "default"
-CACHE_TTL = 60 * 15  # 缓存超时时间
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
+SESSION_CACHE_ALIAS = "default"
+CACHE_TTL = 60 * 10  # 缓存超时时间
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

@@ -7,7 +7,7 @@ from ..schemas import GuestLoginSchema, GuestSchema, IdSchema, MessageSchema
 router = Router()
 
 
-@router.post("/guest/login", response=IdSchema, auth=TimeBaseAuth)
+@router.post("/guest/login", response=IdSchema, auth=TimeBaseAuth())
 def guest_login(request, body: GuestLoginSchema):
     try:
         guest = Guest.objects.get(unique_id=f"{body.provider}-{body.provider_id}")
