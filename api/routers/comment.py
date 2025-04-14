@@ -20,7 +20,7 @@ def get_comment(request, comment_id: int):
         comment = Comment.objects.select_related("guest").get(pk=comment_id)
         return comment
     except:
-        return {"message": "Not found"}
+        return 404, {"message": "Not found"}
 
 
 # 从文章获取评论id

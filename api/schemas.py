@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from ninja.schema import Schema
 from pydantic import RootModel
@@ -212,3 +212,28 @@ class GalUpdateSchema(Schema):
     review: Optional[str]
 
     cover_image: Optional[str]
+
+
+class SystemInfoSchema(Schema):
+    hostname: str
+    platform: str
+    cpu_usage: float
+    memory_usage: float
+    disk_usage: float
+    uptime: float
+
+
+class DatabaseStatusSchema(Schema):
+    name: str
+    status: str
+    response_time: float
+
+
+class ApiStatusSchema(Schema):
+    status: str
+    version: str
+    environment: str
+    timestamp: str
+    databases: List[DatabaseStatusSchema]
+    system: SystemInfoSchema
+    dependencies: Dict[str, str]
