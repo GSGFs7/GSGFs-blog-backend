@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -116,6 +117,25 @@ WSGI_APPLICATION = "blog.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+# Replace the DATABASES section of your settings.py with this
+# tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
+#         "NAME": tmpPostgres.path.lstrip("/"),
+#         "USER": tmpPostgres.username,
+#         "PASSWORD": tmpPostgres.password,
+#         "HOST": tmpPostgres.hostname,
+#         "PORT": 5432,
+#         "OPTIONS": {
+#             "sslmode": "require",
+#         },
+#     }
+# }
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.{}".format(
@@ -136,22 +156,25 @@ DATABASES = {
 #     }
 # }
 
+redis_host = os.environ.get("REDIS_HOST", "localhost")
+if os.environ.get("DOCKER_ENV", "False") == "True":
+    redis_host = "redis"
 
-# redis的配置, 暂时不需要
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://localhost:6379/1",  # 使用1号数据库
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#             "IGNORE_EXCEPTIONS": True,
-#         },
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{redis_host}:6379/1",  # 使用1号数据库
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+        },
+        "KEY_PREFIX": "django",  # eg. django:1:health_check
+    },
+}
 
-# SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
-# SESSION_CACHE_ALIAS = "default"
-CACHE_TTL = 60 * 15  # 缓存超时时间
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 设置session使用缓存
+SESSION_CACHE_ALIAS = "default"
+CACHE_TTL = 60 * 10  # 缓存超时时间
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -210,8 +233,15 @@ INTERNAL_IPS = [
 ]
 
 API_KEY = os.getenv("API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 LOGIN_URL = "two_factor:login"
 
 # this one is optional
 LOGIN_REDIRECT_URL = "two_factor:profile"
+
+# email backend
+EMAIL_BACKEND = "api.backends.ResendEmailBackend"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Address sent to website administrator
+ADMINS = [("admin", os.getenv("ADMIN_EMAIL"))]

@@ -1,8 +1,10 @@
-import json
 import base64
 import hashlib
 import hmac
+import json
 import time
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
 
 import jwt
 from django.conf import settings
@@ -44,11 +46,9 @@ class Auth(HttpBearer):
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
-            print(token)
             # 解码 token
             decoded_token = base64.b64decode(token).decode("utf-8")
             token_data = json.loads(decoded_token)
-            print(token_data)
 
             # 获取时间和消息
             current_time = int(time.time() / 10)  # 10s
@@ -58,9 +58,6 @@ class TimeBaseAuth(HttpBearer):
             # 生成服务器端签名
             server_signature = self.generate_signature(current_time, message)
             server_signature1 = self.generate_signature(current_time - 1, message)
-
-            print(server_signature, server_signature1)
-            print(client_signature)
 
             # 验证
             if hmac.compare_digest(client_signature, server_signature):
@@ -81,3 +78,42 @@ class TimeBaseAuth(HttpBearer):
         )
         hmac_obj.update(message.encode())
         return hmac_obj.hexdigest()
+
+
+class JWTAuth(HttpBearer):
+    """JWT auth class, lightweight, faster"""
+
+    def authenticate(self, request, token: str) -> Optional[Dict[str, Any]]:
+        """verify JWT and return a payload"""
+
+        try:
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=["HS256"],
+            )
+
+            exp = payload.get("exp")
+            if exp and int(time.time()) > exp:
+                return None
+
+            return payload
+        except jwt.PyJWTError as e:
+            print(e)
+            return None
+
+    @staticmethod
+    def create_token(expiration_in_mins: int = 60 * 24, **extra_data) -> str:
+        """create a new token"""
+
+        expiration = datetime.now(timezone.utc) + timedelta(minutes=expiration_in_mins)
+
+        payload = {
+            "exp": int(expiration.timestamp()),
+            "iat": int(datetime.now(timezone.utc).timestamp()),
+            **extra_data,
+        }
+
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+        return token

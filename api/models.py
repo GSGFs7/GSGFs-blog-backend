@@ -38,6 +38,31 @@ class Author(BaseModel):
         return self.name
 
 
+class Gal(BaseModel):
+    vndb_id = models.CharField(max_length=10, unique=True)
+    title = models.CharField(max_length=100, null=True, blank=True)
+    title_cn = models.CharField(max_length=100, null=True, blank=True)
+
+    # score
+    character_score = models.FloatField(blank=True, null=True)
+    story_score = models.FloatField(blank=True, null=True)
+    comprehensive_score = models.FloatField(blank=True, null=True)
+    vndb_rating = models.FloatField(blank=True, null=True)
+
+    # time
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+
+    # review
+    summary = models.CharField(max_length=200, blank=True, null=True)  # No spoilers
+    review = models.TextField(blank=True, null=True)
+
+    cover_image = models.URLField(max_length=500, blank=True, null=True)
+
+    def __str__(self):
+        return self.vndb_id
+
+
 class Post(BaseModel):
     # 基础信息
     title = models.CharField(max_length=50)

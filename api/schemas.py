@@ -1,5 +1,5 @@
 import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from ninja.schema import Schema
 from pydantic import RootModel
@@ -167,3 +167,78 @@ class PostIdsForSitemap(RootModel):
 
     class Config:
         from_attributes = True
+
+
+class GalSchema(Schema):
+    id: int
+    vndb_id: str
+    title: Optional[str]
+    title_cn: Optional[str]
+
+    character_score: Optional[float]
+    story_score: Optional[float]
+    comprehensive_score: Optional[float]
+    vndb_rating: Optional[float]
+
+    created_at: datetime.datetime
+    update_at: datetime.datetime
+
+    summary: Optional[str]
+    review: Optional[str]
+
+    cover_image: Optional[str]
+
+
+class GalPaginationResponse(Schema):
+    gals: List[GalSchema]
+    pagination: PaginationSchema
+
+
+class GalUpdateSchema(Schema):
+    id: int
+    vndb_id: str
+    title: Optional[str]
+    title_cn: Optional[str] = None
+
+    character_score: Optional[float]
+    story_score: Optional[float]
+    comprehensive_score: Optional[float]
+    vndb_rating: Optional[float]
+
+    # created_at: Optional[datetime.datetime]
+    # update_at: Optional[datetime.datetime]
+
+    summary: Optional[str]
+    review: Optional[str]
+
+    cover_image: Optional[str]
+
+
+class SystemInfoSchema(Schema):
+    hostname: str
+    platform: str
+    cpu_usage: float
+    memory_usage: float
+    disk_usage: float
+    uptime: float
+
+
+class DatabaseStatusSchema(Schema):
+    name: str
+    status: str
+    response_time: float
+
+
+class ApiStatusSchema(Schema):
+    status: str
+    version: str
+    environment: str
+    timestamp: str
+    databases: List[DatabaseStatusSchema]
+    system: SystemInfoSchema
+    dependencies: Dict[str, Any]
+
+
+class TokenSchema(Schema):
+    token: str
+    token_type: str

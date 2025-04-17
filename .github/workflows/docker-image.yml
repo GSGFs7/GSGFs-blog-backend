@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p ./artifacts
           cd ./artifacts
-          docker save django:latest | zstd -c -T0 --ultra -20 > 'django.tar.zst'
+          docker save django:latest | zstd -c -T0 -12 > 'django.tar.zst'
           sha256sum django.tar.zst > django.tar.zst.sha256
 
       - name: Upload artifacts
