@@ -233,8 +233,15 @@ INTERNAL_IPS = [
 ]
 
 API_KEY = os.getenv("API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 LOGIN_URL = "two_factor:login"
 
 # this one is optional
 LOGIN_REDIRECT_URL = "two_factor:profile"
+
+# email backend
+EMAIL_BACKEND = "api.backends.ResendEmailBackend"
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Address sent to website administrator
+ADMINS = [("admin", os.getenv("ADMIN_EMAIL"))]

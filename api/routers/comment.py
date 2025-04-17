@@ -1,4 +1,5 @@
 from ninja import Router
+from django.core.mail import mail_admins
 
 from api.auth import TimeBaseAuth
 from api.models import Comment, Guest, Post
@@ -38,12 +39,11 @@ def get_comment_from_post(request, post_id: int):
 
 
 @router.post(
-    "/comment/new",
+    "/new",
     response={200: IdSchema, 404: MessageSchema},
     auth=TimeBaseAuth(),
 )
 def new_comment(request, body: NewCommentSchema):
-    print(body)
     try:
         post = Post.objects.get(pk=body.post_id)
         guest = Guest.objects.get(unique_id=body.unique_id)
@@ -55,6 +55,9 @@ def new_comment(request, body: NewCommentSchema):
         comment.browser_version = body.metadata.browser_version
         comment.platform = body.metadata.platform
         comment.save()
+
+        # tall admin had a new comment
+        mail_admins("had a new comment", f"had a new comment in post '{post.title}'")
 
         return 200, {"id": comment.id}
     except Post.DoesNotExist:
