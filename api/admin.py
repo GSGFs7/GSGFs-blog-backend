@@ -40,7 +40,39 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ["title", "content"]  # 添加搜索功能
 
 
+class CommentAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "content",
+                    "post",
+                    "guest",
+                    "user_agent",
+                    "OS",
+                    "platform",
+                    "browser",
+                    "browser_version",
+                ]
+            },
+        ),
+        (
+            "Time Information",
+            {
+                "fields": [
+                    "created_at",
+                    "update_at",
+                ]
+            },
+        ),
+    ]
+
+    readonly_fields = ["created_at", "update_at"]
+    list_display = ["created_at", "update_at"]
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Guest)
-admin.site.register(Comment)
+admin.site.register(Comment, CommentAdmin)
 admin.site.register(Gal)
