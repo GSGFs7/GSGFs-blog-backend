@@ -88,7 +88,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            zstd -d -c /tmp/django.tar.zst | docker load
+            zstd -d -c /tmp/artifacts/django.tar.zst | docker load
             docker compose -f ~/blog/docker-compose.yml down || true
             docker compose -f ~/blog/docker-compose.yml up -d
-            rm /tmp/django.tar.zst
+            rm /tmp/artifacts/django.tar.zst
