@@ -73,7 +73,7 @@ jobs:
       - name: Deploy to server
         run: |
           # 传输 Docker 镜像到服务器
-          scp -p ${{ secrets.SSH_PORT }} ./artifacts/django.tar.zst ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+          scp -P ${{ secrets.SSH_PORT }} ./artifacts/django.tar.zst ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/
 
           # 登录服务器并执行部署
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
