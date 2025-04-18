@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
 import os
-from dotenv import load_dotenv
+from pathlib import Path
 from urllib.parse import urlparse
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,7 +35,7 @@ DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
 
 # 关闭 SSL 重定向, 交由由外部 Nginx 处理
-SECURE_SSL_REDIRECT = False
+# SECURE_SSL_REDIRECT = False
 
 # CDN 和代理配置
 USE_X_FORWARDED_HOST = True  # 信任头部设置

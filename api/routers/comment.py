@@ -57,7 +57,7 @@ def new_comment(request, body: NewCommentSchema):
         comment.save()
 
         # tall admin had a new comment
-        mail_admins("had a new comment", f"had a new comment in post '{post.title}'")
+        # mail_admins("had a new comment", f"had a new comment in post '{post.title}'")  # too slow
 
         return 200, {"id": comment.id}
     except Post.DoesNotExist:
