@@ -48,3 +48,44 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image-${{ github.sha }}
+          path: ./artifacts
+
+      - name: deploy docker image
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -t ed25519 -p ${{ secrets.SSH_PORT }} ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          # 传输 Docker 镜像到服务器
+          scp -p ${{ secrets.SSH_PORT }} ./artifacts/django.tar.zst ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/
+
+          # 登录服务器并执行部署
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # 加载 Docker 镜像
+            zstd -d -c /tmp/django.tar.zst | docker load
+
+            # 停止并移除旧容器
+            docker-compose -f ~/blog/docker-compose.yml down || true
+
+            # 启动新容器
+            docker-compose -f ~/blog/docker-compose.yml up -d
+
+            # 清理
+            rm /tmp/django.tar.zst
+          EOF
