@@ -1,15 +1,15 @@
 # GSGFs-blog-backend
 
-个人网站的后端, 使用`Django`和`Django-ninja`构建.
+使用`Django`和`Django-ninja`构建的个人网站后端.
 
 ## 运行
 
-`python`版本: `3.13`
+`python`版本: `3.13`, 推荐使用 uv 作为包管理器
 
 1. 创建一个`python`虚拟环境
 
    ```bash
-   python -m venv .venv
+   uv venv
    ```
 
 2. 激活此虚拟环境(以`Linux`为例)
@@ -21,7 +21,7 @@
 3. 安装库
 
    ```bash
-   pip install -r requirements.txt
+   uv pip install -r requirements.txt
    ```
 
 4. 将`.env.example`复制一份为`.env`并填写需要的环境变量(如果不填写数据库部分则会使用不需要额外配置的`sqlite3`作为数据库)
@@ -64,7 +64,7 @@
     docker-compose up -d
     ```
 
-  - 使用`action`自动构建的镜像
+  - 使用`action`自动构建的镜像  
     这些镜像可以在`action`的`artifact`中找到, 下载后使用`docker load`载入即可.
 
 ## 小工具
