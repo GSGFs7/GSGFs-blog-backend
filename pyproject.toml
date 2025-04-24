@@ -1,0 +1,7 @@
+[project]
+name = "GSGFs-blog-backend"
+version = "1.0.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
