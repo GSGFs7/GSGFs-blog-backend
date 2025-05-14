@@ -2,7 +2,7 @@ services:
   django-web:
     build:
       context: .
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     # image: django
     container_name: django
     working_dir: /app
