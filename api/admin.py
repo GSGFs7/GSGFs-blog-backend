@@ -35,7 +35,13 @@ class PostAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = ["update_at"]  # 将 update_at 设为只读
-    list_display = ["title", "author", "created_at", "update_at"]  # 在列表中显示日期
+    list_display = [
+        "title",
+        "author",
+        "status",
+        "created_at",
+        "update_at",
+    ]  # 在列表中显示日期
     list_filter = ["status", "category", "author"]  # 添加过滤器
     search_fields = ["title", "content"]  # 添加搜索功能
 
@@ -69,7 +75,7 @@ class CommentAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = ["created_at", "update_at"]
-    list_display = ["created_at", "update_at"]
+    list_display = ["content", "post", "guest", "created_at", "update_at"]
 
 
 class GalAdmin(admin.ModelAdmin):
@@ -105,10 +111,44 @@ class GalAdmin(admin.ModelAdmin):
     ]
 
     readonly_fields = ["created_at", "update_at"]
-    list_display = ["created_at", "update_at"]
+    list_display = ["vndb_id", "title", "created_at", "update_at"]
+
+
+class GuestAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "name",
+                    "unique_id",
+                    "email",
+                    "password",
+                    "provider",
+                    "provider_id",
+                    "avatar",
+                    "is_admin",
+                    "last_visit",
+                ]
+            },
+        ),
+        (
+            "Time Information",
+            {
+                "fields": [
+                    "created_at",
+                    "update_at",
+                ]
+            },
+        ),
+    ]
+
+    readonly_fields = ["created_at", "update_at"]
+    list_display = ["name", "provider", "created_at", "update_at"]
+    list_filter = ["provider"]
 
 
 admin.site.register(Post, PostAdmin)
-admin.site.register(Guest)
+admin.site.register(Guest, GuestAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Gal, GalAdmin)
