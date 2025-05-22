@@ -139,14 +139,18 @@ class Post(BaseModel):
 
     # 重写保存时的操作
     def save(
-        self, using=None, force_insert=False, force_update=False, update_fields=None
+        self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         if not self.slug:
             self.slug = slugify(self.title)
         if not self.meta_description:
-            # 有个小bug(不是我的问题), 需要再次确认小于160个
             self.meta_description = Truncator(self.content).chars(150, html=True)[:160]
-        return super().save(force_insert, force_update, using, update_fields)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
 
 class Page(BaseModel):
@@ -225,14 +229,19 @@ class Page(BaseModel):
 
     # 重写保存时的操作
     def save(
-        self, using=None, force_insert=False, force_update=False, update_fields=None
+        self, force_insert=False, force_update=False, using=None, update_fields=None
     ):
         if not self.slug:
             self.slug = slugify(self.title)
         if not self.meta_description:
             # 需要再次确认小于160个
             self.meta_description = Truncator(self.content).chars(150, html=True)[:160]
-        return super().save(force_insert, force_update, using, update_fields)
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
 
 class Guest(BaseModel):
