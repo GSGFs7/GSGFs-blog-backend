@@ -72,7 +72,43 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ["created_at", "update_at"]
 
 
+class GalAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "vndb_id",
+                    "title",
+                    "title_cn",
+                    # score
+                    "character_score",
+                    "story_score",
+                    "comprehensive_score",
+                    "vndb_rating",
+                    # review
+                    "summary",
+                    "review",
+                    "cover_image",
+                ]
+            },
+        ),
+        (
+            "Time Information",
+            {
+                "fields": [
+                    "created_at",
+                    "update_at",
+                ]
+            },
+        ),
+    ]
+
+    readonly_fields = ["created_at", "update_at"]
+    list_display = ["created_at", "update_at"]
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Guest)
 admin.site.register(Comment, CommentAdmin)
-admin.site.register(Gal)
+admin.site.register(Gal, GalAdmin)
