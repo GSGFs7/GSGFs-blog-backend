@@ -3,6 +3,7 @@ from pydantic import PositiveInt
 
 from ..auth import TimeBaseAuth
 from ..models import Gal
+from ..nvdb import query_vn
 from ..schemas import (
     GalPaginationResponse,
     GalSchema,

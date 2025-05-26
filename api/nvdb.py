@@ -1,6 +1,7 @@
-import requests
+import os
+from typing import List, Literal, Optional, TypedDict
 
-from typing import TypedDict, List, Optional, Literal
+import requests
 
 
 class Title(TypedDict):
@@ -26,7 +27,7 @@ class VNDBResponse(TypedDict):
     more: bool
 
 
-def query_vn(id: str):
+def query_vn(id: str) -> VNDBResponse:
     fields = [
         "title",
         "alttitle",
@@ -40,6 +41,7 @@ def query_vn(id: str):
         "https://api.vndb.org/kana/vn",
         headers={
             "Content-Type": "application/json",
+            "User-Agent": f"Django (+https://{os.getenv('SERVER_NAME', 'Unknown')})",
         },
         json={
             "filters": ["id", "=", id],
