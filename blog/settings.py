@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "two_factor.plugins.email",  # <- if you want email capability.
     # "two_factor.plugins.yubikey",  # <- for yubikey capability.
     "debug_toolbar",  # debug包
+    "django_celery_beat",  # Celery 定时任务
     "api.apps.ApiConfig",
 ]
 
@@ -246,3 +247,8 @@ EMAIL_BACKEND = "api.backends.ResendEmailBackend"
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Address sent to website administrator
 ADMINS = [("admin", os.getenv("ADMIN_EMAIL"))]
+
+# Celery 配置
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_TIMEZONE = "Asia/Shanghai"
