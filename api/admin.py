@@ -128,7 +128,6 @@ class GuestAdmin(admin.ModelAdmin):
                     "provider_id",
                     "avatar",
                     "is_admin",
-                    "last_visit",
                 ]
             },
         ),
@@ -138,12 +137,13 @@ class GuestAdmin(admin.ModelAdmin):
                 "fields": [
                     "created_at",
                     "update_at",
+                    "last_visit",
                 ]
             },
         ),
     ]
 
-    readonly_fields = ["created_at", "update_at"]
+    readonly_fields = ["created_at", "update_at", "last_visit"]
     list_display = ["name", "provider", "created_at", "update_at"]
     list_filter = ["provider"]
 
