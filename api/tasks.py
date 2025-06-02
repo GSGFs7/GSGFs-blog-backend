@@ -8,7 +8,9 @@ from .nvdb import query_vn
 logger = logging.getLogger(__name__)
 
 
-# TODO: split it, not all tasks in a single process
+UPDATE_VNDB_INTERVAL: int = 60 * 60 * 24  # Updated every 24 hours
+
+
 @shared_task
 def sync_vndb_data():
     """
@@ -18,6 +20,13 @@ def sync_vndb_data():
     entries = Gal.objects.all()
 
     for entry in entries:
+        # Skip entries that have been updated recently
+        if (
+            entry.update_at.timestamp() + UPDATE_VNDB_INTERVAL
+            > entry.created_at.timestamp()
+        ):
+            continue
+
         try:
             data = query_vn(entry.vndb_id)
 
