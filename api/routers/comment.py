@@ -1,5 +1,5 @@
-from ninja import Router
 from django.core.mail import mail_admins
+from ninja import Router
 
 from api.auth import TimeBaseAuth
 from api.models import Comment, Guest, Post
@@ -32,7 +32,7 @@ def get_comment(request, comment_id: int):
 def get_comment_from_post(request, post_id: int):
     try:
         post = Post.objects.get(pk=post_id)
-        comments = post.comment.all()
+        comments = post.comment.all()  # type: ignore
         return 200, {"ids": [i.id for i in comments]}
     except Post.DoesNotExist:
         return 404, {"message": "Post not found"}
@@ -49,17 +49,18 @@ def new_comment(request, body: NewCommentSchema):
         guest = Guest.objects.get(unique_id=body.unique_id)
 
         comment = Comment.objects.create(content=body.content, post=post, guest=guest)
-        comment.OS = body.metadata.OS
-        comment.user_agent = body.metadata.user_agent
-        comment.browser = body.metadata.browser
-        comment.browser_version = body.metadata.browser_version
-        comment.platform = body.metadata.platform
-        comment.save()
+        if not body.metadata is None:
+            comment.OS = body.metadata.OS
+            comment.user_agent = body.metadata.user_agent
+            comment.browser = body.metadata.browser
+            comment.browser_version = body.metadata.browser_version
+            comment.platform = body.metadata.platform
+            comment.save()
 
         # tall admin had a new comment
         # mail_admins("had a new comment", f"had a new comment in post '{post.title}'")  # too slow
 
-        return 200, {"id": comment.id}
+        return 200, {"id": comment.pk}  # pk = id
     except Post.DoesNotExist:
         return 404, {"message": "Post not found"}
     except Guest.DoesNotExist:

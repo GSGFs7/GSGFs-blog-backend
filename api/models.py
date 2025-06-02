@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import Truncator, slugify
 
+from .utils import extract_keywords
+
 
 class BaseModel(models.Model):
     # django 的元数据选项 表示这是一个用于模板的抽象基类 不会创建数据表 只能由于继承
@@ -62,6 +64,10 @@ class Gal(BaseModel):
     def __str__(self):
         return self.vndb_id
 
+    def save(self, *args, **kwargs) -> None:
+        
+        return super().save(*args, **kwargs)
+
 
 class Post(BaseModel):
     # 基础信息
@@ -89,6 +95,9 @@ class Post(BaseModel):
         max_length=160,
         blank=True,
         help_text="SEO描述, 留空将自动生成",
+    )
+    keywords = models.CharField(
+        max_length=200, blank=True, help_text="文章关键词，用逗号分隔"
     )
 
     # 统计
@@ -143,8 +152,13 @@ class Post(BaseModel):
     ):
         if not self.slug:
             self.slug = slugify(self.title)
+
         if not self.meta_description:
             self.meta_description = Truncator(self.content).chars(150, html=True)[:160]
+
+        if not self.keywords:
+            self.keywords = extract_keywords(self.content)
+
         return super().save(
             force_insert=force_insert,
             force_update=force_update,
@@ -179,6 +193,9 @@ class Page(BaseModel):
         max_length=160,
         blank=True,
         help_text="SEO描述, 留空将自动生成",
+    )
+    keywords = models.CharField(
+        max_length=200, blank=True, help_text="文章关键词，用逗号分隔"
     )
 
     # 统计
@@ -233,9 +250,14 @@ class Page(BaseModel):
     ):
         if not self.slug:
             self.slug = slugify(self.title)
+
         if not self.meta_description:
             # 需要再次确认小于160个
             self.meta_description = Truncator(self.content).chars(150, html=True)[:160]
+
+        if not self.keywords:
+            self.keywords = extract_keywords(self.content)
+
         return super().save(
             force_insert=force_insert,
             force_update=force_update,

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Post, Guest, Comment, Gal
+from .models import Comment, Gal, Guest, Post
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -29,6 +29,7 @@ class PostAdmin(admin.ModelAdmin):
                     "meta_description",
                     "view_count",
                     "order",
+                    "keywords",
                 ]
             },
         ),

@@ -12,6 +12,7 @@ from ..schemas import (
     PostsCardsSchema,
     PostsSchema,
     RenderSchema,
+    PostSitemapSchema,
 )
 
 router = Router()
@@ -74,7 +75,9 @@ def get_post(request, post_id: int):
 @router.get("/sitemap", response=PostIdsForSitemap)
 def get_all_post_ids_for_sitemap(request):
     posts = Post.objects.values("id", "slug", "update_at")
-    return PostIdsForSitemap(root=list(posts))
+    # transform to Pydantic model
+    post_schemas = [PostSitemapSchema(**post) for post in posts]
+    return PostIdsForSitemap(root=post_schemas)
 
 
 @router.post("/render", auth=TimeBaseAuth())
@@ -92,11 +95,13 @@ def render(request, body: RenderSchema):
     if fields.get("header_image") is not None:
         post.header_image = fields.get("header_image")
 
-    if fields.get("slug") is not None:
-        post.slug = fields.get("slug")
+    slug_value = fields.get("slug")
+    if slug_value is not None:
+        post.slug = str(slug_value)
 
-    if fields.get("meta_description") is not None:
-        post.meta_description = fields.get("meta_description")
+    meta_description_value = fields.get("meta_description")
+    if meta_description_value is not None:
+        post.meta_description = meta_description_value
 
     # 改为便捷的get_or_create()
     # 处理作者
