@@ -26,7 +26,6 @@ def heath_status(request):
 
 @router.get("/status", response=ApiStatusSchema, auth=TimeBaseAuth())
 def api_status(request):
-
     system_info = get_system_info()
     databases_status = check_database_connections()
     dependencies = check_dependencies()
@@ -45,14 +44,14 @@ def api_status(request):
 def get_system_info() -> SystemInfoSchema:
     """collection system information"""
 
-    return {
-        "hostname": platform.node(),
-        "platform": f"{platform.system()} {platform.release()}",
-        "cpu_usage": psutil.cpu_percent(interval=0.1),
-        "memory_usage": psutil.virtual_memory().percent,
-        "disk_usage": psutil.disk_usage("/").percent,
-        "uptime": time.time() - psutil.boot_time(),  # seconds
-    }
+    return SystemInfoSchema(
+        hostname=platform.node(),
+        platform=f"{platform.system()} {platform.release()}",
+        cpu_usage=psutil.cpu_percent(interval=0.1),
+        memory_usage=psutil.virtual_memory().percent,
+        disk_usage=psutil.disk_usage("/").percent,
+        uptime=time.time() - psutil.boot_time(),  # seconds
+    )
 
 
 def check_database_connections() -> List[DatabaseStatusSchema]:

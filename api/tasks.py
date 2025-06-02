@@ -8,6 +8,7 @@ from .nvdb import query_vn
 logger = logging.getLogger(__name__)
 
 
+# TODO: split it, not all tasks in a single process
 @shared_task
 def sync_vndb_data():
     """

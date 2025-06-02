@@ -48,6 +48,7 @@ class PostsSchema(Schema):
     update_at: datetime.datetime
     header_image: Optional[str]
     meta_description: str
+    keywords: Optional[str] = None
     order: int
     slug: str
     status: str
@@ -113,7 +114,7 @@ class LoginSchema(Schema):
 
 
 class TokenSchema(Schema):
-    access_token: str
+    token: str
     token_type: str = "bearer"
 
 
@@ -237,8 +238,3 @@ class ApiStatusSchema(Schema):
     databases: List[DatabaseStatusSchema]
     system: SystemInfoSchema
     dependencies: Dict[str, Any]
-
-
-class TokenSchema(Schema):
-    token: str
-    token_type: str
