@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Iterable, List, Union
 
 import resend
 from django.conf import settings
@@ -14,9 +14,7 @@ class ResendEmailBackend(BaseEmailBackend):
         super().__init__(fail_silently, **kwargs)
         self.api_key = getattr(settings, "RESEND_API_KEY", "")
 
-    def send_messages(
-        self, email_messages: List[Union[EmailMessage, EmailMultiAlternatives]]
-    ) -> int:
+    def send_messages(self, email_messages: Iterable[EmailMessage]) -> int:
         """method of send email, will return the number of email was send"""
         if not email_messages:
             return 0

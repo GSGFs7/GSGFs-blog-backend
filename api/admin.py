@@ -12,7 +12,6 @@ class PostAdmin(admin.ModelAdmin):
                     "title",
                     "content",
                     "content_html",
-                    "author",
                     "tags",
                     "category",
                     "status",
@@ -38,12 +37,11 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = ["update_at"]  # 将 update_at 设为只读
     list_display = [
         "title",
-        "author",
         "status",
         "created_at",
         "update_at",
     ]  # 在列表中显示日期
-    list_filter = ["status", "category", "author"]  # 添加过滤器
+    list_filter = ["status", "category"]  # 添加过滤器
     search_fields = ["title", "content"]  # 添加搜索功能
 
 

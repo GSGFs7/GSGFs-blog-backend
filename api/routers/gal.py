@@ -3,7 +3,7 @@ from pydantic import PositiveInt
 
 from ..auth import TimeBaseAuth
 from ..models import Gal
-from ..nvdb import query_vn
+from ..vndb import query_vn
 from ..schemas import (
     GalPaginationResponse,
     GalSchema,
@@ -77,7 +77,6 @@ def update_gal(request, gal_id: int, body: GalUpdateSchema):
         gal.summary = body.summary
         gal.review = body.review
         gal.cover_image = body.cover_image
-
         # 保存更改
         gal.save()
 

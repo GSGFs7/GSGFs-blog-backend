@@ -4,15 +4,15 @@ from ninja import Router
 from pydantic import PositiveInt
 
 from ..auth import TimeBaseAuth
-from ..models import Author, Category, Post, Tag
+from ..models import Category, Post, Tag
 from ..schemas import (
     IdsSchema,
     MessageSchema,
     PostIdsForSitemap,
     PostsCardsSchema,
+    PostSitemapSchema,
     PostsSchema,
     RenderSchema,
-    PostSitemapSchema,
 )
 
 router = Router()
@@ -102,13 +102,6 @@ def render(request, body: RenderSchema):
     meta_description_value = fields.get("meta_description")
     if meta_description_value is not None:
         post.meta_description = meta_description_value
-
-    # 改为便捷的get_or_create()
-    # 处理作者
-    if fields.get("author") is not None:
-        author_name = fields.get("author")
-        author, author_created = Author.objects.get_or_create(name=author_name)
-        post.author = author
 
     # 处理分类
     if fields.get("category") is not None:

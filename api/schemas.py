@@ -95,7 +95,6 @@ class MessageSchema(Schema):
 
 class RenderSchema(Schema):
     id: int
-    author: Optional[str] = None
     category: Optional[str] = None
     content_html: Optional[str] = None
     cover_image: Optional[str] = None

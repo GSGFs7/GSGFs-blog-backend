@@ -3,6 +3,8 @@ from typing import List, Literal, Optional, TypedDict
 
 import requests
 
+from .models import Gal
+
 
 class Title(TypedDict):
     title: str
@@ -15,7 +17,7 @@ class Image(TypedDict):
 
 class VNItem(TypedDict):
     id: str
-    alttile: Optional[str]
+    alttitle: Optional[str]
     rating: float
     title: str
     titles: List[Title]
