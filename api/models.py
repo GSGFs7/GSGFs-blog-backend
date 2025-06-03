@@ -56,7 +56,6 @@ class Gal(BaseModel):
         return self.vndb_id
 
     def save(self, *args, **kwargs) -> None:
-
         return super().save(*args, **kwargs)
 
 

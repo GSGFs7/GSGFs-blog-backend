@@ -3,7 +3,7 @@ import logging
 from celery import shared_task
 
 from .models import Gal
-from .nvdb import query_vn
+from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def sync_vndb_data():
             if "results" in data and data["results"]:
                 vn_data = data["results"][0]
 
-                entry.title = vn_data.get("alttile", vn_data["title"])
+                entry.title = vn_data.get("alttitle", vn_data["title"])
                 title_cn = None
                 for title in vn_data.get("titles", []):
                     if title["lang"] == "zh-Hans":
