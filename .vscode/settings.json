@@ -39,5 +39,6 @@
       "path": "pwsh",
       "icon": "terminal-powershell"
     }
-  }
+  },
+  "python.analysis.typeCheckingMode": "standard"
 }

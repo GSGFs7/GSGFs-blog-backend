@@ -6,6 +6,9 @@ from .utils import extract_keywords
 
 
 class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now=True)
+
     # django 的元数据选项 表示这是一个用于模板的抽象基类 不会创建数据表 只能由于继承
     # https://docs.djangoproject.com/zh-hans/5.1/topics/db/models/#abstract-base-classes
     class Meta:
@@ -32,14 +35,6 @@ class Category(BaseModel):
         return self.name
 
 
-class Author(BaseModel):
-    name = models.CharField(max_length=50, unique=True)
-    email = models.EmailField()
-
-    def __str__(self):
-        return self.name
-
-
 class Gal(BaseModel):
     vndb_id = models.CharField(max_length=10, unique=True)
     title = models.CharField(max_length=100, null=True, blank=True)
@@ -51,10 +46,6 @@ class Gal(BaseModel):
     comprehensive_score = models.FloatField(blank=True, null=True)
     vndb_rating = models.FloatField(blank=True, null=True)
 
-    # time
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
-
     # review
     summary = models.CharField(max_length=200, blank=True, null=True)  # No spoilers
     review = models.TextField(blank=True, null=True)
@@ -65,7 +56,7 @@ class Gal(BaseModel):
         return self.vndb_id
 
     def save(self, *args, **kwargs) -> None:
-        
+
         return super().save(*args, **kwargs)
 
 
@@ -73,8 +64,6 @@ class Post(BaseModel):
     # 基础信息
     title = models.CharField(max_length=50)
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
     # 渲染后的内容
     content_html = models.TextField(null=True, blank=True)
@@ -114,14 +103,7 @@ class Post(BaseModel):
         default=None,
         related_name="post",
     )  # tags 可以对多
-    author = models.ForeignKey(
-        Author,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        default=None,
-        related_name="post",  # 可以通过对方来查询自己
-    )
+
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -140,7 +122,7 @@ class Post(BaseModel):
         default="draft",
     )
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
 
     def __str__(self):
@@ -171,8 +153,6 @@ class Page(BaseModel):
     # 基础信息
     title = models.CharField(max_length=50)
     content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
     # 渲染后的内容
     content_html = models.TextField(null=True, blank=True)
@@ -212,14 +192,7 @@ class Page(BaseModel):
         default=None,
         related_name="pages",
     )  # tags 可以对多
-    author = models.ForeignKey(
-        Author,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        default=None,
-        related_name="pages",  # 可以通过对方来查询自己
-    )
+
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -238,7 +211,7 @@ class Page(BaseModel):
         default="draft",
     )
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
 
     def __str__(self):
@@ -283,16 +256,6 @@ class Guest(BaseModel):
     avatar = models.URLField(max_length=200)
     is_admin = models.BooleanField(default=False)
     last_visit = models.DateTimeField(auto_now=True)
-    as_author = models.ForeignKey(
-        Author,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        default=None,
-        related_name="user",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -302,8 +265,6 @@ class Comment(BaseModel):
     content = models.TextField(max_length=10000)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comment")
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name="comment")
-    created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
 
     # 用户信息
     user_agent = models.CharField(max_length=100, blank=True, default="unknown")
