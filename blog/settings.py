@@ -165,7 +165,7 @@ if os.environ.get("DOCKER_ENV", "False") == "True":
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{redis_host}:6379/1",  # 使用1号数据库
+        "LOCATION": f"redis://{redis_host}:6379/0",  # 使用0号数据库
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
@@ -248,7 +248,9 @@ DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Address sent to website administrator
 ADMINS = [("admin", os.getenv("ADMIN_EMAIL"))]
 
-# Celery 配置
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+# Celery configuration
+CELERY_BROKER_URL = f"redis://{redis_host}:6379/0"
+CELERY_RESULT_BACKEND = f"redis://{redis_host}:6379/0"
 CELERY_TIMEZONE = "Asia/Shanghai"
+# Celery scheduled tasks use database storage, if not it django_celery_beat will not work
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
