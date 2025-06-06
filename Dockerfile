@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 最终环境
 FROM python:3.13.3-alpine
 
+# Manage multiple processes simultaneously
+RUN apk add --no-cache supervisor 
+
 RUN adduser -D -H -h /app user && \
     mkdir /app && \
     chown -R user /app
@@ -35,14 +38,24 @@ COPY --from=builder /usr/local/bin/ /usr/local/bin/
 # 复制代码
 COPY --chown=user:user . .
 
+# supervisor configuration
+COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf
+
+# supervisor log directory
+RUN mkdir -p /var/log/supervisor && \
+    chown -R user /var/log/supervisor
+
 # 收集静态文件
 RUN python manage.py collectstatic --noinput
 
-USER user
+# supervisor need to run as root
+# USER user 
 
 EXPOSE 8000
 
-CMD [ "gunicorn", "-c", "gunicorn.conf.py", "blog.wsgi:application" ]
+# CMD [ "gunicorn", "-c", "gunicorn.conf.py", "blog.wsgi:application" ]
+
+CMD [ "supervisord" , "-c", "/etc/supervisor/supervisord.conf" ]
 
 
 # https://www.docker.com/blog/how-to-dockerize-django-app/
