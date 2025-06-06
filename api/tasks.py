@@ -1,7 +1,7 @@
 import logging
-from datetime import datetime
 
 from celery import shared_task
+from django.utils import timezone
 
 from .models import Gal
 from .vndb import query_vn
@@ -19,7 +19,7 @@ def sync_vndb_data():
     """
     logger.info("开始同步 VNDB 数据...")
     entries = Gal.objects.all()
-    current_time = datetime.now().timestamp()
+    current_time = timezone.now().timestamp()
 
     for entry in entries:
         if current_time - entry.update_at.timestamp() < UPDATE_VNDB_INTERVAL:
