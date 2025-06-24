@@ -254,3 +254,7 @@ CELERY_RESULT_BACKEND = f"redis://{redis_host}:6379/0"
 CELERY_TIMEZONE = "Asia/Shanghai"
 # Celery scheduled tasks use database storage, if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# img bed
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")

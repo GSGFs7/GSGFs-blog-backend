@@ -41,5 +41,6 @@
       "icon": "terminal-powershell"
     }
   },
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "python.analysis.autoImportCompletions": true
 }

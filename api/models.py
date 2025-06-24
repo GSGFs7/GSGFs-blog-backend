@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 from django.utils.text import Truncator, slugify
 
 from .utils import extract_keywords
@@ -128,9 +127,7 @@ class Post(BaseModel):
         return self.title
 
     # 重写保存时的操作
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
 
@@ -140,12 +137,7 @@ class Post(BaseModel):
         if not self.keywords:
             self.keywords = extract_keywords(self.content)
 
-        return super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
+        return super().save(*args, **kwargs)
 
 
 class Page(BaseModel):
@@ -217,9 +209,7 @@ class Page(BaseModel):
         return self.title
 
     # 重写保存时的操作
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None
-    ):
+    def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
 
@@ -230,12 +220,7 @@ class Page(BaseModel):
         if not self.keywords:
             self.keywords = extract_keywords(self.content)
 
-        return super().save(
-            force_insert=force_insert,
-            force_update=force_update,
-            using=using,
-            update_fields=update_fields,
-        )
+        return super().save(*args, **kwargs)
 
 
 class Guest(BaseModel):
@@ -274,3 +259,39 @@ class Comment(BaseModel):
 
     def __str__(self):
         return self.content[:10]
+
+
+class Anime(BaseModel):
+    name = models.CharField(
+        max_length=100, blank=False, null=False, unique=True, db_index=True
+    )
+    name_cn = models.CharField(max_length=100, blank=True, null=True)
+    alias = models.CharField(max_length=200, blank=True, null=True)
+
+    rating = models.FloatField(blank=True, null=True)
+    review = models.TextField(blank=True, null=True)
+
+    cover_image = models.URLField(max_length=500, blank=True, null=True)
+
+    class Meta(BaseModel.Meta):
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name
+
+
+# class Image(BaseModel):
+#     title = models.CharField(
+#         max_length=100, blank=True, null=True, help_text="图片标题"
+#     )
+#     description = models.TextField(blank=True, null=True, help_text="图片描述")
+#     file_name = models.CharField(max_length=100, unique=True, help_text="图片文件名")
+#     file_size = models.PositiveIntegerField(help_text="图片文件大小（字节）")
+#     file_type = models.CharField(max_length=50, help_text="图片文件类型")
+#     url = models.URLField(max_length=500, help_text="图片URL地址")
+
+#     class Meta(BaseModel.Meta):
+#         ordering = ["-created_at"]
+
+#     def __str__(self):
+#         return self.title or self.file_name
