@@ -175,7 +175,6 @@ class Post(BaseModel):
             category = post_metadata.get("category")
             category, created = Category.objects.get_or_create(name=category)
             self.category = category
-            super().save(update_fields=["category"])
 
         # save main object, all settings above will be saved
         # after that, continue to process operations that require primary keys
