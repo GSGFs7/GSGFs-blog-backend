@@ -279,28 +279,24 @@ def chinese_slugify(title: str, max_length: int = 50) -> str:
     # slug = django_slugify(title)
     slug = None
 
-    if slug and len(slug) <= max_length:
-        return slug
+    cleaned = re.sub(r"[^\w\s\u4e00-\u9fff\-]", " ", title)
 
-    if not slug:
-        cleaned = re.sub(r"[^\w\s\u4e00-\u9fff\-]", " ", title)
+    parts = []
+    for word in cleaned.split():
+        if re.search(r"[\u4e00-\u9fff]", word):
+            pinyin_parts = lazy_pinyin(word, style=Style.NORMAL)
+            parts.extend([p.lower() for p in pinyin_parts])
+        else:
+            clean_word = re.sub(r"[^\w\-]", "", word.lower())
+            if clean_word:
+                parts.append(clean_word)
 
-        parts = []
-        for word in cleaned.split():
-            if re.search(r"[\u4e00-\u9fff]", word):
-                pinyin_parts = lazy_pinyin(word, style=Style.NORMAL)
-                parts.extend([p.lower() for p in pinyin_parts])
-            else:
-                clean_word = re.sub(r"[^\w\-]", "", word.lower())
-                if clean_word:
-                    parts.append(clean_word)
-
-        slug = "-".join(parts)
-        slug = re.sub(r"-+", "-", slug).strip("-")
+    slug = "-".join(parts)
+    slug = re.sub(r"-+", "-", slug).strip("-")
 
     if len(slug) > max_length:
         hash_suffix = hashlib.md5(title.encode()).hexdigest()[:6]
         available_length = max_length - 7
         slug = slug[:available_length] + "-" + hash_suffix
 
-    return slug or ""
+    return slug or "untitled"

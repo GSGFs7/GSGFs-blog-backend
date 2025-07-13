@@ -5,13 +5,6 @@ from .jikan import query_anime
 from .models import Anime, Gal
 from .vndb import query_vn
 
-# Post.save() already updated keywords
-# @receiver(pre_save, sender=Post)
-# @receiver(pre_save, sender=Page)
-# def add_keywords(sender, instance, **kwargs):
-#     if not instance.keywords:
-#         instance.keywords = extract_metadata(instance.content).get("keywords")
-
 
 @receiver(pre_save, sender=Gal)
 def sync_with_vndb(sender, instance, **kwargs):

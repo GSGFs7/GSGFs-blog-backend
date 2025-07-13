@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 
 from .utils import chinese_slugify, extract_metadata
@@ -142,6 +142,7 @@ class Post(BaseModel):
 
     # rewrite save action
     # called after adminFrom (at `./admin.py`)
+    @transaction.atomic  # keep atomic, all success or all failures
     def save(self, *args, **kwargs):
         post_metadata = extract_metadata(self.content)
 
@@ -169,6 +170,15 @@ class Post(BaseModel):
         if not self.header_image:
             self.header_image = post_metadata.get("header_image")
 
+        # === category ===
+        if not self.category and post_metadata.get("category"):
+            category = post_metadata.get("category")
+            category, created = Category.objects.get_or_create(name=category)
+            self.category = category
+            super().save(update_fields=["category"])
+
+        # save main object, all settings above will be saved
+        # after that, continue to process operations that require primary keys
         super().save(*args, **kwargs)
 
         # === tags ===
@@ -179,13 +189,6 @@ class Post(BaseModel):
                 tag_obj, created = Tag.objects.get_or_create(name=tag_name)
                 tags_to_set.append(tag_obj)
             self.tags.set(tags_to_set)
-
-        # === category ===
-        if not self.category and post_metadata.get("category"):
-            category = post_metadata.get("category")
-            category, created = Category.objects.get_or_create(name=category)
-            self.category = category
-            super().save(update_fields=["category"])
 
 
 class Page(BaseModel):

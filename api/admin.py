@@ -65,6 +65,12 @@ class PostAdminForm(forms.ModelForm):
                 errors["slug"] = (
                     "Slug field cannot be empty and cannot be automatically generated."
                 )
+            if (
+                Post.objects.filter(slug=cleaned_data.get("slug"))
+                .exclude(pk=self.instance.pk)
+                .exists()
+            ):
+                errors["slug"] = "The slug already exists."
 
         if errors:
             raise ValidationError(errors)
