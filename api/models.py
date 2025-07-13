@@ -35,7 +35,9 @@ class Category(BaseModel):
 
 
 class Gal(BaseModel):
-    vndb_id = models.CharField(max_length=10, unique=True)
+    vndb_id = models.CharField(
+        blank=False, max_length=10, unique=True, help_text="在VNDB中的ID, 必填"
+    )
     title = models.CharField(max_length=100, null=True, blank=True)
     title_cn = models.CharField(max_length=100, null=True, blank=True)
 
@@ -262,16 +264,19 @@ class Comment(BaseModel):
 
 
 class Anime(BaseModel):
+    mal_id = models.IntegerField(blank=False, help_text="在MyAnimeList中的ID, 必填")
     name = models.CharField(
-        max_length=100, blank=False, null=False, unique=True, db_index=True
+        max_length=100, blank=True, null=False, unique=True, db_index=True
     )
     name_cn = models.CharField(max_length=100, blank=True, null=True)
-    alias = models.CharField(max_length=200, blank=True, null=True)
-
-    rating = models.FloatField(blank=True, null=True)
-    review = models.TextField(blank=True, null=True)
-
+    year = models.IntegerField(default=None, blank=True, null=True)
+    synopsis = models.TextField(default=None, blank=True, null=True)
     cover_image = models.URLField(max_length=500, blank=True, null=True)
+    # https://en.wikipedia.org/wiki/Motion_Picture_Association_film_rating_system
+    rating = models.CharField(blank=True, null=True)
+
+    score = models.FloatField(blank=True, null=True)  # fill it by your self
+    review = models.TextField(blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         ordering = ["-created_at"]

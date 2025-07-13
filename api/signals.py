@@ -1,7 +1,8 @@
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .models import Gal, Page, Post
+from .jikan import query_anime
+from .models import Anime, Gal, Page, Post
 from .utils import extract_keywords
 from .vndb import query_vn
 
@@ -44,3 +45,31 @@ def sync_with_vndb(sender, instance, **kwargs):
 
             logger = logging.getLogger(__name__)
             logger.error(f"更新 VNDB 数据失败: {instance.vndb_id}")
+
+
+@receiver(pre_save, sender=Anime)
+def sync_with_jikan(sender, instance, **kwargs):
+    if not instance.mal_id:
+        return
+
+    if not instance.pk or not instance.title:
+        try:
+            res = query_anime(instance.mal_id)
+
+            title = None
+            for t in res.titles:
+                if t.type == "Japanese":
+                    title = t.title
+            if title is None:
+                title = res.titles[0].title
+
+            instance.name = title
+            instance.year = res.year
+            instance.synopsis = res.synopsis
+            instance.cover_image = res.images.webp.large_image_url
+            instance.rating = res.rating
+        except:
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"更新 Anime 数据失败: {instance.vndb_id}")
