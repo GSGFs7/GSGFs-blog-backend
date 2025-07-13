@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Comment, Gal, Guest, Post
+from .models import Anime, Comment, Gal, Guest, Post
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -147,7 +147,41 @@ class GuestAdmin(admin.ModelAdmin):
     list_filter = ["provider"]
 
 
+class AnimeAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": [
+                    "mal_id",
+                    "name",
+                    "name_cn",
+                    "year",
+                    "synopsis",
+                    "cover_image",
+                    "rating",
+                    "score",
+                    "review",
+                ]
+            },
+        ),
+        (
+            "Time Information",
+            {
+                "fields": [
+                    "created_at",
+                    "update_at",
+                ]
+            },
+        ),
+    ]
+
+    readonly_fields = ["created_at", "update_at"]
+    list_display = ["name", "created_at", "update_at"]
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Guest, GuestAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Gal, GalAdmin)
+admin.site.register(Anime, AnimeAdmin)

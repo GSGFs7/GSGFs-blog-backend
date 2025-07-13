@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import sys
+from typing import Optional
 
 import boto3
 import dotenv
@@ -38,7 +39,7 @@ def list_buckets() -> None:
         print(f"{bucket['Name']}")
 
 
-def upload_file(file_name: str, bucket: str, object_name: str = None) -> bool:
+def upload_file(file_name: str, bucket: str, object_name: Optional[str] = None) -> bool:
     """Upload a file to an S3 bucket
 
     :param file_name: File to upload
@@ -126,10 +127,10 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
 
         # Overriding JSON serialization of `datetime`
         class DateTimeEncoder(json.JSONEncoder):
-            def default(self, obj):
-                if isinstance(obj, datetime.datetime):
-                    return obj.strftime("%Y-%m-%d %H:%M:%S")
-                return super().default(obj)
+            def default(self, o):
+                if isinstance(o, datetime.datetime):
+                    return o.strftime("%Y-%m-%d %H:%M:%S")
+                return super().default(o)
 
         try:
             with open("uploaded.json", "w", encoding="utf-8") as f:

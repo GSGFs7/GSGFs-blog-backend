@@ -51,8 +51,8 @@ CSRF_TRUSTED_ORIGINS = (
 
 # 安全设置
 SECURE_SSL_REDIRECT = not DEBUG  # 强制 HTTPS
-SESSION_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 cookie
-CSRF_COOKIE_SECURE = True  # 仅通过 HTTPS 发送 CSRF cookie
+SESSION_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 cookie, CF 的请求可能为 http
+CSRF_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 CSRF cookie, 同上
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_HSTS_SECONDS = 31536000  # 1年
@@ -254,3 +254,7 @@ CELERY_RESULT_BACKEND = f"redis://{redis_host}:6379/0"
 CELERY_TIMEZONE = "Asia/Shanghai"
 # Celery scheduled tasks use database storage, if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# img bed
+R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")

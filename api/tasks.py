@@ -31,19 +31,19 @@ def sync_vndb_data():
 
             if "results" in data and data["results"]:
                 vn_data = data["results"][0]
-                alt_title = vn_data.get("alttitle", None)
-                if alt_title and isinstance(alt_title, str) and alt_title.strip():
-                    entry.title = alt_title
-                else:
-                    entry.title = vn_data["title"]
-                title_cn = None
-                for title in vn_data.get("titles", []):
-                    if title["lang"] == "zh-Hans":
-                        title_cn = title["title"]
-                        break
-                entry.title_cn = title_cn
-                entry.cover_image = vn_data["image"]["url"]
-                entry.vndb_rating = vn_data.get("rating", None)
+                # alt_title = vn_data.get("alttitle", None)
+                # if alt_title and isinstance(alt_title, str) and alt_title.strip():
+                #     entry.title = alt_title
+                # else:
+                #     entry.title = vn_data["title"]
+                # title_cn = None
+                # for title in vn_data.get("titles", []):
+                #     if title["lang"] == "zh-Hans":
+                #         title_cn = title["title"]
+                #         break
+                # entry.title_cn = title_cn
+                # entry.cover_image = vn_data["image"]["url"]
+                entry.vndb_rating = vn_data.get("rating", None) # rating only
 
                 entry.save()
             else:
