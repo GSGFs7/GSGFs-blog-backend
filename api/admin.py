@@ -1,6 +1,81 @@
+from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+
+from api.utils import chinese_slugify, extract_front_matter
 
 from .models import Anime, Comment, Gal, Guest, Post
+
+
+class PostAdminForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = "__all__"
+
+    def clean(self):
+        """
+        Cleans and validates form data for a Post model.
+
+        - Extracts metadata from the 'content' field using front matter if available.
+        - If 'title' is missing, attempts to extract it from metadata; checks for uniqueness.
+        - Automatically generates 'slug' from metadata or the title if not provided.
+        - Collects validation errors for missing or duplicate fields and raises ValidationError if any are found.
+
+        Returns:
+            dict: The cleaned and possibly modified form data.
+
+        Raises:
+            ValidationError: If required fields are missing, cannot be extracted/generated, or if the title is not unique.
+        """
+
+        cleaned_data = super().clean()
+        title = cleaned_data.get("title")
+        content = cleaned_data.get("content")
+
+        metadata = {}
+        errors = {}
+
+        if content:
+            metadata = extract_front_matter(content)
+        else:
+            errors["content"] = "Content field cannot be empty."
+
+        if not title:
+            extracted_title = metadata.get("title")
+            if extracted_title:
+                cleaned_data["title"] = extracted_title
+                if (
+                    Post.objects.filter(title=extracted_title)
+                    .exclude(pk=self.instance.pk)
+                    .exists()
+                ):
+                    errors["title"] = (
+                        "The title extracted from Front Matter already exists."
+                    )
+            else:
+                errors["title"] = (
+                    "The title field cannot be empty and cannot be automatically extracted from Front Matter."
+                )
+
+        if not cleaned_data.get("slug"):
+            cleaned_data["slug"] = metadata.get("slug") or chinese_slugify(
+                str(cleaned_data.get("title", ""))
+            )
+            if not cleaned_data.get("slug"):
+                errors["slug"] = (
+                    "Slug field cannot be empty and cannot be automatically generated."
+                )
+            if (
+                Post.objects.filter(slug=cleaned_data.get("slug"))
+                .exclude(pk=self.instance.pk)
+                .exists()
+            ):
+                errors["slug"] = "The slug already exists."
+
+        if errors:
+            raise ValidationError(errors)
+
+        return cleaned_data
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -33,7 +108,7 @@ class PostAdmin(admin.ModelAdmin):
             },
         ),
     ]
-
+    form = PostAdminForm
     readonly_fields = ["update_at"]  # 将 update_at 设为只读
     list_display = [
         "title",
