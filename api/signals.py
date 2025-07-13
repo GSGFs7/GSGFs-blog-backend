@@ -72,4 +72,4 @@ def sync_with_jikan(sender, instance, **kwargs):
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.error(f"更新 Anime 数据失败: {instance.vndb_id}")
+            logger.error(f"更新 Anime 数据失败: {instance.mal_id}")
