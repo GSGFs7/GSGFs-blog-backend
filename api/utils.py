@@ -3,6 +3,7 @@ import re
 from typing import Dict, List, Optional, TypedDict
 
 import yaml
+from django.utils.text import Truncator
 from jieba import analyse as jieba_analyse
 from pypinyin import Style, lazy_pinyin
 
@@ -10,6 +11,7 @@ from pypinyin import Style, lazy_pinyin
 class MetadataResult(TypedDict):
     keywords: str
     tags: List[str]
+    description: str
     title: Optional[str]
     slug: Optional[str]
     category: Optional[str]
@@ -244,6 +246,9 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     if header_image is None and first_image:
         header_image = first_image
 
+    # === description ===
+    description = Truncator(text).chars(150)
+
     # Return the most common words as a comma-separated string
     return {
         "keywords": ",".join(keywords_list[:num_keywords]),
@@ -253,6 +258,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
         "category": category,
         "cover_image": cover_image,
         "header_image": header_image,
+        "description": description,
     }
 
 

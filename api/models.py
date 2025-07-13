@@ -158,7 +158,7 @@ class Post(BaseModel):
 
         # === description ===
         if not self.meta_description:
-            self.meta_description = Truncator(self.content).chars(150, html=True)[:160]
+            self.meta_description = post_metadata.get("description")
 
         # === keywords ===
         if not self.keywords:
