@@ -6,7 +6,7 @@ from .utils import chinese_slugify, extract_metadata
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # django 的元数据选项 表示这是一个用于模板的抽象基类 不会创建数据表 只能由于继承
     # https://docs.djangoproject.com/zh-hans/5.1/topics/db/models/#abstract-base-classes

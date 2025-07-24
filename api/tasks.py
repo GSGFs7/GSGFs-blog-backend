@@ -22,7 +22,7 @@ def sync_vndb_data():
     current_time = timezone.now().timestamp()
 
     for entry in entries:
-        if current_time - entry.update_at.timestamp() < UPDATE_VNDB_INTERVAL:
+        if current_time - entry.updated_at.timestamp() < UPDATE_VNDB_INTERVAL:
             logger.info(f"跳过最近已更新: {entry.vndb_id}")
             continue
 

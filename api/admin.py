@@ -109,12 +109,12 @@ class PostAdmin(admin.ModelAdmin):
         ),
     ]
     form = PostAdminForm
-    readonly_fields = ["update_at"]  # 将 update_at 设为只读
+    readonly_fields = ["updated_at"]  # 将 updated_at 设为只读
     list_display = [
         "title",
         "status",
         "created_at",
-        "update_at",
+        "updated_at",
     ]  # 在列表中显示日期
     list_filter = ["status", "category"]  # 添加过滤器
     search_fields = ["title", "content"]  # 添加搜索功能
@@ -142,14 +142,14 @@ class CommentAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "created_at",
-                    "update_at",
+                    "updated_at",
                 ]
             },
         ),
     ]
 
-    readonly_fields = ["created_at", "update_at"]
-    list_display = ["content", "post", "guest", "created_at", "update_at"]
+    readonly_fields = ["created_at", "updated_at"]
+    list_display = ["content", "post", "guest", "created_at", "updated_at"]
 
 
 class GalAdmin(admin.ModelAdmin):
@@ -178,14 +178,14 @@ class GalAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "created_at",
-                    "update_at",
+                    "updated_at",
                 ]
             },
         ),
     ]
 
-    readonly_fields = ["created_at", "update_at"]
-    list_display = ["vndb_id", "title", "created_at", "update_at"]
+    readonly_fields = ["created_at", "updated_at"]
+    list_display = ["vndb_id", "title", "created_at", "updated_at"]
 
 
 class GuestAdmin(admin.ModelAdmin):
@@ -210,15 +210,15 @@ class GuestAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "created_at",
-                    "update_at",
+                    "updated_at",
                     "last_visit",
                 ]
             },
         ),
     ]
 
-    readonly_fields = ["created_at", "update_at", "last_visit"]
-    list_display = ["name", "provider", "created_at", "update_at"]
+    readonly_fields = ["created_at", "updated_at", "last_visit"]
+    list_display = ["name", "provider", "created_at", "updated_at"]
     list_filter = ["provider"]
 
 
@@ -245,14 +245,14 @@ class AnimeAdmin(admin.ModelAdmin):
             {
                 "fields": [
                     "created_at",
-                    "update_at",
+                    "updated_at",
                 ]
             },
         ),
     ]
 
-    readonly_fields = ["created_at", "update_at"]
-    list_display = ["name", "created_at", "update_at"]
+    readonly_fields = ["created_at", "updated_at"]
+    list_display = ["name", "created_at", "updated_at"]
 
 
 admin.site.register(Post, PostAdmin)

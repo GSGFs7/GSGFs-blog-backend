@@ -22,7 +22,7 @@ class CommentSchema(Schema):
     guest_id: int
     guest_name: str
     created_at: datetime.datetime
-    update_at: datetime.datetime
+    updated_at: datetime.datetime
     avatar: str
 
     # 从关联的 guest 获取name
@@ -45,7 +45,7 @@ class PostsSchema(Schema):
     content: str
     cover_image: Optional[str]
     created_at: datetime.datetime
-    update_at: datetime.datetime
+    updated_at: datetime.datetime
     header_image: Optional[str]
     meta_description: str
     keywords: Optional[str] = None
@@ -68,7 +68,7 @@ class PostsCardSchema(Schema):
     slug: str
     tags: Optional[List[TagsSchema]]
     title: str
-    update_at: datetime.datetime
+    updated_at: datetime.datetime
 
 
 class PaginationSchema(Schema):
@@ -159,7 +159,7 @@ class NewCommentSchema(Schema):
 class PostSitemapSchema(Schema):
     id: int
     slug: str
-    update_at: datetime.datetime
+    updated_at: datetime.datetime
 
 
 class PostIdsForSitemap(RootModel):
@@ -181,10 +181,11 @@ class GalSchema(Schema):
     vndb_rating: Optional[float]
 
     created_at: datetime.datetime
-    update_at: datetime.datetime
+    updated_at: datetime.datetime
 
     summary: Optional[str]
     review: Optional[str]
+    review_html: Optional[str]
 
     cover_image: Optional[str]
 
@@ -206,7 +207,7 @@ class GalUpdateSchema(Schema):
     vndb_rating: Optional[float]
 
     # created_at: Optional[datetime.datetime]
-    # update_at: Optional[datetime.datetime]
+    # updated_at: Optional[datetime.datetime]
 
     summary: Optional[str]
     review: Optional[str]
