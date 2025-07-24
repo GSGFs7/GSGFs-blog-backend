@@ -43,7 +43,7 @@ def sync_vndb_data():
                 #         break
                 # entry.title_cn = title_cn
                 # entry.cover_image = vn_data["image"]["url"]
-                entry.vndb_rating = vn_data.get("rating", None) # rating only
+                entry.vndb_rating = vn_data.get("rating", None)  # rating only
 
                 entry.save()
             else:
