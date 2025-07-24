@@ -1,8 +1,10 @@
-from django.db.models.signals import pre_save
+import logging
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
 from .jikan import query_anime
-from .models import Anime, Gal
+from .markdown import markdown_to_html_frontend
+from .models import Anime, Gal, Post
 from .vndb import query_vn
 
 
@@ -32,11 +34,9 @@ def sync_with_vndb(sender, instance, **kwargs):
             instance.cover_image = vn_data["image"]["url"]
             instance.vndb_rating = vn_data.get("rating", None)
             # This is a pre_save signal, should not call `save()` here otherwise it will cause infinite loop
-        except:
-            import logging
-
+        except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.error(f"更新 VNDB 数据失败: {instance.vndb_id}")
+            logger.error(f"更新 VNDB 数据失败({instance.vndb_id}): {e}")
 
 
 @receiver(pre_save, sender=Anime)
@@ -60,8 +60,33 @@ def sync_with_jikan(sender, instance, **kwargs):
             instance.synopsis = res.synopsis
             instance.cover_image = res.images.webp.large_image_url
             instance.rating = res.rating
-        except:
-            import logging
-
+        except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.error(f"更新 Anime 数据失败: {instance.mal_id}")
+            logger.error(f"更新 Anime 数据失败({instance.mal_id}): {e}")
+
+
+@receiver(post_save, sender=Gal)
+def convert_gal_markdown_to_html(sender, instance, **kwargs):
+    try:
+        res = markdown_to_html_frontend(instance.review)
+        instance.review_html = res.html
+        # Disconnect sinal, avoid infinite loop
+        post_save.disconnect(convert_gal_markdown_to_html, sender=Gal)
+        instance.save(update_fields=["review_html"])
+        post_save.connect(convert_gal_markdown_to_html, sender=Gal)  # Reconnect after save
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Markdown 转换失败: {e}")
+
+
+@receiver(post_save, sender=Post)
+def convert_post_markdown_to_html(sender, instance, **kwargs):
+    try:
+        res = markdown_to_html_frontend(instance.content)
+        post_save.disconnect(convert_post_markdown_to_html, sender=Post)
+        instance.content_html = res.html
+        instance.save(update_fields=["content_html"])
+        post_save.connect(convert_post_markdown_to_html, sender=Post)
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Markdown 转换失败: {e}")

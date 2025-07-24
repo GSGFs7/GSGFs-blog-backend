@@ -6,7 +6,7 @@ from .utils import chinese_slugify, extract_metadata
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # django 的元数据选项 表示这是一个用于模板的抽象基类 不会创建数据表 只能由于继承
     # https://docs.djangoproject.com/zh-hans/5.1/topics/db/models/#abstract-base-classes
@@ -52,6 +52,7 @@ class Gal(BaseModel):
         max_length=200, blank=True, null=True, help_text="显示在外面, 类似于备注"
     )  # No spoilers
     review = models.TextField(blank=True, null=True)
+    review_html = models.TextField(blank=True, null=True)
 
     cover_image = models.URLField(
         max_length=500, blank=True, null=True, help_text="(暂时没用)"
@@ -285,7 +286,7 @@ class Guest(BaseModel):
     unique_id = models.CharField(max_length=50, unique=True, db_index=True)  # 添加索引
     email = models.EmailField()
     password = models.CharField(max_length=128)
-    provider = models.CharField(choices=Providers, max_length=10, default="myself")
+    provider = models.CharField(max_length=10, choices=Providers, default=Providers.myself)
     provider_id = models.IntegerField()
     avatar = models.URLField(max_length=200)
     is_admin = models.BooleanField(default=False)
@@ -332,7 +333,6 @@ class Anime(BaseModel):
 
     def __str__(self):
         return self.name
-
 
 # class Image(BaseModel):
 #     title = models.CharField(

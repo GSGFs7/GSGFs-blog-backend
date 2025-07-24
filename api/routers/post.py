@@ -74,48 +74,48 @@ def get_post(request, post_id: int):
 
 @router.get("/sitemap", response=PostIdsForSitemap)
 def get_all_post_ids_for_sitemap(request):
-    posts = Post.objects.values("id", "slug", "update_at")
+    posts = Post.objects.values("id", "slug", "updated_at")
     # transform to Pydantic model
     post_schemas = [PostSitemapSchema(**post) for post in posts]
     return PostIdsForSitemap(root=post_schemas)
 
 
-@router.post("/render", auth=TimeBaseAuth())
-def render(request, body: RenderSchema):
-    post = Post.objects.get(pk=body.id)
-    fields = body.dict(exclude={"id"})
-    # print(fields)
-
-    if fields.get("content_html") is not None:
-        post.content_html = fields.get("content_html")
-
-    if fields.get("cover_image") is not None:
-        post.cover_image = fields.get("cover_image")
-
-    if fields.get("header_image") is not None:
-        post.header_image = fields.get("header_image")
-
-    slug_value = fields.get("slug")
-    if slug_value is not None:
-        post.slug = str(slug_value)
-
-    meta_description_value = fields.get("meta_description")
-    if meta_description_value is not None:
-        post.meta_description = meta_description_value
-
-    # 处理分类
-    if fields.get("category") is not None:
-        category_name = fields.get("category")
-        category, category_created = Category.objects.get_or_create(name=category_name)
-        post.category = category
-
-    # 处理标签
-    if fields.get("tags") is not None:
-        new_tags = []
-        name_of_tags = fields.get("tags", [])
-        for tag_name in name_of_tags:
-            new_tag, tags_created = Tag.objects.get_or_create(name=tag_name)
-            new_tags.append(new_tag)
-        post.tags.set(new_tags)
-
-    post.save()
+# @router.post("/render", auth=TimeBaseAuth())
+# def render(request, body: RenderSchema):
+#     post = Post.objects.get(pk=body.id)
+#     fields = body.dict(exclude={"id"})
+#     # print(fields)
+#
+#     if fields.get("content_html") is not None:
+#         post.content_html = fields.get("content_html")
+#
+#     if fields.get("cover_image") is not None:
+#         post.cover_image = fields.get("cover_image")
+#
+#     if fields.get("header_image") is not None:
+#         post.header_image = fields.get("header_image")
+#
+#     slug_value = fields.get("slug")
+#     if slug_value is not None:
+#         post.slug = str(slug_value)
+#
+#     meta_description_value = fields.get("meta_description")
+#     if meta_description_value is not None:
+#         post.meta_description = meta_description_value
+#
+#     # 处理分类
+#     if fields.get("category") is not None:
+#         category_name = fields.get("category")
+#         category, category_created = Category.objects.get_or_create(name=category_name)
+#         post.category = category
+#
+#     # 处理标签
+#     if fields.get("tags") is not None:
+#         new_tags = []
+#         name_of_tags = fields.get("tags", [])
+#         for tag_name in name_of_tags:
+#             new_tag, tags_created = Tag.objects.get_or_create(name=tag_name)
+#             new_tags.append(new_tag)
+#         post.tags.set(new_tags)
+#
+#     post.save()

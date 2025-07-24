@@ -48,15 +48,15 @@ def remove_markdown(text: str) -> str:
     # Remove headers
     text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
     # Remove links
-    text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
+    text = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", text)
     # Remove images
-    text = re.sub(r"!\[([^\]]*)\]\([^\)]+\)", r"\1", text)
+    text = re.sub(r"!\[([^]]*)]\([^)]+\)", r"\1", text)
     # Remove emphasis
     text = re.sub(r"(\*\*|__)(.*?)\1", r"\2", text)
     # Remove math
-    text = re.sub(r"\$([^\$\n]+?)\$", "", text)
+    text = re.sub(r"\$([^$\n]+?)\$", "", text)
     text = re.sub(r"\$\$([\s\S]*?)\$\$", "", text)
-    text = re.sub(r"\\\[([\s\S]*?)\\\]", "", text)
+    text = re.sub(r"\\\[([\s\S]*?)\\]", "", text)
     text = re.sub(r"\\\(([\s\S]*?)\\\)", "", text)
     # Remove front matter
     text = re.sub(r"^---\s*\n(.*?)\n---\s*\n", "", text, flags=re.DOTALL)
@@ -78,8 +78,8 @@ def remove_code_blocks(text: str) -> str:
     # Remove inline code
     text = re.sub(r"`([^`]+)`", r"\1", text)
     # Remove HTML code blocks
-    text = re.sub(r"<pre[\s\S]*?<\/pre>", "", text)
-    text = re.sub(r"<code[\s\S]*?<\/code>", "", text)
+    text = re.sub(r"<pre[\s\S]*?</pre>", "", text)
+    text = re.sub(r"<code[\s\S]*?</code>", "", text)
     return text.strip()
 
 
@@ -283,7 +283,6 @@ def chinese_slugify(title: str, max_length: int = 50) -> str:
 
     # have some problem when Chinese and English are mixed
     # slug = django_slugify(title)
-    slug = None
 
     cleaned = re.sub(r"[^\w\s\u4e00-\u9fff\-]", " ", title)
 
