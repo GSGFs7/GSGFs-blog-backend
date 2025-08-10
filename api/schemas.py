@@ -5,6 +5,12 @@ from ninja.schema import Schema
 from pydantic import RootModel
 
 
+class PaginationSchema(Schema):
+    page: int
+    size: int
+    total: int
+
+
 class CategorySchema(Schema):
     id: int
     name: str
@@ -33,6 +39,15 @@ class CommentSchema(Schema):
     @staticmethod
     def resolve_avatar(obj):
         return obj.guest.avatar
+
+
+class CommentPaginationResponse(Schema):
+    comments: List[CommentSchema]
+    pagination: PaginationSchema
+
+
+class CommentResponse(Schema):
+    comments: List[CommentSchema]
 
 
 class CommentIdsSchema(Schema):
@@ -69,12 +84,6 @@ class PostsCardSchema(Schema):
     tags: Optional[List[TagsSchema]]
     title: str
     updated_at: datetime.datetime
-
-
-class PaginationSchema(Schema):
-    page: int
-    size: int
-    total: int
 
 
 class PostsCardsSchema(Schema):

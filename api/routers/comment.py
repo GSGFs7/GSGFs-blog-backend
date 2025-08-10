@@ -1,10 +1,14 @@
+from typing import List
+
 from django.core.mail import mail_admins
 from ninja import Router
+from pydantic import PositiveInt
 
 from api.auth import TimeBaseAuth
 from api.models import Comment, Guest, Post
 from api.schemas import (
     CommentIdsSchema,
+    CommentResponse,
     CommentSchema,
     IdSchema,
     MessageSchema,
@@ -35,7 +39,20 @@ def get_comment_from_post(request, post_id: int):
         comments = post.comments.all()  # type: ignore
         return 200, {"ids": [i.id for i in comments]}
     except Post.DoesNotExist:
-        return 404, {"message": "Post not found"}
+        return 404, {"message": "Not found"}
+
+
+# get all comment with content
+@router.get(
+    "/post/{int:post_id}/all", response={200: CommentResponse, 404: MessageSchema}
+)
+def get_all_comment_from_post(request, post_id: int):
+    try:
+        post = Post.objects.get(pk=post_id)
+        comments = post.comments.all()  # type: ignore
+        return 200, {"comments": list(comments)}
+    except:
+        return 404, {"message": "Not found"}
 
 
 @router.post(

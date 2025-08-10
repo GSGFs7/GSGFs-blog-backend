@@ -169,6 +169,7 @@ class GalAdmin(admin.ModelAdmin):
                     # review
                     "summary",
                     "review",
+                    "review_html",
                     "cover_image",
                 ]
             },
