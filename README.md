@@ -38,35 +38,6 @@
    ./manage.py runserver
    ```
 
-## 部署
-
-`./manage.py runserver`只适合开发环境, 在生产环境中, 请使用`gunicorn`或`uwsgi`等`WSGI`服务器.
-
-- 使用`docker`部署:
-
-  - 手动构建
-    构建并导出镜像(以`Linux`为例):
-
-    ```bash
-    export.sh
-    ```
-
-    将导出的镜像上传到服务器, 然后运行下面的命令载入镜像:
-
-    ```bash
-    docker load < django.tar.zst
-    ```
-
-    复制`docker-compose.yml`, 注释`django-web`中的`build`部分, 启用`image`部分.  
-     创建`.env`文件, 填写需要的环境变量, 然后运行:
-
-    ```bash
-    docker-compose up -d
-    ```
-
-  - 使用`action`自动构建的镜像  
-    这些镜像可以在`action`的`artifact`中找到, 下载后使用`docker load`载入即可.
-
 ## 小工具
 
 - `backup-db.sh`: 一个简单备份数据库脚本(配合`cron`使用)
