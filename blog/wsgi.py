@@ -13,6 +13,7 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 
+application = get_wsgi_application()
+
 # for vercel
-# application = get_wsgi_application()
-app = get_wsgi_application()
+app = application
