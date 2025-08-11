@@ -12,9 +12,18 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
-from urllib.parse import urlparse
+from typing import List
 
 from dotenv import load_dotenv
+
+
+# 用于规范化的辅助函数
+def _split_csv(env_str: str) -> List[str]:
+    return [x.strip() for x in env_str.split(",") if x and x.strip()]
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,17 +31,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # 载入 .env 就算没有也不会出问题
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1").split(",")
+ALLOWED_HOSTS = _split_csv(
+    os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
+)
 
 # 关闭 SSL 重定向, 交由由外部 Nginx 处理
 # SECURE_SSL_REDIRECT = False
@@ -44,8 +51,8 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # csrf配置
 CSRF_TRUSTED_ORIGINS = (
-    os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
-    if os.environ.get("CSRF_TRUSTED_ORIGINS")
+    _split_csv(os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", ""))
+    if os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS")
     else []
 )
 
@@ -55,9 +62,15 @@ SESSION_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 cookie, CF 的请求
 CSRF_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 CSRF cookie, 同上
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_HSTS_SECONDS = 31536000  # 1年
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1年
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 # Application definition
 
@@ -113,7 +126,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "blog.wsgi.application"
+WSGI_APPLICATION = "blog.wsgi.app"
 
 
 # Database
@@ -122,7 +135,6 @@ WSGI_APPLICATION = "blog.wsgi.application"
 
 # Replace the DATABASES section of your settings.py with this
 # tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
-
 
 # DATABASES = {
 #     "default": {
@@ -158,14 +170,16 @@ DATABASES = {
 #     }
 # }
 
-redis_host = os.environ.get("REDIS_HOST", "localhost")
+_redis_host = os.environ.get("REDIS_HOST", "localhost")
+# 如果是 docker 环境强制使用 "redis" 作为 host, 这是在 docker 配置中写死了的
 if os.environ.get("DOCKER_ENV", "False") == "True":
-    redis_host = "redis"
+    _redis_host = "redis"
+_redis_port = os.environ.get("REDIS_PORT", "6379")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{redis_host}:6379/0",  # 使用0号数据库
+        "LOCATION": f"redis://{_redis_host}:{_redis_port}/0",  # 使用0号数据库
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
@@ -243,14 +257,29 @@ LOGIN_URL = "two_factor:login"
 LOGIN_REDIRECT_URL = "two_factor:profile"
 
 # email backend
-EMAIL_BACKEND = "api.backends.ResendEmailBackend"
+EMAIL_BACKEND = "api.backends.ResendEmailBackend"  # 从 __init__.py 中获取
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 SERVER_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")  # Address sent to website administrator
 ADMINS = [("admin", os.getenv("ADMIN_EMAIL"))]
 
+# logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.environ.get("DJANGO_LOGLEVEL", "INFO").upper(),
+    },
+}
+
 # Celery configuration
-CELERY_BROKER_URL = f"redis://{redis_host}:6379/0"
-CELERY_RESULT_BACKEND = f"redis://{redis_host}:6379/0"
+CELERY_BROKER_URL = f"redis://{_redis_host}:{_redis_port}/0"
+CELERY_RESULT_BACKEND = f"redis://{_redis_host}:{_redis_port}/0"
 CELERY_TIMEZONE = "Asia/Shanghai"
 # Celery scheduled tasks use database storage, if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
