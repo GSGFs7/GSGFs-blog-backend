@@ -24,7 +24,10 @@
    uv pip install -r requirements.txt
    ```
 
-4. 将`.env.example`复制一份为`.env`并填写需要的环境变量(如果不填写数据库部分则会使用不需要额外配置的`sqlite3`作为数据库)
+4. 将`.env.example`复制一份为`.env`并填写需要的环境变量
+
+   如果不填写数据库部分则会使用不需要额外配置的`sqlite3`作为数据库  
+   尖括号中的内容是必填项, 可以使用 `openssl rand -base64 33` 生成所需的随机字符
 
 5. 迁移数据库
 

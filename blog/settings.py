@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 from typing import List
 
+import dj_database_url
 from dotenv import load_dotenv
 
 
@@ -126,60 +127,53 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "blog.wsgi.app"
+WSGI_APPLICATION = "blog.wsgi.application"
 
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# Replace the DATABASES section of your settings.py with this
-# tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+_database_url = os.environ.get("DATABASE_URL")
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": tmpPostgres.path.lstrip("/"),
-#         "USER": tmpPostgres.username,
-#         "PASSWORD": tmpPostgres.password,
-#         "HOST": tmpPostgres.hostname,
-#         "PORT": 5432,
-#         "OPTIONS": {
-#             "sslmode": "require",
-#         },
-#     }
-# }
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.{}".format(
-            os.getenv("DATABASE_ENGINE", "sqlite3")
+if _database_url:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            _database_url,
+            conn_max_age=60,
         ),
-        "NAME": os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
-        "USER": os.getenv("DATABASE_USERNAME", "user"),
-        "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
-        "HOST": os.getenv("DATABASE_HOST", "127.0.0.1"),
-        "PORT": os.getenv("DATABASE_PORT", 5432),
     }
-}
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.{}".format(
+                os.getenv("DATABASE_ENGINE", "sqlite3")
+            ),
+            "NAME": os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
+            "USER": os.getenv("DATABASE_USERNAME", "user"),
+            "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
+            "HOST": (
+                os.getenv("DATABASE_HOST", "127.0.0.1")
+                if not os.getenv("DOCKER_ENV")
+                else "db"  # 写死在 docker 配置中的
+            ),
+            "PORT": os.getenv("DATABASE_PORT", 5432),
+            "CONN_MAX_AGE": 60,
+        }
+    }
 
 _redis_host = os.environ.get("REDIS_HOST", "localhost")
 # 如果是 docker 环境强制使用 "redis" 作为 host, 这是在 docker 配置中写死了的
 if os.environ.get("DOCKER_ENV", "False") == "True":
     _redis_host = "redis"
 _redis_port = os.environ.get("REDIS_PORT", "6379")
+# 使用0号数据库
+_redis_url = os.environ.get("REDIS_URL", f"redis://{_redis_host}:{_redis_port}/0")
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{_redis_host}:{_redis_port}/0",  # 使用0号数据库
+        "LOCATION": _redis_url,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_KWARGS": {"max_connections": 100},
@@ -278,8 +272,8 @@ LOGGING = {
 }
 
 # Celery configuration
-CELERY_BROKER_URL = f"redis://{_redis_host}:{_redis_port}/0"
-CELERY_RESULT_BACKEND = f"redis://{_redis_host}:{_redis_port}/0"
+CELERY_BROKER_URL = _redis_url
+CELERY_RESULT_BACKEND = _redis_url
 CELERY_TIMEZONE = "Asia/Shanghai"
 # Celery scheduled tasks use database storage, if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
