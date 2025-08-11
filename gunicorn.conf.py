@@ -13,6 +13,7 @@ worker_class = "sync"
 # 日志
 accesslog = "-"
 errorlog = "-"
-loglevel = "debug"
+loglevel = "info"
+capture_output = True
 
 daemon = False

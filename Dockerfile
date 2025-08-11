@@ -1,5 +1,5 @@
 # 构建环境
-FROM python:3.13.3-alpine AS builder
+FROM python:3.13.6-alpine AS builder
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 最终环境
-FROM python:3.13.3-alpine
+FROM python:3.13.6-alpine
 
 # Manage multiple processes simultaneously
 RUN apk add --no-cache supervisor 
