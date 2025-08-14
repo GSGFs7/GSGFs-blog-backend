@@ -4,6 +4,9 @@
 
 ## 运行
 
+> [!NOTE]
+> Django 自带的后台在 `/not-admin` 而不是 `/admin`
+
 `python`版本: `3.13`, 推荐使用 uv 作为包管理器
 
 1. 创建一个`python`虚拟环境
@@ -35,7 +38,13 @@
    ./manage.py makemigrations && ./manage.py migrate
    ```
 
-6. 运行开发服务器
+6. 创建一个管理员用户 (用于登陆后台)
+
+   ```
+   ./manage.py createsuperuser
+   ```
+
+7. 运行开发服务器
 
    ```bash
    ./manage.py runserver
