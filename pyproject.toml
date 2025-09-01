@@ -4,8 +4,26 @@ version = "1.0.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
-
-[[tool.uv.index]]
-url = "https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple"
-default = true
+dependencies = [
+    "boto3>=1.40.19",
+    "dj-database-url>=3.0.1",
+    "django>=5.2.5",
+    "django-celery-beat>=2.8.1",
+    "django-debug-toolbar>=6.0.0",
+    "django-ninja>=1.4.3",
+    "django-redis>=6.0.0",
+    "django-two-factor-auth>=1.17.0",
+    "gunicorn>=23.0.0",
+    "jieba>=0.42.1",
+    "phonenumbers>=9.0.12",
+    "pillow>=11.3.0",
+    "psutil>=7.0.0",
+    "psycopg2-binary>=2.9.10",
+    "pyjwt>=2.10.1",
+    "pypinyin>=0.55.0",
+    "python-dotenv>=1.1.1",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.5",
+    "resend>=2.13.1",
+    "whitenoise>=6.9.0",
+]

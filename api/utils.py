@@ -172,18 +172,27 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     text = remove_markdown(text)
     text = remove_html_tags(text)
 
+    # === tags ===
+    tags_list: List[str] = []
+    if "tags" in front_matter:
+        field_value = front_matter["tags"]
+        if isinstance(field_value, list):
+            tags_list.extend(field_value)
+        if isinstance(field_value, str):
+            tags_list.append(field_value)
+    if "tag" in front_matter:
+        field_value = front_matter["tag"]
+        if isinstance(field_value, list):
+            tags_list.extend(field_value)
+        if isinstance(field_value, str):
+            tags_list.append(field_value)
+
     # === keywords ===
     keywords_list: List[str] = []
     if "keywords" in front_matter:
         keywords_list.extend(front_matter["keywords"])
     if "tags" in front_matter:
-        field_value = front_matter["tags"]
-        if isinstance(field_value, list):
-            keywords_list.extend(field_value)
-        if isinstance(field_value, str):
-            keywords_list.append(field_value)
-    if "tag" in front_matter:
-        keywords_list.append(front_matter["tag"])
+        keywords_list.extend(tags_list)
     most_common = jieba_analyse.extract_tags(text, topK=num_keywords)
     # Ensure most_common is a list of strings (extract the first element if tuples)
     if most_common and isinstance(most_common[0], tuple):
@@ -194,21 +203,14 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
         ]
     keywords_list.extend(most_common)
 
-    # === tags ===
-    tags_list: List[str] = []
-    if "tags" in front_matter:
-        field_value = front_matter["tags"]
-        if isinstance(field_value, list):
-            tags_list.extend(field_value)
-        if isinstance(field_value, str):
-            tags_list.append(field_value)
-    if "tag" in front_matter:
-        tags_list.append(front_matter["tag"])
-
     # === category ===
     category: str | None = None
     if "category" in front_matter:
-        category = front_matter["category"]
+        field_value = front_matter["category"]
+        if isinstance(field_value, list) and field_value:
+            category = field_value[0]
+        if isinstance(field_value, str):
+            category = field_value
     if "categories" in front_matter and category is None:
         field_value = front_matter["categories"]
         if isinstance(field_value, list) and field_value:
