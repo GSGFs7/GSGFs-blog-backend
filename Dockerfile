@@ -61,10 +61,8 @@ ENV DOCKER_ENV="True"
 # python lib
 COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
-# model
-COPY --from=builder /app/sentence_transformers_models /app/sentence_transformers_models
-# code
-COPY --chown=user:user . .
+# code and model
+COPY --from=builder --chown=user:user /app .
 
 # supervisor configuration
 COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf

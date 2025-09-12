@@ -16,14 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build the Docker image
+        # use '--load' to load the image to the Docker daemon, otherwise will save a empty image
         run: |
           docker buildx build \
+            --load \
             --secret id=hf_token,env=HUGGINGFACE_HUB_TOKEN \
             --build-arg MODEL_NAME=google/embeddinggemma-300m \
             --build-arg SENTENCE_TRANSFORMERS_HOME=sentence_transformers_models \
@@ -67,7 +69,7 @@ jobs:
     steps:
       - name: Download artifact
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: docker-image-${{ github.sha }}
           path: ./artifacts
@@ -81,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Copy Docker image to server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
