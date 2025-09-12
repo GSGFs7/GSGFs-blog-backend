@@ -1,27 +1,32 @@
 from django.conf import settings
 from django.core.cache import cache
 from ninja import Router
+from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
-from ..auth import TimeBaseAuth
-from ..models import Category, Post, Tag
+from ..ml_model import get_sentence_transformer_model
+from ..models import Post
 from ..schemas import (
     IdsSchema,
     MessageSchema,
+    PostCardsSchema,
+    PostCardsWithSimilaritySchema,
     PostIdsForSitemap,
-    PostsCardsSchema,
     PostSitemapSchema,
     PostsSchema,
-    RenderSchema,
 )
+
+CONFIDENCE = 0.3
 
 router = Router()
 
 
 @router.get(
-    "/posts", response={200: PostsCardsSchema, 400: MessageSchema, 404: MessageSchema}
+    "/posts", response={200: PostCardsSchema, 400: MessageSchema, 404: MessageSchema}
 )
-def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
+def get_posts(
+        request, page: PositiveInt = 1, size: PositiveInt = 10
+):  # -> tuple[Literal[404], dict[str, str]] | tuple[Literal[400],...:
     offset = (page - 1) * size  # 起点
     total = Post.objects.count()
 
@@ -31,7 +36,7 @@ def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    posts = Post.objects.all()[offset : offset + size]
+    posts = Post.objects.all()[offset: offset + size]
     return 200, {
         "posts": list(posts),
         "pagination": {
@@ -80,42 +85,58 @@ def get_all_post_ids_for_sitemap(request):
     return PostIdsForSitemap(root=post_schemas)
 
 
-# @router.post("/render", auth=TimeBaseAuth())
-# def render(request, body: RenderSchema):
-#     post = Post.objects.get(pk=body.id)
-#     fields = body.dict(exclude={"id"})
-#     # print(fields)
-#
-#     if fields.get("content_html") is not None:
-#         post.content_html = fields.get("content_html")
-#
-#     if fields.get("cover_image") is not None:
-#         post.cover_image = fields.get("cover_image")
-#
-#     if fields.get("header_image") is not None:
-#         post.header_image = fields.get("header_image")
-#
-#     slug_value = fields.get("slug")
-#     if slug_value is not None:
-#         post.slug = str(slug_value)
-#
-#     meta_description_value = fields.get("meta_description")
-#     if meta_description_value is not None:
-#         post.meta_description = meta_description_value
-#
-#     # 处理分类
-#     if fields.get("category") is not None:
-#         category_name = fields.get("category")
-#         category, category_created = Category.objects.get_or_create(name=category_name)
-#         post.category = category
-#
-#     # 处理标签
-#     if fields.get("tags") is not None:
-#         new_tags = []
-#         name_of_tags = fields.get("tags", [])
-#         for tag_name in name_of_tags:
-#             new_tag, tags_created = Tag.objects.get_or_create(name=tag_name)
-#             new_tags.append(new_tag)
-#         post.tags.set(new_tags)
-#
-#     post.save()
+@router.get(
+    "/search", response={200: PostCardsWithSimilaritySchema, 400: MessageSchema}
+)
+def get_post_ids_from_query(
+        request,
+        q: str,
+        page: PositiveInt = 1,
+        size: PositiveInt = 10,
+):
+    # cache
+    cache_key = f"post_search_results:{hash(q)}"
+    cached = cache.get(cache_key)
+
+    # find cache
+    if cached is None:
+        model = get_sentence_transformer_model()
+        query_embedding = model.encode_query(q)
+        post_query = (
+            Post.objects.annotate(
+                similarity=1 - CosineDistance("embedding", query_embedding)
+            )
+            .filter(similarity__gt=CONFIDENCE)
+            .order_by("-similarity")
+            .values_list("id", "similarity")
+        )
+        result = list(post_query)
+        cache.set(cache_key, result, timeout=3600)  # 1h
+    else:
+        result = cached
+
+    # paginate
+    total = len(result)
+    offset = (page - 1) * size
+    paginated_result = result[offset: offset + size]
+
+    # if empty
+    if not paginated_result:
+        return 200, {
+            "posts_with_similarity": [],
+            "pagination": {"total": total, "page": page, "size": size},
+        }
+
+    # Assemble into corresponding structure
+    paginated_ids = [item[0] for item in paginated_result]
+    posts_dict = Post.objects.in_bulk(paginated_ids)
+    posts_with_similarity = []
+    for post_id, similarity in paginated_result:
+        post_obj = posts_dict.get(post_id)
+        if post_obj:
+            posts_with_similarity.append({"post": post_obj, "similarity": similarity})
+
+    return 200, {
+        "posts_with_similarity": posts_with_similarity,
+        "pagination": {"total": total, "page": page, "size": size},
+    }

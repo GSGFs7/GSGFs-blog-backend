@@ -16,8 +16,6 @@ import boto3
 import dotenv
 from botocore.exceptions import ClientError
 
-dotenv.load_dotenv(".env")
-
 # Config
 # R2_TOKEN = os.environ.get("R2_TOKEN")  # The token given by CF is not used
 R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL")
@@ -36,7 +34,7 @@ r2_client = boto3.client(
 def list_buckets() -> None:
     """List all buckets"""
     for bucket in r2_client.list_buckets()["Buckets"]:
-        print(f"{bucket['Name']}")
+        print(f"{bucket.get('Name', '')}")
 
 
 def upload_file(file_name: str, bucket: str, object_name: Optional[str] = None) -> bool:
@@ -63,6 +61,7 @@ def upload_file(file_name: str, bucket: str, object_name: Optional[str] = None) 
 def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
     """Recursively upload all files in a folder
 
+    :param prefix:
     :param dir_path: Directory to upload
     :param bucket: Bucket to upload
     """
@@ -115,7 +114,7 @@ def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
 
 
 def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
-    """List all object in an bucket
+    """List all object in a bucket
 
     :param bucket: The name of bucket
     :param prefix: Only list objects starting with this prefix (optional)
@@ -158,15 +157,16 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page["Contents"]:
-                    size_mb = obj["Size"] / (1024 * 1024)
-                    print(f'  {obj["Key"]} ({size_mb:.2f} MB)')
+                    size = obj.get("Size", 0)
+                    size_mb = size / (1024 * 1024)
+                    print(f'  {obj.get("Key", "")} ({size_mb:.2f} MB)')
                     files.append(
                         {
-                            "Key": obj["Key"],
-                            "LastModified": obj["LastModified"],
-                            "ETag": obj["ETag"],
-                            "Size": obj["Size"],
-                            "StorageClass": obj["StorageClass"],
+                            "Key": obj.get("Key", ""),
+                            "LastModified": obj.get("LastModified"),
+                            "ETag": obj.get("ETag"),
+                            "Size": size,
+                            "StorageClass": obj.get("StorageClass"),
                         }
                     )
         write_list_object(files)
@@ -276,4 +276,6 @@ def main():
 
 
 if __name__ == "__main__":
+    dotenv.load_dotenv(".env")
+
     main()

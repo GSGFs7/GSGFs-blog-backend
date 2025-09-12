@@ -76,17 +76,17 @@ class PostsSchema(Schema):
 # 省略版本
 class PostsCardSchema(Schema):
     id: int
-    category: Optional[CategorySchema]
-    cover_image: Optional[str]
-    created_at: datetime.datetime
-    meta_description: str
-    slug: str
-    tags: Optional[List[TagsSchema]]
     title: str
+    slug: str
+    meta_description: str
+    cover_image: Optional[str]
+    category: Optional[CategorySchema]
+    tags: Optional[List[TagsSchema]]
+    created_at: datetime.datetime
     updated_at: datetime.datetime
 
 
-class PostsCardsSchema(Schema):
+class PostCardsSchema(Schema):
     pagination: PaginationSchema
     posts: List[PostsCardSchema]
 
@@ -273,3 +273,13 @@ class AnimeSchema(Schema):
 
     score: Optional[float]
     review: Optional[str]
+
+
+class PostCardWithSimilarity(Schema):
+    post: PostsCardSchema
+    similarity: float
+
+
+class PostCardsWithSimilaritySchema(Schema):
+    posts_with_similarity: List[PostCardWithSimilarity]
+    pagination: PaginationSchema
