@@ -9,3 +9,4 @@ django.tar.zst
 staticfiles
 backups
 .ssh
+sentence_transformers_models

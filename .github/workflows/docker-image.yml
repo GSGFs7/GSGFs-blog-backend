@@ -15,10 +15,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build the Docker image
-        run: docker buildx build -t django .
+        run: |
+          docker buildx build \
+            --secret id=hf_token,env=HUGGINGFACE_HUB_TOKEN \
+            --build-arg MODEL_NAME=google/embeddinggemma-300m \
+            --build-arg SENTENCE_TRANSFORMERS_HOME=sentence_transformers_models \
+            -t django .
+        env:
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
 
       - name: Export Docker image
         run: |

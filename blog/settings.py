@@ -23,6 +23,10 @@ def _split_csv(env_str: str) -> List[str]:
     return [x.strip() for x in env_str.split(",") if x and x.strip()]
 
 
+def is_docker_env() -> bool:
+    return os.environ.get("DOCKER_ENV", "False").lower() in ("1", "true", "yes")
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -41,9 +45,6 @@ DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 ALLOWED_HOSTS = _split_csv(
     os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
 )
-
-# 关闭 SSL 重定向, 交由由外部 Nginx 处理
-# SECURE_SSL_REDIRECT = False
 
 # CDN 和代理配置
 USE_X_FORWARDED_HOST = True  # 信任头部设置
@@ -153,9 +154,9 @@ else:
             "USER": os.getenv("DATABASE_USERNAME", "user"),
             "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
             "HOST": (
-                os.getenv("DATABASE_HOST", "127.0.0.1")
-                if not os.getenv("DOCKER_ENV")
-                else "db"  # 写死在 docker 配置中的
+                "db"  # 写死在 docker 配置中的
+                if is_docker_env()
+                else os.getenv("DATABASE_HOST", "127.0.0.1")
             ),
             "PORT": os.getenv("DATABASE_PORT", 5432),
             "CONN_MAX_AGE": 60,
@@ -164,7 +165,7 @@ else:
 
 _redis_host = os.environ.get("REDIS_HOST", "localhost")
 # 如果是 docker 环境强制使用 "redis" 作为 host, 这是在 docker 配置中写死了的
-if os.environ.get("DOCKER_ENV", "False") == "True":
+if is_docker_env():
     _redis_host = "redis"
 _redis_port = os.environ.get("REDIS_PORT", "6379")
 # 使用0号数据库
@@ -281,3 +282,11 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # img bed
 R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+
+# vector search
+MODEL_NAME = os.environ.get("MODEL_NAME")
+SENTENCE_TRANSFORMERS_HOME = os.environ.get("SENTENCE_TRANSFORMERS_HOME")
+# supervisord may use root permissions
+# PermissionError: [Errno 13] Permission denied: '/root/.cache/huggingface/token'
+if SENTENCE_TRANSFORMERS_HOME:
+    os.environ["HF_HOME"] = SENTENCE_TRANSFORMERS_HOME

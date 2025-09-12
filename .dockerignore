@@ -12,6 +12,7 @@ __pycache__/
 
 # IDE
 .vscode/
+.idea
 
 # 虚拟环境
 .venv/
@@ -19,15 +20,19 @@ __pycache__/
 # 数据库
 *.sqlite3
 
+# 数据库备份
+backups
+
 # 测试
 testapp/
+.ssh
 
 # docker镜像导出
 django.tar.zst
 
 # 开发环境
 .env
+.env.example
 
-# 工具脚本
-export.sh
-upload.py
+# github
+.github

@@ -1,6 +1,8 @@
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
+from pgvector.django import VectorField
 
+from .ml_model import get_sentence_transformer_model
 from .utils import chinese_slugify, extract_metadata
 
 
@@ -135,6 +137,9 @@ class Post(BaseModel):
         default="draft",
     )
 
+    # 向量化搜索
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+
     class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
 
@@ -177,11 +182,20 @@ class Post(BaseModel):
             category, created = Category.objects.get_or_create(name=category)
             self.category = category
 
+        # === vector ===
+        model = get_sentence_transformer_model()
+        text_to_embed = self.content
+        # asymmetric semantic search
+        # use `model.encode_document` and `model.encode_query`
+        self.embedding = model.encode_document(text_to_embed)
+
         # save main object, all settings above will be saved
         # after that, continue to process operations that require primary keys
         super().save(*args, **kwargs)
 
         # === tags ===
+        # TODO
+        # it not work! WTF???
         if not self.tags.exists():  # must use `.exists()` to check it
             tags_to_set = []
             tag_list = post_metadata["tags"]
@@ -286,7 +300,9 @@ class Guest(BaseModel):
     unique_id = models.CharField(max_length=50, unique=True, db_index=True)  # 添加索引
     email = models.EmailField()
     password = models.CharField(max_length=128)
-    provider = models.CharField(max_length=10, choices=Providers, default=Providers.myself)
+    provider = models.CharField(
+        max_length=10, choices=Providers, default=Providers.myself
+    )
     provider_id = models.IntegerField()
     avatar = models.URLField(max_length=200)
     is_admin = models.BooleanField(default=False)

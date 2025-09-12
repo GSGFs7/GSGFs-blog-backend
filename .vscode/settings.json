@@ -10,6 +10,7 @@
     "jikan",
     "LOGLEVEL",
     "nvdb",
+    "pgvector",
     "pycache",
     "pypinyin",
     "testapp",
