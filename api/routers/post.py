@@ -4,6 +4,7 @@ from ninja import Router
 from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
+
 from ..ml_model import get_sentence_transformer_model
 from ..models import Post
 from ..schemas import (
@@ -16,7 +17,7 @@ from ..schemas import (
     PostsSchema,
 )
 
-CONFIDENCE = 0.3
+CONFIDENCE = 0.7
 
 router = Router()
 
@@ -25,7 +26,7 @@ router = Router()
     "/posts", response={200: PostCardsSchema, 400: MessageSchema, 404: MessageSchema}
 )
 def get_posts(
-        request, page: PositiveInt = 1, size: PositiveInt = 10
+    request, page: PositiveInt = 1, size: PositiveInt = 10
 ):  # -> tuple[Literal[404], dict[str, str]] | tuple[Literal[400],...:
     offset = (page - 1) * size  # 起点
     total = Post.objects.count()
@@ -36,7 +37,7 @@ def get_posts(
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    posts = Post.objects.all()[offset: offset + size]
+    posts = Post.objects.all()[offset : offset + size]
     return 200, {
         "posts": list(posts),
         "pagination": {
@@ -88,7 +89,7 @@ def get_all_post_ids_for_sitemap(request):
 @router.get(
     "/search", response={200: PostCardsWithSimilaritySchema, 400: MessageSchema}
 )
-def get_post_ids_from_query(
+def get_post_cards_from_query(
         request,
         q: str,
         page: PositiveInt = 1,
@@ -104,10 +105,10 @@ def get_post_ids_from_query(
         query_embedding = model.encode_query(q)
         post_query = (
             Post.objects.annotate(
-                similarity=1 - CosineDistance("embedding", query_embedding)
+                similarity=CosineDistance("embedding", query_embedding)
             )
-            .filter(similarity__gt=CONFIDENCE)
-            .order_by("-similarity")
+            .filter(similarity__lt=CONFIDENCE)
+            .order_by("similarity")
             .values_list("id", "similarity")
         )
         result = list(post_query)

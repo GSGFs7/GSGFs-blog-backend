@@ -75,7 +75,7 @@ class Post(BaseModel):
     content = models.TextField(blank=False, null=False, help_text="文章正文, 必填")
 
     # 渲染后的内容
-    content_html = models.TextField(null=True, blank=True, help_text="(暂时没用)")
+    content_html = models.TextField(null=True, blank=True, help_text="自动生成")
 
     # 图片相关
     cover_image = models.URLField(
