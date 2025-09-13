@@ -61,9 +61,9 @@ def upload_file(file_name: str, bucket: str, object_name: Optional[str] = None) 
 def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
     """Recursively upload all files in a folder
 
-    :param prefix:
     :param dir_path: Directory to upload
     :param bucket: Bucket to upload
+    :param prefix: Prefix for objects in the bucket (optional)
     """
 
     def load_cache() -> dict:

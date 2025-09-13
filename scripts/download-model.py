@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if HUGGINGFACE_HUB_TOKEN is None:
         raise ValueError("HUGGINGFACE_HUB_TOKEN environment variable is not set.")
 
-    res = SentenceTransformer(
+    SentenceTransformer(
         MODEL_NAME,
         cache_folder=SENTENCE_TRANSFORMERS_HOME,
         token=HUGGINGFACE_HUB_TOKEN,
