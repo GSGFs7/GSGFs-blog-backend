@@ -1,6 +1,7 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TestRoot(TestCase):
     def setUp(self) -> None:
         return super().setUp()

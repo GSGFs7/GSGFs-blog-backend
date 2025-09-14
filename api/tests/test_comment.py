@@ -1,10 +1,11 @@
 import json
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from api.auth import TimeBaseAuth
 from api.models import Guest, Post, Comment
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TestComment(TestCase):
     def setUp(self) -> None:
         Post.objects.create(

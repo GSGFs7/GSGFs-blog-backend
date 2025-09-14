@@ -1,9 +1,10 @@
 import json
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from api.auth import TimeBaseAuth
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TestAuth(TestCase):
     def setUp(self) -> None:
         return super().setUp()
