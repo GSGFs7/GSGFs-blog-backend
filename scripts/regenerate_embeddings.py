@@ -8,7 +8,7 @@ import django
 
 if __name__ == "__main__":
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.append(project_root)
+    sys.path.append(project_root)  # Search path for modules
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
     django.setup()

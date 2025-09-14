@@ -11,6 +11,7 @@ from .routers.mail import router as mail_router
 from .routers.page import router as page_router
 from .routers.post import router as posts_router
 from .routers.root import router as root_router
+from .routers.test import router as test_router
 
 api = NinjaAPI()
 
@@ -24,4 +25,5 @@ api.add_router("/health", health_router)
 api.add_router("/mail", mail_router)
 api.add_router("/page", page_router)
 api.add_router("/post", posts_router)
+api.add_router("/test", test_router)
 api.add_router("/", root_router)

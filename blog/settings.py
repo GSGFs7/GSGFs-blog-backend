@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import List
@@ -244,6 +245,9 @@ INTERNAL_IPS = [
 ]
 
 API_KEY = os.getenv("API_KEY")
+if API_KEY is None:
+    logging.warning("API_KEY is not set in environment variables.")
+
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 LOGIN_URL = "two_factor:login"

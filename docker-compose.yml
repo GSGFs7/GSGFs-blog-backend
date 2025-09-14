@@ -13,9 +13,6 @@ services:
     working_dir: /app
     mem_limit: 6G
     cpus: 2
-    # 会导致找不到文件
-    # volumes:
-    #   - .:/app
     ports:
       - "8000:8000"
     depends_on:

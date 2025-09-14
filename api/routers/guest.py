@@ -9,20 +9,21 @@ router = Router()
 
 @router.post("/login", response=IdSchema, auth=TimeBaseAuth())
 def guest_login(request, body: GuestLoginSchema):
-    try:
-        guest = Guest.objects.get(unique_id=f"{body.provider}-{body.provider_id}")
+    unique_id = f"{body.provider}-{body.provider_id}"
 
-        guest.avatar = body.avatar_url
+    guest, created = Guest.objects.get_or_create(
+        unique_id=unique_id,
+        provider=body.provider,
+        provider_id=body.provider_id,
+        name=body.name,
+        avatar=body.avatar,
+    )
+
+    if not created:
+        guest.avatar = body.avatar
         guest.name = body.name
         guest.save()
-    except:
-        guest = Guest.objects.create(
-            unique_id=f"{body.provider}-{body.provider_id}",
-            provider=body.provider,
-            provider_id=body.provider_id,
-            name=body.name,
-            avatar=body.avatar_url,
-        )
+
     return guest
 
 

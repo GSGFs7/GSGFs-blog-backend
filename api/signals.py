@@ -36,7 +36,7 @@ def sync_with_vndb(sender, instance, **kwargs):
             # This is a pre_save signal, should not call `save()` here otherwise it will cause infinite loop
         except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.error(f"更新 VNDB 数据失败({instance.vndb_id}): {e}")
+            logger.error(f"Failed to sync VNDB data({instance.vndb_id}): {e}")
 
 
 @receiver(pre_save, sender=Anime)
@@ -62,7 +62,7 @@ def sync_with_jikan(sender, instance, **kwargs):
             instance.rating = res.rating
         except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.error(f"更新 Anime 数据失败({instance.mal_id}): {e}")
+            logger.error(f"Failed to update Anime data({instance.mal_id}): {e}")
 
 
 @receiver(post_save, sender=Gal)
@@ -76,7 +76,7 @@ def convert_gal_markdown_to_html(sender, instance, **kwargs):
         post_save.connect(convert_gal_markdown_to_html, sender=Gal)  # Reconnect after save
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.error(f"Markdown 转换失败: {e}")
+        logger.error(f"Markdown conversion failed: {e}")
 
 
 @receiver(post_save, sender=Post)
@@ -89,4 +89,4 @@ def convert_post_markdown_to_html(sender, instance, **kwargs):
         post_save.connect(convert_post_markdown_to_html, sender=Post)
     except Exception as e:
         logger = logging.getLogger(__name__)
-        logger.error(f"Markdown 转换失败: {e}")
+        logger.error(f"Markdown conversion failed: {e}")
