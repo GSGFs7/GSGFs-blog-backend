@@ -12,8 +12,58 @@ permissions:
   packages: read
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+      db:
+        image: pgvector/pgvector:pg17-trixie
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: github_action_test
+          POSTGRES_USER: github_action_test_user
+          POSTGRES_PASSWORD: github_action_test_password
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH=$PATH:$HOME/.local/bin
+
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run tests
+        run: uv run python manage.py test
+        env:
+          DJANGO_SECRET_KEY: github-action-test-django-secret-key
+          DATABASE_ENGINE: postgresql
+          DATABASE_NAME: github_action_test
+          DATABASE_USERNAME: github_action_test_user
+          DATABASE_PASSWORD: github_action_test_password
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MODEL_NAME: google/embeddinggemma-300m
+          SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+
+
   build:
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
