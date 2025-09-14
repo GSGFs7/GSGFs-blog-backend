@@ -11,38 +11,6 @@ from django.conf import settings
 from ninja.security import HttpBearer
 
 
-class Auth(HttpBearer):
-    def authenticate(self, request, token):
-        try:
-            # 解码 token
-            decoded_token = base64.b64decode(token).decode("utf-8")
-            token_data = json.loads(decoded_token)
-
-            # 获取数据
-            timestamp = token_data["timestamp"]
-            nonce = token_data["nonce"]
-            signature = token_data["signature"]
-
-            # 验证时间戳
-            current_time = int(time.time() * 1000)  # ms
-            if current_time - timestamp > 60000:  # 一分钟
-                return None
-
-            # 复现签名
-            message = f"{timestamp}.{nonce}"
-            expected_signature = hmac.new(
-                settings.API_KEY.encode(), message.encode(), hashlib.sha256
-            ).hexdigest()
-
-            if hmac.compare_digest(signature, expected_signature):
-                return True
-            else:
-                return None
-        except Exception as e:
-            print(f"Authentication error: {e}")
-            return None
-
-
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
@@ -71,6 +39,9 @@ class TimeBaseAuth(HttpBearer):
 
     @staticmethod
     def generate_signature(timestamp: int, message: str) -> str:
+        if settings.API_KEY is None:
+            raise ValueError("API_KEY is not set")
+
         hmac_obj = hmac.new(
             settings.API_KEY.encode(),
             str(timestamp).encode(),
