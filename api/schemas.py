@@ -139,7 +139,7 @@ class GuestLoginSchema(Schema):
     name: str
     provider: str
     provider_id: int
-    avatar_url: str
+    avatar: str
 
 
 class IdSchema(Schema):
