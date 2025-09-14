@@ -3,7 +3,6 @@ This module provides a function to convert markdown content to HTML.
 The convert api is provided by the frontend service.
 """
 
-import logging
 import os
 from typing import Dict, List
 
@@ -35,7 +34,6 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
     url = os.getenv("FRONTEND_URL")
     if url is None:
         err_msg = "Environment variable `FRONTEND_URL` is not set. Please set it to the frontend URL."
-        logging.warning(err_msg)
         raise ValueError(err_msg)
 
     if not url.endswith("/"):
@@ -47,7 +45,6 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
         response.raise_for_status()  # Raise an error for bad responses (4xx or 5xx)
     except requests.RequestException as e:
         err_msg = f"Failed to render markdown: {e}"
-        logging.error(err_msg)
         raise RuntimeError(err_msg) from e
 
     try:
@@ -57,13 +54,11 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
             raise ValueError("Response is not a valid JSON object")
         if "error" in json_data:
             err_msg = f"Error from frontend service: {json_data['error']}"
-            logging.error(err_msg)
             raise RuntimeError(err_msg)
 
         return FrontendMarkdownResponse.model_validate(json_data)
     except ValueError as e:
         err_msg = f"Failed to parse JSON response: {e}"
-        logging.error(err_msg)
         raise RuntimeError(err_msg) from e
 
 
