@@ -79,6 +79,20 @@ class TimeBaseAuth(HttpBearer):
         hmac_obj.update(message.encode())
         return hmac_obj.hexdigest()
 
+    @staticmethod
+    def create_token(message: str, time_10s: Optional[int] = None) -> str:
+        if time_10s is None:
+            # may be floating point accuracy issues
+            time_10s = int((time.time() * 1000 / 1000) / 10)
+        signature = TimeBaseAuth.generate_signature(time_10s, message)
+        token_data = {
+            "message": message,
+            "signature": signature,
+        }
+        token_json = json.dumps(token_data)
+        token = base64.b64encode(token_json.encode("utf-8")).decode("utf-8")
+        return token
+
 
 class JWTAuth(HttpBearer):
     """JWT auth class, lightweight, faster"""
