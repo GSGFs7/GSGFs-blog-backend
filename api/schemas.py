@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Dict, List, Optional
 
 from ninja.schema import Schema
-from pydantic import RootModel, Field
+from pydantic import Field, RootModel
 
 
 class PaginationSchema(Schema):

@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 from pgvector.django import VectorField
@@ -166,6 +167,11 @@ class Post(BaseModel):
             self.slug = post_metadata.get("slug")
         if not self.slug and self.title:
             self.slug = chinese_slugify(self.title)
+        RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
+        if self.slug in RESERVED_SLUGS:
+            raise ValidationError(
+                f"Slug '{self.slug}' is a reserved keyword and cannot be used."
+            )
 
         # === description ===
         if not self.meta_description:

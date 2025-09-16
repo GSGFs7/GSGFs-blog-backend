@@ -35,11 +35,15 @@ class PostAdminForm(forms.ModelForm):
         metadata = {}
         errors = {}
 
+        RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
+
+        # === content ===
         if content:
             metadata = extract_front_matter(content)
         else:
             errors["content"] = "Content field cannot be empty."
 
+        # === title ===
         if not title:
             extracted_title = metadata.get("title")
             if extracted_title:
@@ -57,6 +61,7 @@ class PostAdminForm(forms.ModelForm):
                     "The title field cannot be empty and cannot be automatically extracted from Front Matter."
                 )
 
+        # === slug ===
         if not cleaned_data.get("slug"):
             cleaned_data["slug"] = metadata.get("slug") or chinese_slugify(
                 str(cleaned_data.get("title", ""))
@@ -71,6 +76,10 @@ class PostAdminForm(forms.ModelForm):
                 .exists()
             ):
                 errors["slug"] = "The slug already exists."
+        if cleaned_data.get("slug") in RESERVED_SLUGS:
+            errors["slug"] = (
+                "Slug is reserved and cannot be used. Please choose another."
+            )
 
         if errors:
             raise ValidationError(errors)
