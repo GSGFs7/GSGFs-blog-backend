@@ -80,7 +80,7 @@ def get_post(request, post_id: int):
 
 @router.get("/sitemap", response=PostIdsForSitemap)
 def get_all_post_ids_for_sitemap(request):
-    posts = Post.objects.values("id", "slug", "updated_at")
+    posts = Post.objects.values("id", "slug", "content_update_at")
     # transform to Pydantic model
     post_schemas = [PostSitemapSchema(**post) for post in posts]
     return PostIdsForSitemap(root=post_schemas)

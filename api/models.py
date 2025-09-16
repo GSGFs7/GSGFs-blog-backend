@@ -140,6 +140,11 @@ class Post(BaseModel):
     # 向量化搜索
     embedding = VectorField(dimensions=768, null=True, blank=True)
 
+    # update in 'api/signals.py'
+    content_update_at = models.DateTimeField(
+        null=False, blank=True, help_text="文章正文最后更新时间"
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
 
