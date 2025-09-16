@@ -104,12 +104,13 @@ class PostAdmin(admin.ModelAdmin):
                     "view_count",
                     "order",
                     "keywords",
+                    "content_update_at",
                 ]
             },
         ),
     ]
     form = PostAdminForm
-    readonly_fields = ["updated_at"]  # 将 updated_at 设为只读
+    readonly_fields = ["updated_at", "content_update_at"]
     list_display = [
         "title",
         "status",
