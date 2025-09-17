@@ -2,6 +2,7 @@ import os
 
 from celery import Celery
 
+# `celery -A blog worker -l info` needs this
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 
 app = Celery("blog")
