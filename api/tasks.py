@@ -1,6 +1,7 @@
 import logging
 
 from celery import shared_task
+from django.core.mail import mail_admins
 from django.utils import timezone
 
 from .models import Gal
@@ -53,3 +54,12 @@ def sync_vndb_data():
             logger.error(f"查询 VNDB 数据失败: {entry.vndb_id}, 错误: {e}")
             continue
     logger.info("VNDB 数据同步完成。")
+
+
+@shared_task
+def mail_admins_task(subject: str, message: str):
+    try:
+        mail_admins(subject, message)
+        logging.info("Success mail admin")
+    except Exception as e:
+        logging.warning(f"Mail admin failed: {e}")

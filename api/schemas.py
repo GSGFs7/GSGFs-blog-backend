@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Dict, List, Optional
 
 from ninja.schema import Schema
-from pydantic import RootModel
+from pydantic import Field, RootModel
 
 
 class PaginationSchema(Schema):
@@ -61,6 +61,7 @@ class PostsSchema(Schema):
     cover_image: Optional[str]
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    content_update_at: datetime.datetime
     header_image: Optional[str]
     meta_description: str
     keywords: Optional[str] = None
@@ -84,6 +85,7 @@ class PostsCardSchema(Schema):
     tags: Optional[List[TagsSchema]]
     created_at: datetime.datetime
     updated_at: datetime.datetime
+    content_update_at: datetime.datetime
 
 
 class PostCardsSchema(Schema):
@@ -168,7 +170,10 @@ class NewCommentSchema(Schema):
 class PostSitemapSchema(Schema):
     id: int
     slug: str
-    updated_at: datetime.datetime
+    updated_at: datetime.datetime = Field(alias="content_update_at")
+
+    class Config:
+        populate_by_name = True
 
 
 class PostIdsForSitemap(RootModel):

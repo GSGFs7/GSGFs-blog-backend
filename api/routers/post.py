@@ -1,9 +1,10 @@
+import logging
+
 from django.conf import settings
 from django.core.cache import cache
 from ninja import Router
 from pgvector.django import CosineDistance
 from pydantic import PositiveInt
-
 
 from ..ml_model import get_sentence_transformer_model
 from ..models import Post
@@ -57,7 +58,10 @@ def get_all_post_ids(request):
     return {"ids": list(Post.objects.values_list("id", flat=True))}
 
 
-@router.get("/{int:post_id}", response={200: PostsSchema, 404: MessageSchema})
+@router.get(
+    "/{int:post_id}",
+    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
+)
 def get_post(request, post_id: int):
     # cache_key = f"post:{post_id}"
     # post_data = cache.get(cache_key)
@@ -76,24 +80,27 @@ def get_post(request, post_id: int):
         return post
     except Post.DoesNotExist:
         return 404, {"message": "Not found"}
+    except Exception as e:
+        logging.error(e)
+        return 500, {"message": "Internal Server Error"}
 
 
-@router.get("/sitemap", response=PostIdsForSitemap)
+@router.get("/sitemap", response={200: PostIdsForSitemap})
 def get_all_post_ids_for_sitemap(request):
-    posts = Post.objects.values("id", "slug", "updated_at")
+    posts = Post.objects.values("id", "slug", "content_update_at")
     # transform to Pydantic model
     post_schemas = [PostSitemapSchema(**post) for post in posts]
-    return PostIdsForSitemap(root=post_schemas)
+    return 200, PostIdsForSitemap(root=post_schemas)
 
 
 @router.get(
     "/search", response={200: PostCardsWithSimilaritySchema, 400: MessageSchema}
 )
 def get_post_cards_from_query(
-        request,
-        q: str,
-        page: PositiveInt = 1,
-        size: PositiveInt = 10,
+    request,
+    q: str,
+    page: PositiveInt = 1,
+    size: PositiveInt = 10,
 ):
     # cache
     cache_key = f"post_search_results:{hash(q)}"
@@ -119,7 +126,7 @@ def get_post_cards_from_query(
     # paginate
     total = len(result)
     offset = (page - 1) * size
-    paginated_result = result[offset: offset + size]
+    paginated_result = result[offset : offset + size]
 
     # if empty
     if not paginated_result:
@@ -141,3 +148,21 @@ def get_post_cards_from_query(
         "posts_with_similarity": posts_with_similarity,
         "pagination": {"total": total, "page": page, "size": size},
     }
+
+
+# NOTE:
+# must put dynamic routing under static routing
+# if add new static router remember to add the name to exclude list manually at 'api/admin.py' and 'api/models.py'
+@router.get(
+    "/{str:post_slug}",
+    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
+)
+def get_post_from_slug(request, post_slug: str):
+    try:
+        post = Post.objects.get(slug=post_slug)
+        return post
+    except Post.DoesNotExist:
+        return 404, {"message": "Not found"}
+    except Exception as e:
+        logging.error(e)
+        return 500, {"message": "Internal Server Error"}

@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 from pgvector.django import VectorField
@@ -140,6 +141,11 @@ class Post(BaseModel):
     # 向量化搜索
     embedding = VectorField(dimensions=768, null=True, blank=True)
 
+    # update in 'api/signals.py'
+    content_update_at = models.DateTimeField(
+        null=False, blank=True, help_text="文章正文最后更新时间"
+    )
+
     class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
 
@@ -161,6 +167,11 @@ class Post(BaseModel):
             self.slug = post_metadata.get("slug")
         if not self.slug and self.title:
             self.slug = chinese_slugify(self.title)
+        RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
+        if self.slug in RESERVED_SLUGS:
+            raise ValidationError(
+                f"Slug '{self.slug}' is a reserved keyword and cannot be used."
+            )
 
         # === description ===
         if not self.meta_description:

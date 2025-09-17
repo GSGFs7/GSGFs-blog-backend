@@ -1,6 +1,7 @@
 import logging
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
@@ -70,10 +71,12 @@ def convert_gal_markdown_to_html(sender, instance, **kwargs):
     try:
         res = markdown_to_html_frontend(instance.review)
         instance.review_html = res.html
-        # Disconnect sinal, avoid infinite loop
+        # Disconnect signal, avoid infinite loop
         post_save.disconnect(convert_gal_markdown_to_html, sender=Gal)
         instance.save(update_fields=["review_html"])
-        post_save.connect(convert_gal_markdown_to_html, sender=Gal)  # Reconnect after save
+        post_save.connect(
+            convert_gal_markdown_to_html, sender=Gal
+        )  # Reconnect after save
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Markdown conversion failed: {e}")
@@ -90,3 +93,20 @@ def convert_post_markdown_to_html(sender, instance, **kwargs):
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Markdown conversion failed: {e}")
+
+
+@receiver(pre_save, sender=Post)
+def update_content_update_at(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = Post.objects.get(pk=instance.pk)
+            # content update
+            if old_instance.content != instance.content:
+                instance.content_update_at = timezone.now()
+            # 'content_update_at' not set
+            if instance.content_update_at is None:
+                instance.content_update_at = timezone.now()
+        except Post.DoesNotExist:
+            instance.content_updata_at = timezone.now()
+    else:
+        instance.content_update_at = timezone.now()
