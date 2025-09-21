@@ -61,6 +61,7 @@ jobs:
           SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
           HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
           API_KEY: github_action_test_API_KEY
+          FRONTEND_URL: https://gsgfs.moe
 
 
   build:
