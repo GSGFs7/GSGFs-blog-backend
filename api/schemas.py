@@ -58,7 +58,7 @@ class PostsSchema(Schema):
     id: int
     category: Optional[CategorySchema] = None
     content: str
-    content_html: str
+    content_html: Optional[str]
     cover_image: Optional[str]
     created_at: datetime.datetime
     updated_at: datetime.datetime
