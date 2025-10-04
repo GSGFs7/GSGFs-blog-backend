@@ -6,6 +6,8 @@ from ninja import Router
 from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
+from api.rate_limit import rate_limit
+
 from ..ml_model import get_sentence_transformer_model
 from ..models import Post
 from ..schemas import (
@@ -94,8 +96,14 @@ def get_all_post_ids_for_sitemap(request):
 
 
 @router.get(
-    "/search", response={200: PostCardsWithSimilaritySchema, 400: MessageSchema}
+    "/search",
+    response={
+        200: PostCardsWithSimilaritySchema,
+        400: MessageSchema,
+        429: MessageSchema,
+    },
 )
+@rate_limit(key_prefix="post_search", max_requests=10, window=1)
 def get_post_cards_from_query(
     request,
     q: str,
@@ -105,6 +113,10 @@ def get_post_cards_from_query(
     # cache
     cache_key = f"post_search_results:{hash(q)}"
     cached = cache.get(cache_key)
+
+    # length limit
+    if len(q) > 100:
+        return 400, {"message": "Query too long"}
 
     # find cache
     if cached is None:
