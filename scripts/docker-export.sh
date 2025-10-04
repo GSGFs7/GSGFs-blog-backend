@@ -1,3 +1,3 @@
 #!/usr/bin/bash
 
-docker save django:latest | zstd -c -T0 --ultra -17 > 'django.tar.zst'
+docker save django:latest | zstd -c -T0 -16 > 'django.tar.zst'
