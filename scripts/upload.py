@@ -16,6 +16,10 @@ import boto3
 import dotenv
 from botocore.exceptions import ClientError
 
+# load env
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv.load_dotenv(os.path.join(project_root, ".env"))
+
 # Config
 # R2_TOKEN = os.environ.get("R2_TOKEN")  # The token given by CF is not used
 R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL")
@@ -99,17 +103,19 @@ def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
             print(r2_object_name)
             print(already_existing_file)
             if already_existing_file.get(r2_object_name):
-                print(f"跳过重复文件: {local_path}")
+                print(f"Skipping duplicate file: {local_path}")
                 continue
 
             # Upload files
-            print(f"正在上传: {local_path} -> ({bucket}){r2_object_name}")
+            print(f"Loading: {local_path} -> ({bucket}){r2_object_name}")
             total_files += 1
             if upload_file(local_path, bucket, r2_object_name):
                 uploaded_files += 1
 
     print("-" * shutil.get_terminal_size().columns)
-    print(f"上传完成: 总共 {total_files} 个文件, 成功上传 {uploaded_files} 个")
+    print(
+        f"Upload complete: {total_files} files in total, {uploaded_files} uploaded successfully"
+    )
     return
 
 
@@ -142,7 +148,7 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
                     )
                 )
         except Exception as e:
-            print(f"写入文件错误: {e}")
+            print(f"Error writing file: {e}")
 
     try:
         paginator = r2_client.get_paginator("list_objects_v2")
@@ -153,13 +159,13 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
         )
 
         files = []
-        print(f'存储桶 "{bucket}" 中的文件:')
+        print(f'Objects in bucket "{bucket}":')
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page["Contents"]:
                     size = obj.get("Size", 0)
                     size_mb = size / (1024 * 1024)
-                    print(f'  {obj.get("Key", "")} ({size_mb:.2f} MB)')
+                    print(f'  {obj.get("Key", "")} ({size_mb:.2f} MiB)')
                     files.append(
                         {
                             "Key": obj.get("Key", ""),
@@ -171,7 +177,7 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
                     )
         write_list_object(files)
     except ClientError as e:
-        print(f"Error: 列出 '{bucket}' 中的文件失败. {e}")
+        print(f"Error: Failed to list files in '{bucket}'. {e}")
 
 
 def print_usage() -> None:
@@ -276,6 +282,5 @@ def main():
 
 
 if __name__ == "__main__":
-    dotenv.load_dotenv(".env")
 
     main()
