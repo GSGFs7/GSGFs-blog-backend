@@ -30,7 +30,8 @@ def sync_with_vndb(sender, instance, **kwargs):
             vn_data = res["results"][0]
 
             # Update the instance not the database directly
-            instance.title = vn_data.get("alttitle", vn_data["title"])
+            # instance.title = vn_data.get("alttitle", vn_data["title"])  # "{"alttitle": null, "title": "xxx"}" -> return None 
+            instance.title = vn_data.get("alttitle") or vn_data["title"]
             instance.title_cn = find_cn_title(vn_data.get("titles", []))
             instance.cover_image = vn_data["image"]["url"]
             instance.vndb_rating = vn_data.get("rating", None)
