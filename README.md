@@ -61,22 +61,23 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 │   ├── backends/   # Django 后端
 │   ├── migrations/ # 数据库迁移
 │   ├── routers/    # 路由
-│   └── tests/      # 测试
+│   ├── tests/      # 测试
+│   ├── admin.py    # Django admin 设置
+│   ├── apps.py     # Django app 设置
+│   ├── models.py   # Django ORM
+│   ├── schemas.py  # schema 定义
+│   ├── signals.py  # Django 信号处理
+│   ├── task.py     # celery 任务
+│   └── urls.py     # URL 汇总
 ├── blog/           # Django project
 ├── scripts/        # 辅助脚本
 ├── templates/      # Django 模板
-├── admin.py        # Django admin 设置
-├── apps.py         # Django app 设置
-├── models.py       # Django ORM
-├── schemas.py      # schema 定义
-├── signals.py      # Django 信号处理
-├── task.py         # celery 任务
-└── urls.py         # URL 汇总
+└── manage.py       # Django cli
 ```
 
 ## 接口文档
 
-`django-ninja` 自带 `swagger`, 启动后访问 <http://127.0.0.1:8000/api/docs>
+`django-ninja` 自带 `swagger-UI`, 启动后访问 <http://127.0.0.1:8000/api/docs>
 
 ## 小工具
 
