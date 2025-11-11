@@ -77,7 +77,7 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 
 ## 接口文档
 
-`django-ninja` 自带 `swagger-UI`, 启动后访问 <http://127.0.0.1:8000/api/docs>
+`django-ninja` 自带 `swagger-UI`, 启动后访问 `/api/docs`
 
 ## 小工具
 

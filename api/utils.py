@@ -1,6 +1,8 @@
+import copy
 import hashlib
 import re
-from typing import Dict, List, Optional, TypedDict
+from functools import wraps
+from typing import Any, Dict, List, Optional, TypedDict
 
 import yaml
 from django.utils.text import Truncator
@@ -307,3 +309,141 @@ def chinese_slugify(title: str, max_length: int = 50) -> str:
         slug = slug[:available_length] + "-" + hash_suffix
 
     return slug or "untitled"
+
+
+def _openapi_convert(spec: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    convert django-ninja openapi 3.1 -> openapi 3.0
+    :param spec: the Dict of django-ninja openapi.json
+    :return: openapi 3.0 Dict
+    """
+
+    def _convert_schema(schema: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(schema, dict):
+            return schema
+
+        schema = copy.deepcopy(schema)
+
+        # null in anyOf
+        if "anyOf" in schema:
+            has_null = False
+            non_null_schemas = []
+
+            for sub_schema in schema["anyOf"]:
+                if isinstance(sub_schema, dict) and sub_schema.get("type") == "null":
+                    has_null = True
+                else:
+                    non_null_schemas.append(sub_schema)
+
+                if has_null:
+                    schema["nullable"] = True
+                    if len(non_null_schemas) == 1:
+                        single_schema = non_null_schemas[0]
+                        del schema["anyOf"]
+                        schema.update(single_schema)
+                    elif len(non_null_schemas) > 1:
+                        schema["anyOf"] = non_null_schemas
+                    else:
+                        del schema["anyOf"]
+
+        # type list
+        if "type" in schema and isinstance(schema["type"], list):
+            if "null" in schema["type"]:
+                schema["nullable"] = True
+                types = [t for t in schema["type"] if t != "null"]
+                schema["type"] = types[0] if len(types) == 1 else types
+
+        # examples -> example
+        if "examples" in schema and isinstance(schema["examples"], list):
+            schema["example"] = schema["examples"][0] if schema["examples"] else None
+            del schema["examples"]
+
+        # convert exclusiveMinimum/Maximum
+        if "exclusiveMinimum" in schema and isinstance(
+            schema["exclusiveMinimum"], (int, float)
+        ):
+            schema["maximum"] = schema["exclusiveMinimum"]
+            schema["exclusiveMinimum"] = True
+        if "exclusiveMaximum" in schema and isinstance(
+            schema["exclusiveMaximum"], (int, float)
+        ):
+            schema["maximum"] = schema["exclusiveMaximum"]
+            schema["exclusiveMaximum"] = True
+
+        # recursive process schema
+        if "properties" in schema:
+            for prop_name, prop_schema in schema["properties"].items():
+                schema["properties"][prop_name] = _convert_schema(prop_schema)
+
+        if "additionalProperties" in schema and isinstance(
+            schema["additionalProperties"], dict
+        ):
+            schema["additionalProperties"] = _convert_schema(
+                schema["additionalProperties"]
+            )
+
+        for keyword in ["allOf", "anyOf", "oneOf"]:
+            if keyword in schema:
+                schema[keyword] = [_convert_schema(s) for s in schema[keyword]]
+
+        return schema
+
+    def _convert_operation(operation: Dict[str, Any]) -> None:
+        if "requestBody" in operation:
+            content = operation["requestBody"].get("content", {})
+            for media_type, media_obj in content.items():
+                if "schema" in media_obj:
+                    media_obj["schema"] = _convert_schema(media_obj["schema"])
+                if "examples" in media_obj and isinstance(media_obj["examples"], dict):
+                    pass
+
+        if "responses" in operation:
+            for status, response in operation["responses"].items():
+                if "content" in response:
+                    for media_type, media_obj in response["content"].items():
+                        if "schema" in media_obj:
+                            media_obj["schema"] = _convert_schema(media_obj["schema"])
+
+        if "parameters" in operation:
+            for param in operation["parameters"]:
+                if "schema" in param:
+                    param["schema"] = _convert_schema(param["schema"])
+
+    result = copy.deepcopy(spec)
+
+    # change the version
+    if "openapi" in result:
+        result["openapi"] = "3.0.3"
+
+    # convert schema
+    if "components" in result and "schemas" in result["components"]:
+        for schema_name, schema in result["components"]["schemas"].items():
+            result["components"]["schemas"][schema_name] = _convert_schema(schema)
+
+    if "paths" in result:
+        for path, methods in result["paths"].items():
+            for method, operation in methods.items():
+                if isinstance(operation, dict):
+                    _convert_operation(operation)
+
+    return result
+
+
+def convert_openapi(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        spec = func(*args, **kwargs)
+        return _openapi_convert(spec)
+
+    return wrapper
+
+
+if __name__ == "__main__":
+    import requests
+    import json
+
+    result = requests.get("http://localhost:8000/api/openapi.json")
+    json_result = result.json()
+    converted_result = _openapi_convert(json_result)
+    with open("./openapi.json", "w") as f:
+        f.write(json.dumps(converted_result))

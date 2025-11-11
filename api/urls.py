@@ -1,3 +1,5 @@
+from django.contrib.admin.views.decorators import staff_member_required
+from django.conf import settings
 from ninja import NinjaAPI
 
 from .routers.anime import router as anime_router
@@ -12,8 +14,19 @@ from .routers.page import router as page_router
 from .routers.post import router as posts_router
 from .routers.root import router as root_router
 from .routers.test import router as test_router
+from .utils import convert_openapi
 
-api = NinjaAPI()
+api = NinjaAPI(
+    title="GSGFs blog API",
+    description="GSGFs blog backend API",
+    version="1.0.0",
+    docs_decorator=staff_member_required if not settings.DEBUG else None,
+)
+
+# convert to openapi 3.0, PyCharm not support 3.1 yet
+original_get_schema = api.get_openapi_schema
+api.get_openapi_schema = convert_openapi(original_get_schema)  # wrap
+
 
 api.add_router("/anime", anime_router)
 api.add_router("/auth", auth_router)
