@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from django.core.cache import cache
 from ninja import Router
 from pgvector.django import CosineDistance

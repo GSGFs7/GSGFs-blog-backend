@@ -1,9 +1,7 @@
 import os
-from typing import List, Literal, Optional, TypedDict
+from typing import List, Optional, TypedDict
 
 import requests
-
-from .models import Gal
 
 
 class Title(TypedDict):
