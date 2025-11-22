@@ -44,9 +44,12 @@ jobs:
 
       - name: Install dependencies
         run: uv sync
+
+      - name: Download model
+        run: uv run scripts/download-model.py
       
       - name: Run tests
-        run: uv run python manage.py test
+        run: uv run manage.py test
         env:
           DJANGO_SECRET_KEY: github-action-test-django-secret-key
           DATABASE_ENGINE: postgresql
