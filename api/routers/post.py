@@ -24,17 +24,22 @@ CONFIDENCE = 0.7
 router = Router()
 
 
-@router.get(
-    "/posts", response={200: PostCardsSchema, 400: MessageSchema, 404: MessageSchema}
-)
+@router.get("/", response={200: PostCardsSchema, 400: MessageSchema})
 def get_posts(
     request, page: PositiveInt = 1, size: PositiveInt = 10
 ):  # -> tuple[Literal[404], dict[str, str]] | tuple[Literal[400],...:
-    offset = (page - 1) * size  # 起点
+    offset = (page - 1) * size
     total = Post.objects.count()
 
     if total == 0:
-        return 404, {"message": "Empty"}
+        return 200, {
+            "posts": [],
+            "pagination": {
+                "total": total,
+                "page": page,
+                "size": size,
+            },
+        }
 
     if offset >= total:
         return 400, {"message": "Out of range"}
@@ -50,40 +55,13 @@ def get_posts(
     }
 
 
-@router.get("/", response=IdsSchema)
+@router.get("/ids", response=IdsSchema)
 def get_all_post_ids(request):
     # QuerySet的values_list()方法与values类似
     # 不过返回的是一个元组而非字典
     # flat可以使返回一个值时返回那个值而非一个一元组
     # print(Post.objects.values_list("id", flat=True))
     return {"ids": list(Post.objects.values_list("id", flat=True))}
-
-
-@router.get(
-    "/{int:post_id}",
-    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
-)
-def get_post(request, post_id: int):
-    # cache_key = f"post:{post_id}"
-    # post_data = cache.get(cache_key)
-
-    # if not post_data:
-    #     try:
-    #         post = Post.objects.get(pk=post_id)
-    #         cache.set(cache_key, post, settings.CACHE_TTL)
-    #         return post
-    #     except Post.DoesNotExist:
-    #         return 404, {"message": "Not found"}
-    # return post_data
-
-    try:
-        post = Post.objects.get(pk=post_id)
-        return post
-    except Post.DoesNotExist:
-        return 404, {"message": "Not found"}
-    except Exception as e:
-        logging.error(e)
-        return 500, {"message": "Internal Server Error"}
 
 
 @router.get("/sitemap", response={200: PostIdsForSitemap})
@@ -159,6 +137,21 @@ def get_post_cards_from_query(
         "posts_with_similarity": posts_with_similarity,
         "pagination": {"total": total, "page": page, "size": size},
     }
+
+
+@router.get(
+    "/{int:post_id}",
+    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
+)
+def get_post(request, post_id: int):
+    try:
+        post = Post.objects.get(pk=post_id)
+        return post
+    except Post.DoesNotExist:
+        return 404, {"message": "Not found"}
+    except Exception as e:
+        logging.error(e)
+        return 500, {"message": "Internal Server Error"}
 
 
 # NOTE:

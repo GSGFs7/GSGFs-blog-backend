@@ -19,7 +19,7 @@ class TestPost(TestCase):
         response = self.client.get("/api/post/")
         self.assertContains(response, post.pk, status_code=200)
 
-        response = self.client.get("/api/post/posts")
+        response = self.client.get("/api/post/ids")
         self.assertContains(response, post.pk, status_code=200)
 
         response = self.client.get(f"/api/post/{post.pk}")
