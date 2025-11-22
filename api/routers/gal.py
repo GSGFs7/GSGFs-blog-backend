@@ -16,13 +16,8 @@ from ..schemas import (
 router = Router()
 
 
-@router.get("/", response=IdsSchema)
-def get_gal_ids(request):
-    return {"ids": list(Gal.objects.values_list("id", flat=True))}
-
-
 @router.get(
-    "/gals",
+    "/",
     response={200: GalPaginationResponse, 400: MessageSchema, 404: MessageSchema},
 )
 def get_all_gal(request, page: PositiveInt = 1, size: PositiveInt = 10):
@@ -44,6 +39,11 @@ def get_all_gal(request, page: PositiveInt = 1, size: PositiveInt = 10):
             "size": size,
         },
     }
+
+
+@router.get("/ids", response=IdsSchema)
+def get_gal_ids(request):
+    return {"ids": list(Gal.objects.values_list("id", flat=True))}
 
 
 @router.get("/{int:gal_id}", response={200: GalSchema, 404: MessageSchema})
