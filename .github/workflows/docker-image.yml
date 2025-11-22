@@ -47,7 +47,11 @@ jobs:
 
       - name: Download model
         run: uv run scripts/download-model.py
-      
+        env:
+          MODEL_NAME: google/embeddinggemma-300m
+          SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+
       - name: Run tests
         run: uv run manage.py test
         env:
