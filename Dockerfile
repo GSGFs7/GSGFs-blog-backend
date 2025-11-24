@@ -17,7 +17,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # no output buffer
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc g++
+RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ git
 
 RUN pip install --upgrade pip
 # RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
