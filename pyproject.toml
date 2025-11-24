@@ -16,7 +16,8 @@ dependencies = [
     "django-redis>=6.0.0",
     "django-two-factor-auth>=1.18.1",
     "gunicorn>=23.0.0",
-    "jieba @ git+https://github.com/GSGFs7/jieba.git@master", # origin repo was no longer update
+    # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
+    "jieba @ git+https://github.com/GSGFs7/jieba.git@master",
     "pgvector>=0.4.1",
     "phonenumbers>=9.0.12",
     "pillow>=11.3.0",
