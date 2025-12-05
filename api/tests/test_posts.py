@@ -4,7 +4,12 @@ from django.test import TestCase, override_settings
 from api.models import Post
 
 
-@override_settings(SECURE_SSL_REDIRECT=False)
+@override_settings(
+    SECURE_SSL_REDIRECT=False,
+    # make celery sync run the function
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_EAGER_PROPAGATES=True,
+)
 class TestPost(TestCase):
     def setUp(self):
         Post.objects.create(
