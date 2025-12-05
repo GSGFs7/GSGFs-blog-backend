@@ -6,6 +6,7 @@ from django.utils import timezone
 from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
 from .models import Anime, Gal, Post
+from .tasks import generate_post_embedding
 from .vndb import query_vn
 
 
@@ -30,7 +31,7 @@ def sync_with_vndb(sender, instance, **kwargs):
             vn_data = res["results"][0]
 
             # Update the instance not the database directly
-            # instance.title = vn_data.get("alttitle", vn_data["title"])  # "{"alttitle": null, "title": "xxx"}" -> return None 
+            # instance.title = vn_data.get("alttitle", vn_data["title"])  # "{"alttitle": null, "title": "xxx"}" -> return None
             instance.title = vn_data.get("alttitle") or vn_data["title"]
             instance.title_cn = find_cn_title(vn_data.get("titles", []))
             instance.cover_image = vn_data["image"]["url"]
@@ -111,3 +112,20 @@ def update_content_update_at(sender, instance, **kwargs):
             instance.content_updata_at = timezone.now()
     else:
         instance.content_update_at = timezone.now()
+
+
+@receiver(post_save, sender=Post)
+def generate_post_embedding_async(sender, instance, created, **kwargs):
+    """
+    Trigger Celery task to generate embedding for post asynchronously.
+    This runs after the post is saved to the database.
+    Uses transaction.on_commit to ensure the task runs after the transaction commits.
+    """
+    try:
+        # Trigger the Celery task asynchronously
+        generate_post_embedding.delay(instance.pk)
+        logger = logging.getLogger(__name__)
+        logger.info(f"已触发 embedding 生成任务: Post ID {instance.pk}")
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"触发 embedding 任务失败: Post ID {instance.pk}, 错误: {e}")

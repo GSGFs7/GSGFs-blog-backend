@@ -4,7 +4,8 @@ from celery import shared_task
 from django.core.mail import mail_admins
 from django.utils import timezone
 
-from .models import Gal
+from .ml_model import get_sentence_transformer_model
+from .models import Gal, Post
 from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
@@ -63,3 +64,24 @@ def mail_admins_task(subject: str, message: str):
         logging.info("Success mail admin")
     except Exception as e:
         logging.warning(f"Mail admin failed: {e}")
+
+
+@shared_task
+def generate_post_embedding(post_id: int):
+    """
+    Celery task to generate embedding for a post.
+    """
+    try:
+        post = Post.objects.get(id=post_id)
+        model = get_sentence_transformer_model()
+
+        embedding = model.encode_document(post.content)
+
+        # Update the embedding field
+        Post.objects.filter(id=post_id).update(embedding=embedding)
+
+        logger.info(f"成功生成文章 embedding: Post ID {post_id}")
+    except Post.DoesNotExist:
+        logger.error(f"文章不存在: Post ID {post_id}")
+    except Exception as e:
+        logger.error(f"生成 embedding 失败: Post ID {post_id}, 错误: {e}")

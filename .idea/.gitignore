@@ -3,3 +3,5 @@
 /workspace.xml
 copilot*
 httpRequests/
+*.local.xml
+dataSources

@@ -24,8 +24,8 @@ api = NinjaAPI(
 )
 
 # convert to openapi 3.0, PyCharm not support 3.1 yet
-original_get_schema = api.get_openapi_schema
-api.get_openapi_schema = convert_openapi(original_get_schema)  # wrap
+# original_get_schema = api.get_openapi_schema
+# api.get_openapi_schema = convert_openapi(original_get_schema)  # wrap
 
 
 api.add_router("/anime", anime_router)
