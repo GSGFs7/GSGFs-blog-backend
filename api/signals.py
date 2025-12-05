@@ -1,4 +1,5 @@
 import logging
+from django.db import transaction
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -122,10 +123,13 @@ def generate_post_embedding_async(sender, instance, created, **kwargs):
     Uses transaction.on_commit to ensure the task runs after the transaction commits.
     """
     try:
-        # Trigger the Celery task asynchronously
-        generate_post_embedding.delay(instance.pk)
-        logger = logging.getLogger(__name__)
-        logger.info(f"已触发 embedding 生成任务: Post ID {instance.pk}")
+        def task():
+            # Trigger the Celery task asynchronously
+            generate_post_embedding.delay(instance.pk)
+            logger = logging.getLogger(__name__)
+            logger.info(f"已触发 embedding 生成任务: Post ID {instance.pk}")
+
+        transaction.on_commit(task)
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"触发 embedding 任务失败: Post ID {instance.pk}, 错误: {e}")

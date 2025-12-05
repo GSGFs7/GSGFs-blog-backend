@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
 from api.models import Post
+from api.tasks import generate_post_embedding
 
 
 @override_settings(
@@ -12,9 +13,17 @@ from api.models import Post
 )
 class TestPost(TestCase):
     def setUp(self):
-        Post.objects.create(
+        post = Post.objects.create(
             title="test", content="test content", slug="test", status="published"
         )
+        # generate post embedding again
+        # it may fail to auto sync generate
+        generate_post_embedding(post.id)
+
+    def test_post_embedding_generation(self):
+        post = Post.objects.get(title="test")
+        self.assertIsNotNone(post.embedding)
+
 
     def test_post_api(self):
         post = Post.objects.get(title="test")
