@@ -3,7 +3,6 @@ from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 from pgvector.django import VectorField
 
-from .ml_model import get_sentence_transformer_model
 from .utils import chinese_slugify, extract_metadata
 
 
@@ -194,11 +193,8 @@ class Post(BaseModel):
             self.category = category
 
         # === vector ===
-        model = get_sentence_transformer_model()
-        text_to_embed = self.content
-        # asymmetric semantic search
-        # use `model.encode_document` and `model.encode_query`
-        self.embedding = model.encode_document(text_to_embed)
+        # Moved to Celery task (see api/tasks.py: generate_post_embedding)
+        # The embedding will be generated asynchronously after the post is saved
 
         # save main object, all settings above will be saved
         # after that, continue to process operations that require primary keys
@@ -360,6 +356,7 @@ class Anime(BaseModel):
 
     def __str__(self):
         return self.name
+
 
 # class Image(BaseModel):
 #     title = models.CharField(
