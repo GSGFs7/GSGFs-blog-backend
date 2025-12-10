@@ -1,0 +1,22 @@
+# $HOME/.config/containers/systemd/django.container
+
+[Unit]
+Description=Django Web Application Service
+Requires=blog-db.service blog-redis.service
+After=blog-db.service blog-redis.service
+
+[Container]
+ContainerName=django
+Image=django
+WorkingDir=/app
+PublishPort=8000:8000
+Network=app-network
+EnvironmentFile=/path/to/your/env_file
+
+[Service]
+Restart=always
+MemoryMax=6G
+CPUQuota=200%
+
+[Install]
+WantedBy=default.target multi-user.target

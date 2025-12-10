@@ -1,0 +1,19 @@
+# $HOME/.config/containers/systemd/blog-redis.container
+
+[Unit]
+Description=Redis Cache Service for Blog
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=blog-redis
+Image=redis:7
+#PublishPort=6379:6379
+Volume=redis_date:/data
+Network=app-network
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

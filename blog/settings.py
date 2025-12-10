@@ -155,7 +155,7 @@ else:
             "USER": os.getenv("DATABASE_USERNAME", "user"),
             "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
             "HOST": (
-                "db"  # 写死在 docker 配置中的
+                "blog-db"  # 写死在 docker 配置中的
                 if is_docker_env()
                 else os.getenv("DATABASE_HOST", "127.0.0.1")
             ),
@@ -165,9 +165,9 @@ else:
     }
 
 _redis_host = os.environ.get("REDIS_HOST", "localhost")
-# 如果是 docker 环境强制使用 "redis" 作为 host, 这是在 docker 配置中写死了的
+# 如果是 docker 环境强制使用 "blog-redis" 作为 host, 这是在 docker 配置中写死了的
 if is_docker_env():
-    _redis_host = "redis"
+    _redis_host = "blog-redis"
 _redis_port = os.environ.get("REDIS_PORT", "6379")
 # 使用0号数据库
 _redis_url = os.environ.get("REDIS_URL", f"redis://{_redis_host}:{_redis_port}/0")
