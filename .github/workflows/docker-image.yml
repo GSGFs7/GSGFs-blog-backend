@@ -167,6 +167,5 @@ jobs:
 
             # podman quadlet
             zstd -d -c /tmp/artifacts/django.tar.zst | podman load
-            podman compose -f ~/blog/compose.yml down || true
             systemctl --user restart django.service blog-db.service blog-redis.service
             rm /tmp/artifacts/django.tar.zst
