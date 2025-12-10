@@ -1,5 +1,5 @@
 services:
-  django-web:
+  blog-django:
     build:
       context: .
       dockerfile: Dockerfile
@@ -34,19 +34,19 @@ services:
     networks:
       - app-network
     # watch 配置
-    develop:
-      watch:
-        - action: sync
-          path: .
-          target: /app
-          ignore:
-            - .git/
-            - .vevn
-            - __pycache__/
-        - action: rebuild
-          path: requirements.txt
+    # develop:
+    #   watch:
+    #     - action: sync
+    #       path: .
+    #       target: /app
+    #       ignore:
+    #         - .git/
+    #         - .vevn
+    #         - __pycache__/
+    #     - action: rebuild
+    #       path: requirements.txt
 
-  db:
+  blog-db:
     image: pgvector/pgvector:pg17-trixie
     container_name: blog-db
     env_file:
@@ -61,8 +61,15 @@ services:
       - "5432:5432"
     networks:
       - app-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME} -d ${DATABASE_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_interval: 10s
 
-  redis:
+  blog-redis:
     image: redis:7
     container_name: blog-redis
     ports:
@@ -90,4 +97,4 @@ networks:
 
 secrets:
   hf_token:
-    environment: HUGGINGFACE_HUB_TOKEN
+    external: true

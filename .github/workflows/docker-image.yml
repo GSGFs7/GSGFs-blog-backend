@@ -69,7 +69,6 @@ jobs:
           HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
           API_KEY: github_action_test_API_KEY
 
-
   build:
     runs-on: ubuntu-latest
     needs: test
@@ -160,7 +159,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            zstd -d -c /tmp/artifacts/django.tar.zst | docker load
-            docker compose -f ~/blog/docker-compose.yml down || true
-            docker compose -f ~/blog/docker-compose.yml up -d
+            # docker
+            # zstd -d -c /tmp/artifacts/django.tar.zst | docker load
+            # docker compose -f ~/blog/docker-compose.yml down || true
+            # docker compose -f ~/blog/docker-compose.yml up -d
+            # rm /tmp/artifacts/django.tar.zst
+
+            # podman quadlet
+            zstd -d -c /tmp/artifacts/django.tar.zst | podman load
+            podman compose -f ~/blog/compose.yml down || true
+            systemctl --user restart django.service blog-db.service blog-redis.service
             rm /tmp/artifacts/django.tar.zst

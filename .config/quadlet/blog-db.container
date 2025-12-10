@@ -1,0 +1,20 @@
+# $HOME/.config/containers/systemd/blog-db.container
+
+[Unit]
+Description=PostgreSQL Database Service for Blog
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=blog-db
+Image=pgvector/pgvector:pg17-trixie
+EnvironmentFile=/path/to/your/env_file
+#PublishPort=5432:5432
+Volume=postgres_data:/var/lib/postgresql/data
+Network=app-network
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target
