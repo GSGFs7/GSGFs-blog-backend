@@ -6,8 +6,8 @@ from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
 from api.rate_limit import rate_limit
+from api.tasks import generate_search_embedding_task
 
-from ..ml_model import get_sentence_transformer_model
 from ..models import Post
 from ..schemas import (
     IdsSchema,
@@ -19,7 +19,7 @@ from ..schemas import (
     PostsSchema,
 )
 
-CONFIDENCE = 0.7
+CONFIDENCE = 0.6
 
 router = Router()
 
@@ -72,6 +72,7 @@ def get_all_post_ids_for_sitemap(request):
     return 200, PostIdsForSitemap(root=post_schemas)
 
 
+# TODO: 优化这里, 准确率太低了.
 @router.get(
     "/search",
     response={
@@ -92,13 +93,14 @@ def get_post_cards_from_query(
     cached = cache.get(cache_key)
 
     # length limit
-    if len(q) > 100:
+    if len(q) > 200:
         return 400, {"message": "Query too long"}
 
     # find cache
     if cached is None:
-        model = get_sentence_transformer_model()
-        query_embedding = model.encode_query(q)
+        task = generate_search_embedding_task.delay(q)
+        query_embedding = task.get(timeout=1)
+
         post_query = (
             Post.objects.annotate(
                 similarity=CosineDistance("embedding", query_embedding)

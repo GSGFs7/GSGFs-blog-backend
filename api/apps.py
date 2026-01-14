@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.conf import settings
 
 
 class ApiConfig(AppConfig):
@@ -15,7 +14,7 @@ class ApiConfig(AppConfig):
         # Preload machine learning model
         # This operation will slow down `./manage.py makemigrations && ./manage.py migrate`
         # Lazy load is enough
-        if not settings.DEBUG:
-            ml_model.get_sentence_transformer_model()
+        # if not settings.DEBUG:
+        #     ml_model.get_sentence_transformer_model()
 
         return super().ready()
