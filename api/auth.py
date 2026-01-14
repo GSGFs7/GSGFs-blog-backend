@@ -8,12 +8,23 @@ from typing import Any, Dict, Optional
 
 import jwt
 from django.conf import settings
+from django.core.cache import cache
 from ninja.security import HttpBearer
+
+
+def generate_auth_token_cache_key(token: str):
+    return f"auth_token_{token}"
 
 
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
+            # protect against replay attacks
+            is_cached = cache.touch(generate_auth_token_cache_key(token))
+            if is_cached:
+                return None
+            cache.set(generate_auth_token_cache_key(token), 1, 30)  # 30s
+
             # 解码 token
             decoded_token = base64.b64decode(token).decode("utf-8")
             token_data = json.loads(decoded_token)
