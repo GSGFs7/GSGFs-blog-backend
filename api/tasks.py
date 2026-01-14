@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 UPDATE_VNDB_INTERVAL: int = 60 * 60 * 24 * 7  # Updated every 7 days
 
 
+# TODO: updated field configable
 @shared_task
 def sync_vndb_data():
     """
@@ -85,3 +86,17 @@ def generate_post_embedding(post_id: int):
         logger.error(f"文章不存在: Post ID {post_id}")
     except Exception as e:
         logger.error(f"生成 embedding 失败: Post ID {post_id}, 错误: {e}")
+
+
+@shared_task
+def generate_search_embedding_task(query: str):
+    """
+    Celery task to generate embedding for search query.
+    """
+    try:
+        model = get_sentence_transformer_model()
+        embedding = model.encode_query(query)
+        return embedding.tolist()
+    except Exception as e:
+        logger.error(f"生成搜索 embedding 失败: {query[:50]}, 错误: {e}")
+        raise

@@ -16,3 +16,4 @@ openapi.json
 sentence_transformers_models/
 staticfiles/
 testapp/
+*.http
