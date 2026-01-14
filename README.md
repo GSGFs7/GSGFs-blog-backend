@@ -7,7 +7,7 @@
 > [!NOTE]  
 > Django 自带的后台在 `/not-admin` 而不是 `/admin`
 
-`python`版本: `3.13`, 推荐使用 uv 作为包管理器
+`python`版本: `3.14`, 推荐使用 uv 作为包管理器
 
 _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `python`, 例如 `./manage.py runserver`
 应该改为 `python ./manage.py runserver`_
@@ -26,7 +26,6 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 
 3. 将 `.env.example` 复制一份为 `.env` 并填写需要的环境变量, 并确保数据库和 redis 运行在对应的端口
 
-   ~~如果不填写数据库部分则会使用不需要额外配置的`sqlite3`作为数据库~~ 因为向量的加入, 不再支持 sqlite3  
    尖括号中的内容是必填项, 可以使用 `openssl rand -base64 40` 生成所需的随机字符
 
 4. 由于搜索功能依赖向量化处理, 需要下载用于生成向量的嵌入模型
