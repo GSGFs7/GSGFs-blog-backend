@@ -294,3 +294,7 @@ SENTENCE_TRANSFORMERS_HOME = os.environ.get("SENTENCE_TRANSFORMERS_HOME")
 # PermissionError: [Errno 13] Permission denied: '/root/.cache/huggingface/token'
 if SENTENCE_TRANSFORMERS_HOME:
     os.environ["HF_HOME"] = SENTENCE_TRANSFORMERS_HOME
+    # 'local_files_only=True'
+    # This setting only prevents the download of model weights.
+    # But 'transformers' or 'huggingface_hub' may still attempt to connect to the network
+    os.environ["HF_HUB_OFFLINE"] = "1"

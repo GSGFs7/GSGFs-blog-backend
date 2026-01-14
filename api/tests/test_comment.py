@@ -38,7 +38,7 @@ class TestComment(TestCase):
         self.assertEqual(response.status_code, 401)
 
         # authed test
-        token = TimeBaseAuth.create_token("test")
+        token = TimeBaseAuth.create_token("test comment")
         headers = {"Authorization": f"Bearer {token}"}
         response = self.client.post(
             "/api/comment/new",
