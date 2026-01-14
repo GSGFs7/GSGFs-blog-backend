@@ -9,15 +9,15 @@ services:
         - MODEL_NAME=${MODEL_NAME}
         - SENTENCE_TRANSFORMERS_HOME=${SENTENCE_TRANSFORMERS_HOME}
     # image: django
-    container_name: django
+    container_name: blog-django
     working_dir: /app
     mem_limit: 6G
     cpus: 2
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      - blog-db
+      - blog-redis
     env_file:
       - .env
     environment:
@@ -97,4 +97,5 @@ networks:
 
 secrets:
   hf_token:
-    external: true
+    # You need to create this file
+    file: ./hf_token.txt

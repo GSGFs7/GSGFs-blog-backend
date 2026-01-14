@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1
 # Use the '#syntax' to enable advanced features of BuildKit
 
+FROM python:3.14-slim AS builder
 
-FROM python:3.13-slim AS builder
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -17,16 +19,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # no output buffer
 ENV PYTHONUNBUFFERED=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc g++ git
+RUN apt-get update && apt-get install -y --no-install-recommends git
 
-RUN pip install --upgrade pip
-# RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
-# CPU only
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# try copy models file
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-install-project --no-cache
+
+# Copy application code
 COPY . .
 
 # download model
@@ -35,12 +37,13 @@ RUN --mount=type=secret,id=hf_token \
     export HUGGINGFACE_HUB_TOKEN=$(cat /run/secrets/hf_token) && \
     export MODEL_NAME=${MODEL_NAME} && \
     export SENTENCE_TRANSFORMERS_HOME=${SENTENCE_TRANSFORMERS_HOME} && \
-    python /app/scripts/download-model.py
+    /app/.venv/bin/python /app/scripts/download-model.py
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 # supervisor: Manage multiple processes simultaneously
-RUN apt-get update && apt-get install -y --no-install-recommends supervisor
+RUN apt-get update && apt-get install -y --no-install-recommends supervisor && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -57,12 +60,11 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1 
 ENV DOCKER_ENV="True"
 
-# copy
-# python lib
-COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
-# code and model
-COPY --from=builder --chown=user:user /app .
+# Copy the application from the builder
+COPY --from=builder --chown=user:user /app /app
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
 
 # supervisor configuration
 COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf

@@ -36,3 +36,6 @@ django.tar.zst
 
 # github
 .github
+
+# model
+sentence_transformers_models
