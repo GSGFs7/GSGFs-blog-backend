@@ -24,29 +24,35 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
    source .venv/bin/activate
    ```
 
-3. 将 `.env.example` 复制一份为 `.env` 并填写需要的环境变量, 并确保数据库和 redis 运行在对应的端口
+3. 将 `.env.example` 复制一份为 `.env` 并填写需要的环境变量
 
    尖括号中的内容是必填项, 可以使用 `openssl rand -base64 40` 生成所需的随机字符
 
-4. 由于搜索功能依赖向量化处理, 需要下载用于生成向量的嵌入模型
+4. 启动数据库和 Redis
+
+   ```bash
+   docker compose up -d "blog-db" "blog-redis"
+   ```
+
+5. 由于搜索功能依赖向量化处理, 需要下载用于生成向量的嵌入模型
 
    ```bash
    ./scripts/download-model.py
    ```
 
-5. 迁移数据库
+6. 迁移数据库
 
    ```bash
    ./manage.py makemigrations && ./manage.py migrate
    ```
 
-6. 创建一个管理员用户 (用于登陆后台)
+7. 创建一个管理员用户 (用于登陆后台)
 
    ```bash
    ./manage.py createsuperuser
    ```
 
-7. 运行开发服务器
+8. 运行开发服务器
 
    ```bash
    ./manage.py runserver
