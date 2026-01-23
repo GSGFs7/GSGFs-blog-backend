@@ -41,8 +41,8 @@ def get_comment(request, comment_id: int):
 def get_comment_from_post(request, post_id: int):
     try:
         post = Post.objects.get(pk=post_id)
-        comments = post.comments.all()  # type: ignore
-        return 200, {"ids": [i.id for i in comments]}
+        comment_ids = post.comments.values_list("id", flat=True)  # type: ignore
+        return 200, {"ids": list(comment_ids)}
     except Post.DoesNotExist:
         return 404, {"message": "Not found"}
     except Exception as e:
