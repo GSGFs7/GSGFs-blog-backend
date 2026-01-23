@@ -51,3 +51,22 @@ class TestComment(TestCase):
         created_comment = Comment.objects.latest("id")
         response_data = json.loads(response.content)
         self.assertEqual(response_data["id"], created_comment.pk)
+
+    def test_get_all_comment_from_post_performance(self):
+        post = Post.objects.get(title="comment test")
+        guest = Guest.objects.get(unique_id="myself-114514")
+
+        # Create multiple comments
+        for i in range(5):
+            Comment.objects.create(
+                content=f"test comment {i}",
+                post=post,
+                guest=guest,
+            )
+
+        # The number of queries should be constant regardless of the number of comments
+        with self.assertNumQueries(2):
+            response = self.client.get(f"/api/comment/post/{post.pk}/all")
+            self.assertEqual(response.status_code, 200)
+            response_data = json.loads(response.content)
+            self.assertEqual(len(response_data["comments"]), 5)
