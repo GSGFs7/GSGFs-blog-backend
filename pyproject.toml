@@ -48,3 +48,12 @@ url = "https://pypi.org/simple"
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["I", "E", "F"]
+exclude = ["api/migrations/*.py"]
+
+[tool.ruff.format]
+exclude = ["api/migrations/*.py"]

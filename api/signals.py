@@ -1,6 +1,7 @@
 import logging
+
 from django.db import transaction
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
@@ -32,12 +33,14 @@ def sync_with_vndb(sender, instance, **kwargs):
             vn_data = res["results"][0]
 
             # Update the instance not the database directly
-            # instance.title = vn_data.get("alttitle", vn_data["title"])  # "{"alttitle": null, "title": "xxx"}" -> return None
+            # "{"alttitle": null, "title": "xxx"}" -> return None
+            # instance.title = vn_data.get("alttitle", vn_data["title"])
             instance.title = vn_data.get("alttitle") or vn_data["title"]
             instance.title_cn = find_cn_title(vn_data.get("titles", []))
             instance.cover_image = vn_data["image"]["url"]
             instance.vndb_rating = vn_data.get("rating", None)
-            # This is a pre_save signal, should not call `save()` here otherwise it will cause infinite loop
+            # This is a pre_save signal, should not call `save()`
+            # here otherwise it will cause infinite loop
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to sync VNDB data({instance.vndb_id}): {e}")
@@ -123,6 +126,7 @@ def generate_post_embedding_async(sender, instance, created, **kwargs):
     Uses transaction.on_commit to ensure the task runs after the transaction commits.
     """
     try:
+
         def task():
             # Trigger the Celery task asynchronously
             generate_post_embedding.delay(instance.pk)

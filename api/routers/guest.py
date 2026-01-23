@@ -36,5 +36,5 @@ def get_guest(request, guest_id: int):
     try:
         guest = Guest.objects.get(pk=guest_id)
         return guest
-    except:
+    except Guest.DoesNotExist:
         return 404, {"message": "Not found"}

@@ -3,7 +3,6 @@ from pydantic import PositiveInt
 
 from ..auth import TimeBaseAuth
 from ..models import Gal
-from ..vndb import query_vn
 from ..schemas import (
     GalPaginationResponse,
     GalSchema,
@@ -83,5 +82,5 @@ def update_gal(request, gal_id: int, body: GalUpdateSchema):
         return 200, {"id": gal_id}
     except Gal.DoesNotExist:
         return 404, {"message": "not found"}
-    except Exception as e:
-        return 400, {f"message": "Update failed: {e}"}
+    except Exception:
+        return 400, {"message": "Update failed: {e}"}

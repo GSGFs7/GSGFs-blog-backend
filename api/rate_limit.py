@@ -1,6 +1,7 @@
 from functools import wraps
-from django.core.cache import cache
 from typing import Callable
+
+from django.core.cache import cache
 
 
 def rate_limit(key_prefix: str, max_requests: int, window: int):

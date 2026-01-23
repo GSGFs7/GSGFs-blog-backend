@@ -129,12 +129,12 @@ def extract_first_image(text: str) -> Optional[str]:
 
     markdown_img_pattern = r"!\[([^\]]*)\]\(([^)]+)\)"
     match_result = re.search(markdown_img_pattern, text)
-    if not match_result is None:
+    if match_result is not None:
         return match_result.group(2)
 
     html_img_pattern = r'<img[^>]*src=["\']([^"\']+)["\']'
     match_result = re.search(html_img_pattern, text)
-    if not match_result is None:
+    if match_result is not None:
         return match_result.group(1)
 
     return None
@@ -142,7 +142,8 @@ def extract_first_image(text: str) -> Optional[str]:
 
 def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     """
-    Extracts metadata from a given text, including keywords, tags, category, title, slug, cover image, and header image.
+    Extracts metadata from a given text,
+    including keywords, tags, category, title, slug, cover image, and header image.
     The function processes the input text by:
     - Extracting front matter metadata if present.
     - Identifying the first image in the text.
@@ -152,7 +153,8 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     - Extracting cover and header images from front matter using common field names.
     Args:
         text (str): The input text from which metadata is to be extracted.
-        num_keywords (int, optional): The maximum number of keywords to extract. Defaults to 5.
+        num_keywords (int, optional): The maximum number of keywords to extract.
+        Defaults to 5.
     Returns:
         MetadataResult: A dictionary containing extracted metadata fields:
             - keywords (str): Comma-separated keywords.
@@ -231,7 +233,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     ]
     for name in cover_image_names:
         cover_image = front_matter.get(name)
-        if not cover_image is None:  # if found
+        if cover_image is not None:  # if found
             break
 
     # === header_image ===
@@ -245,7 +247,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     ]
     for name in header_image_names:
         header_image = front_matter.get(name)
-        if not header_image is None:  # if found
+        if header_image is not None:  # if found
             break
     if header_image is None and first_image:
         header_image = first_image
@@ -268,15 +270,18 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
 
 def chinese_slugify(title: str, max_length: int = 50) -> str:
     """
-    Generates a URL-friendly slug from a given title, supporting Chinese and English text.
+    Generates a URL-friendly slug from a given title,
+    supporting Chinese and English text.
 
-    This function converts Chinese characters to their pinyin representation and lowercases English words.
-    Non-alphanumeric characters are removed, and words are joined by hyphens. If the resulting slug exceeds
-    the specified maximum length, it is truncated and appended with a hash suffix for uniqueness.
+    This function converts Chinese characters to their pinyin representation and
+    lowercases English words. Non-alphanumeric characters are removed,
+    and words are joined by hyphens. If the resulting slug exceeds the specified
+    maximum length, it is truncated and appended with a hash suffix for uniqueness.
 
     Args:
         title (str): The input string to be slugified.
-        max_length (int, optional): The maximum length of the resulting slug. Defaults to 50.
+        max_length (int, optional): The maximum length of the resulting slug.
+        Defaults to 50.
 
     Returns:
         str: The slugified string suitable for URLs.
@@ -439,8 +444,9 @@ def convert_openapi(func):
 
 
 if __name__ == "__main__":
-    import requests
     import json
+
+    import requests
 
     result = requests.get("http://localhost:8000/api/openapi.json")
     json_result = result.json()

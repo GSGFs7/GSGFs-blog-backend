@@ -24,16 +24,21 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
         content (str): The markdown content to be converted.
 
     Returns:
-        FrontendMarkdownResponse: A dictionary containing the frontmatter and rendered HTML.
+        FrontendMarkdownResponse: A dictionary containing the frontmatter
+        and rendered HTML.
 
     Raises:
         ValueError: If the `FRONTEND_URL` environment variable is not set.
-        RuntimeError: If the request to the frontend service fails or the response cannot be parsed as JSON.
+        RuntimeError: If the request to the frontend service fails or
+        the response cannot be parsed as JSON.
     """
 
     url = os.getenv("FRONTEND_URL")
     if url is None:
-        err_msg = "Environment variable `FRONTEND_URL` is not set. Please set it to the frontend URL."
+        err_msg = (
+            "Environment variable `FRONTEND_URL` is not set. "
+            "Please set it to the frontend URL."
+        )
         raise ValueError(err_msg)
 
     if not url.endswith("/"):
@@ -41,7 +46,9 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
     url += "api/markdown/render"
 
     try:
-        response = requests.post(url, json={"content": content, "options": {"allowUnsafe": True}})
+        response = requests.post(
+            url, json={"content": content, "options": {"allowUnsafe": True}}
+        )
         response.raise_for_status()  # Raise an error for bad responses (4xx or 5xx)
     except requests.RequestException as e:
         err_msg = f"Failed to render markdown: {e}"
