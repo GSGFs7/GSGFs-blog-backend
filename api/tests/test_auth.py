@@ -18,4 +18,6 @@ class TestAuth(TestCase):
             "/api/test/auth",
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
-        self.assertContains(response, json.dumps({"message": "authenticated"}), status_code=200)
+        self.assertContains(
+            response, json.dumps({"message": "authenticated"}), status_code=200
+        )

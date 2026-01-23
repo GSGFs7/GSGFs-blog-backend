@@ -78,7 +78,7 @@ def new_comment(request, body: NewCommentSchema):
         guest = Guest.objects.get(unique_id=body.unique_id)
 
         comment = Comment.objects.create(content=body.content, post=post, guest=guest)
-        if not body.metadata is None:
+        if body.metadata is not None:
             comment.OS = body.metadata.OS
             comment.user_agent = body.metadata.user_agent
             comment.browser = body.metadata.browser

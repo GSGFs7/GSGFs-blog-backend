@@ -41,7 +41,9 @@ def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
     url += "api/markdown/render"
 
     try:
-        response = requests.post(url, json={"content": content, "options": {"allowUnsafe": True}})
+        response = requests.post(
+            url, json={"content": content, "options": {"allowUnsafe": True}}
+        )
         response.raise_for_status()  # Raise an error for bad responses (4xx or 5xx)
     except requests.RequestException as e:
         err_msg = f"Failed to render markdown: {e}"
