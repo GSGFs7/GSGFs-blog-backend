@@ -51,7 +51,12 @@ class QuietTestRunner(DiscoverRunner):
             if hasattr(jieba, "setLogLevel"):
                 jieba.setLogLevel(logging.WARNING)
         except (ImportError, AttributeError):
-            pass
+            # jieba is optional or may not support setLogLevel;
+            # ignore if configuration fails.
+            logging.getLogger(__name__).debug(
+                "Could not configure jieba logging; "
+                "proceeding without jieba-specific log settings."
+            )
 
     def teardown_test_environment(self, **kwargs):
         """Restore logging configuration after tests."""
