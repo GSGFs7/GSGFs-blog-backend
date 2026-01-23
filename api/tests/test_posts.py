@@ -24,6 +24,7 @@ class TestPost(TestCase):
         post = Post.objects.get(title="test")
         self.assertIsNotNone(post.embedding)
 
+
     def test_post_api(self):
         post = Post.objects.get(title="test")
         self.assertEqual(post.content, "test content")

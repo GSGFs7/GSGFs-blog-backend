@@ -1,10 +1,9 @@
-import logging
-
 from ninja import Router
 from pydantic import PositiveInt
 
 from ..auth import TimeBaseAuth
 from ..models import Gal
+from ..vndb import query_vn
 from ..schemas import (
     GalPaginationResponse,
     GalSchema,
@@ -14,7 +13,6 @@ from ..schemas import (
     MessageSchema,
 )
 
-logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -86,5 +84,4 @@ def update_gal(request, gal_id: int, body: GalUpdateSchema):
     except Gal.DoesNotExist:
         return 404, {"message": "not found"}
     except Exception as e:
-        logger.error(e)
-        return 400, {"message": "Update failed"}
+        return 400, {f"message": "Update failed: {e}"}

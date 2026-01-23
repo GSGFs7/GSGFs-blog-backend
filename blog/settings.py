@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import List
 
@@ -299,7 +298,3 @@ if SENTENCE_TRANSFORMERS_HOME:
     # This setting only prevents the download of model weights.
     # But 'transformers' or 'huggingface_hub' may still attempt to connect to the network
     os.environ["HF_HUB_OFFLINE"] = "1"
-
-# Test runner configuration
-if "test" in sys.argv:
-    TEST_RUNNER = "api.tests.runner.QuietTestRunner"

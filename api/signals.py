@@ -110,7 +110,7 @@ def update_content_update_at(sender, instance, **kwargs):
             if instance.content_update_at is None:
                 instance.content_update_at = timezone.now()
         except Post.DoesNotExist:
-            instance.content_update_at = timezone.now()
+            instance.content_updata_at = timezone.now()
     else:
         instance.content_update_at = timezone.now()
 
@@ -123,7 +123,6 @@ def generate_post_embedding_async(sender, instance, created, **kwargs):
     Uses transaction.on_commit to ensure the task runs after the transaction commits.
     """
     try:
-
         def task():
             # Trigger the Celery task asynchronously
             generate_post_embedding.delay(instance.pk)

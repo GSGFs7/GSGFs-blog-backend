@@ -129,12 +129,12 @@ def extract_first_image(text: str) -> Optional[str]:
 
     markdown_img_pattern = r"!\[([^\]]*)\]\(([^)]+)\)"
     match_result = re.search(markdown_img_pattern, text)
-    if match_result is not None:
+    if not match_result is None:
         return match_result.group(2)
 
     html_img_pattern = r'<img[^>]*src=["\']([^"\']+)["\']'
     match_result = re.search(html_img_pattern, text)
-    if match_result is not None:
+    if not match_result is None:
         return match_result.group(1)
 
     return None
@@ -231,7 +231,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     ]
     for name in cover_image_names:
         cover_image = front_matter.get(name)
-        if cover_image is not None:  # if found
+        if not cover_image is None:  # if found
             break
 
     # === header_image ===
@@ -245,7 +245,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     ]
     for name in header_image_names:
         header_image = front_matter.get(name)
-        if header_image is not None:  # if found
+        if not header_image is None:  # if found
             break
     if header_image is None and first_image:
         header_image = first_image
