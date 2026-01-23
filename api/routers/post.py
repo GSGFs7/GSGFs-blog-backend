@@ -158,7 +158,8 @@ def get_post(request, post_id: int):
 
 # NOTE:
 # must put dynamic routing under static routing
-# if add new static router remember to add the name to exclude list manually at 'api/admin.py' and 'api/models.py'
+# if add new static router remember to add the name to exclude list manually
+# at 'api/admin.py' and 'api/models.py'
 @router.get(
     "/{str:post_slug}",
     response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},

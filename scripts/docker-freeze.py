@@ -50,7 +50,7 @@ if __name__ == "__main__":
     for pac in packages:
         need_to_disable = False
         for r in disabled:
-            if not r.match(pac) is None:
+            if r.match(pac) is not None:
                 need_to_disable = True
                 break
         # comment out

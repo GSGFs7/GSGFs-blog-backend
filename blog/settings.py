@@ -108,7 +108,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # 提供静态文件
-    "debug_toolbar.middleware.DebugToolbarMiddleware",  # 一个debug包的中间件 中间件的顺序很重要
+    "debug_toolbar.middleware.DebugToolbarMiddleware",  # 一个debug包的中间件
 ]
 
 ROOT_URLCONF = "blog.urls"
@@ -193,7 +193,7 @@ CACHE_TTL = 60 * 10  # 缓存超时时间
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",  # noqa: E501
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
@@ -280,7 +280,8 @@ LOGGING = {
 CELERY_BROKER_URL = _redis_url
 CELERY_RESULT_BACKEND = _redis_url
 CELERY_TIMEZONE = "Asia/Shanghai"
-# Celery scheduled tasks use database storage, if not it django_celery_beat will not work
+# Celery scheduled tasks use database storage,
+# if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # img bed
@@ -296,5 +297,9 @@ if SENTENCE_TRANSFORMERS_HOME:
     os.environ["HF_HOME"] = SENTENCE_TRANSFORMERS_HOME
     # 'local_files_only=True'
     # This setting only prevents the download of model weights.
-    # But 'transformers' or 'huggingface_hub' may still attempt to connect to the network
+    # But 'transformers' or 'huggingface_hub' may still attempt to connect to network
     os.environ["HF_HUB_OFFLINE"] = "1"
+
+# Test runner configuration
+# Use custom QuietTestRunner to suppress noisy log output during tests
+TEST_RUNNER = "api.tests.runner.QuietTestRunner"

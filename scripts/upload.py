@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 
-# 用于将本地的文件上传至r2的脚本, 如果需要上传远程文件可以先使用rclone挂载到本地的某个文件夹下再上传.
+# 用于将本地的文件上传至r2的脚本,
+# 如果需要上传远程文件可以先使用rclone挂载到本地的某个文件夹下再上传.
 
 
 import argparse
@@ -82,7 +83,7 @@ def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
             for file in already_existing_file:
                 res[file["Key"]] = True
             return res
-        except:
+        except Exception:
             return {}
 
     total_files = 0
@@ -114,7 +115,8 @@ def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
 
     print("-" * shutil.get_terminal_size().columns)
     print(
-        f"Upload complete: {total_files} files in total, {uploaded_files} uploaded successfully"
+        f"Upload complete: {total_files} files in total"
+        f" {uploaded_files} uploaded successfully"
     )
     return
 
@@ -165,7 +167,7 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
                 for obj in page["Contents"]:
                     size = obj.get("Size", 0)
                     size_mb = size / (1024 * 1024)
-                    print(f'  {obj.get("Key", "")} ({size_mb:.2f} MiB)')
+                    print(f"  {obj.get('Key', '')} ({size_mb:.2f} MiB)")
                     files.append(
                         {
                             "Key": obj.get("Key", ""),
@@ -282,5 +284,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

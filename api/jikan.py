@@ -1,4 +1,3 @@
-import json
 from typing import List, Literal, Optional
 
 import requests
@@ -51,7 +50,8 @@ class AnimeResponse(BaseModel):
 
 def query_anime(id: int) -> AnimeData:
     """
-    Fetches anime information from the Jikan API using the provided MyAnimeList (MAL) anime ID.
+    Fetches anime information from the Jikan API using the provided
+    MyAnimeList (MAL) anime ID.
 
     Args:
         id (int): The MAL ID of the anime to query.

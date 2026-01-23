@@ -2,11 +2,10 @@
 use `jikan.py`, not this file
 """
 
-
-import json
 from typing import List, Optional
-from pydantic import BaseModel
+
 import requests
+from pydantic import BaseModel
 
 
 class AnimeTitle(BaseModel):

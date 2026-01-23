@@ -13,5 +13,4 @@ def get_all_page_ids(request):
 
 @router.get("/{int:page_id}")
 def get_page_by_id(request, page_id: int):
-    page = Page.objects.get(id=page_id)
     pass

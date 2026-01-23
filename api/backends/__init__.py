@@ -1,1 +1,1 @@
-from .ResendEmailBackend import ResendEmailBackend
+from .ResendEmailBackend import ResendEmailBackend as ResendEmailBackend

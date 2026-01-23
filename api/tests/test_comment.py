@@ -1,8 +1,9 @@
 import json
+
 from django.test import TestCase, override_settings
 
 from api.auth import TimeBaseAuth
-from api.models import Guest, Post, Comment
+from api.models import Comment, Guest, Post
 
 
 @override_settings(SECURE_SSL_REDIRECT=False)
@@ -45,7 +46,8 @@ class TestComment(TestCase):
             data=json.dumps(data),
             headers=headers,
             content_type="application/json",
-            # HTTP_AUTHORIZATION=f"Bearer {token}"  # or use this replace 'headers=headers'
+            # or use this replace 'headers=headers'
+            # HTTP_AUTHORIZATION=f"Bearer {token}"
         )
         self.assertEqual(response.status_code, 200)
         created_comment = Comment.objects.latest("id")

@@ -52,8 +52,8 @@ url = "https://download.pytorch.org/whl/cpu"
 line-length = 88
 
 [tool.ruff.lint]
-select = ["I"]
-exclude = ["api/migrations/"]
+select = ["I", "E", "F"]
+exclude = ["api/migrations/*.py"]
 
 [tool.ruff.format]
 exclude = ["api/migrations/*.py"]

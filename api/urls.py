@@ -1,5 +1,5 @@
-from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from ninja import NinjaAPI
 
 from .routers.anime import router as anime_router
@@ -14,7 +14,6 @@ from .routers.page import router as page_router
 from .routers.post import router as posts_router
 from .routers.root import router as root_router
 from .routers.test import router as test_router
-from .utils import convert_openapi
 
 api = NinjaAPI(
     title="GSGFs blog API",

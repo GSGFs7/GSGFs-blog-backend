@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Union
+from typing import Iterable, List, Union
 
 import resend
 from django.conf import settings

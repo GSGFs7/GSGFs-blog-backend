@@ -17,15 +17,18 @@ class PostAdminForm(forms.ModelForm):
         Cleans and validates form data for a Post model.
 
         - Extracts metadata from the 'content' field using front matter if available.
-        - If 'title' is missing, attempts to extract it from metadata; checks for uniqueness.
+        - If 'title' is missing, attempts to extract it from metadata;
+         checks for uniqueness.
         - Automatically generates 'slug' from metadata or the title if not provided.
-        - Collects validation errors for missing or duplicate fields and raises ValidationError if any are found.
+        - Collects validation errors for missing or duplicate fields and raises
+         ValidationError if any are found.
 
         Returns:
             dict: The cleaned and possibly modified form data.
 
         Raises:
-            ValidationError: If required fields are missing, cannot be extracted/generated, or if the title is not unique.
+            ValidationError: If required fields are missing, cannot be
+            extracted/generated, or if the title is not unique.
         """
 
         cleaned_data = super().clean()
@@ -58,7 +61,8 @@ class PostAdminForm(forms.ModelForm):
                     )
             else:
                 errors["title"] = (
-                    "The title field cannot be empty and cannot be automatically extracted from Front Matter."
+                    "The title field cannot be empty and cannot be "
+                    "automatically extracted from Front Matter."
                 )
 
         # === slug ===
