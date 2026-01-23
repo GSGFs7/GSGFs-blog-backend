@@ -48,23 +48,12 @@ url = "https://pypi.org/simple"
 name = "pytorch"
 url = "https://download.pytorch.org/whl/cpu"
 
-
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ['py314']
-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | api/migrations
-)/
-'''
 
+[tool.ruff.lint]
+select = ["I"]
+exclude = ["api/migrations/"]
+
+[tool.ruff.format]
+exclude = ["api/migrations/*.py"]

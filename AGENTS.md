@@ -1,5 +1,9 @@
 # AGENTS.md - GSGFs-blog-backend
 
+> **Note**: This file is automatically maintained. If you notice any outdated information or missing commands, please update this file and update the last modified date below.
+
+> **Last Modified**: 2026-01-23
+
 ## Project Overview
 Django 5.2 + Django-Ninja backend for a personal blog with AI-powered search (vector embeddings), Celery tasks, and PostgreSQL with pgvector.
 
@@ -50,7 +54,7 @@ ruff check
 ruff check --fix
 
 # Format code
-black .
+ruff format .
 
 # Check imports
 ruff check --select I
@@ -251,7 +255,7 @@ Required in `.env`:
 ### Git Hooks
 The project uses pre-commit hooks. Run before committing:
 ```bash
-ruff check && black .
+ruff check && ruff format .
 ```
 
 ### CI/CD
@@ -278,10 +282,10 @@ GitHub Actions run tests on:
 ./manage.py test api.tests.test_posts.TestPost.test_post_embedding_generation
 
 # Check code quality
-ruff check && black .
+ruff check && ruff format --check
 
 # Fix issues
-ruff check --fix && black .
+ruff check --fix && ruff format .
 
 # Run single test file
 ./manage.py test api.tests.test_posts
