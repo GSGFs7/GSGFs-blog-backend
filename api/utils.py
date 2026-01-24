@@ -32,8 +32,12 @@ def remove_html_tags(text: str) -> str:
         str: The input string with HTML tags removed.
     """
     # Remove script and style tags with their content
-    text = re.sub(r"<script[^>]*>[\s\S]*?</script>", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"<style[^>]*>[\s\S]*?</style>", "", text, flags=re.IGNORECASE)
+    text = re.sub(
+        r"<script[^>]*>[\s\S]*?</\s*script[^>]*>", "", text, flags=re.IGNORECASE
+    )
+    text = re.sub(
+        r"<style[^>]*>[\s\S]*?</\s*style[^>]*>", "", text, flags=re.IGNORECASE
+    )
 
     # Remove HTML comments
     text = re.sub(r"<!--[\s\S]*?-->", "", text)

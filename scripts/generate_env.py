@@ -73,11 +73,6 @@ def main():
     # Check if .env already exists
     if Path(output_path).exists():
         print(f"⚠ Warning: {output_path} already exists")
-        # response = input("Backup and overwrite? (y/N): ").strip().lower()
-        # if response != "y":
-        #     print("Cancelled")
-        #     return
-
         # Backup existing file
         shutil.copy2(".env", ".env.bak")
         print("✓ Backed up existing file to .env.bak")
