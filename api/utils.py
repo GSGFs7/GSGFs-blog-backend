@@ -31,8 +31,23 @@ def remove_html_tags(text: str) -> str:
     Returns:
         str: The input string with HTML tags removed.
     """
-    clean = re.compile("<.*?>")
-    return re.sub(clean, "", text)
+    # Remove script and style tags with their content
+    text = re.sub(r"<script[^>]*>[\s\S]*?</script>", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"<style[^>]*>[\s\S]*?</style>", "", text, flags=re.IGNORECASE)
+
+    # Remove HTML comments
+    text = re.sub(r"<!--[\s\S]*?-->", "", text)
+
+    # Remove CDATA sections
+    text = re.sub(r"<!\[CDATA\[[\s\S]*?]]>", "", text)
+
+    # Remove DOCTYPE declarations
+    text = re.sub(r"<!DOCTYPE[^>]*>", "", text, flags=re.IGNORECASE)
+
+    # Remove all other HTML tags (including self-closing tags)
+    text = re.sub(r"<[^>]+>", "", text)
+
+    return text
 
 
 def remove_markdown(text: str) -> str:
@@ -45,23 +60,54 @@ def remove_markdown(text: str) -> str:
     Returns:
         str: The input string with Markdown syntax removed.
     """
-    # Remove inline code
-    text = re.sub(r"`([^`]+)`", r"\1", text)
-    # Remove headers
-    text = re.sub(r"^#+\s*", "", text, flags=re.MULTILINE)
-    # Remove links
-    text = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", text)
-    # Remove images
-    text = re.sub(r"!\[([^]]*)]\([^)]+\)", r"\1", text)
-    # Remove emphasis
-    text = re.sub(r"(\*\*|__)(.*?)\1", r"\2", text)
-    # Remove math
-    text = re.sub(r"\$([^$\n]+?)\$", "", text)
-    text = re.sub(r"\$\$([\s\S]*?)\$\$", "", text)
-    text = re.sub(r"\\\[([\s\S]*?)\\]", "", text)
-    text = re.sub(r"\\\(([\s\S]*?)\\\)", "", text)
-    # Remove front matter
+    # Remove front matter first (to avoid interfering with other patterns)
     text = re.sub(r"^---\s*\n(.*?)\n---\s*\n", "", text, flags=re.DOTALL)
+
+    # Remove math blocks (do this before inline patterns)
+    text = re.sub(r"\$\$[\s\S]*?\$\$", "", text)
+    text = re.sub(r"\\\[[\s\S]*?\\\]", "", text)
+
+    # Remove code blocks (fenced and indented)
+    text = re.sub(r"```[\s\S]*?```", "", text)
+    text = re.sub(r"~~~[\s\S]*?~~~", "", text)
+    text = re.sub(r"(?m)^ {4,}.*$", "", text)
+
+    # Remove inline math
+    text = re.sub(r"\$[^$\n]+\$", "", text)
+    text = re.sub(r"\\\([^)]+\\\)", "", text)
+
+    # Remove images (complete removal, not just alt text)
+    text = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", text)
+
+    # Remove links (keep link text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+
+    # Remove headers
+    text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
+
+    # Remove horizontal rules first (exactly 3 or more of the same character)
+    # Do this before emphasis to avoid *** being interpreted as emphasis
+    text = re.sub(r"^([-*_])\1\1+\s*$", "", text, flags=re.MULTILINE)
+
+    # Remove emphasis (bold, italic, strikethrough)
+    # Handle nested emphasis by removing markers from outside in
+    text = re.sub(r"(\*\*\*|___)(.*?)\1", r"\2", text, flags=re.DOTALL)  # bold+italic
+    text = re.sub(r"(\*\*|__)(.*?)\1", r"\2", text, flags=re.DOTALL)  # bold
+    text = re.sub(r"(\*|_)(.*?)\1", r"\2", text, flags=re.DOTALL)  # italic
+    text = re.sub(r"~~(.*?)~~", r"\1", text, flags=re.DOTALL)  # strikethrough
+
+    # Remove inline code (keep content)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+
+    # Remove blockquotes
+    text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)
+
+    # Remove list markers
+    text = re.sub(r"^[\s]*[-*+]\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^[\s]*\d+\.\s+", "", text, flags=re.MULTILINE)
+
+    # Clean up extra whitespace
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
@@ -75,17 +121,27 @@ def remove_code_blocks(text: str) -> str:
     Returns:
         str: The input string with code blocks removed.
     """
-    # Remove fenced code blocks
+    # Remove HTML pre blocks (they are block-level)
+    text = re.sub(r"<pre[\s\S]*?</pre>", "", text, flags=re.IGNORECASE)
+
+    # Remove fenced code blocks (backticks and tildes)
     text = re.sub(r"```[\s\S]*?```", "", text)
-    # Remove inline code
+    text = re.sub(r"~~~[\s\S]*?~~~", "", text)
+
+    # Remove indented code blocks (4 spaces or 1 tab at start of line)
+    text = re.sub(r"(?m)^(?: {4,}|\t).*$", "", text)
+
+    # Remove inline code (keep content) - both Markdown and HTML
     text = re.sub(r"`([^`]+)`", r"\1", text)
-    # Remove HTML code blocks
-    text = re.sub(r"<pre[\s\S]*?</pre>", "", text)
-    text = re.sub(r"<code[\s\S]*?</code>", "", text)
+    # Handle HTML code tags with or without attributes
+    text = re.sub(r"<code[^>]*>([^<]+)</code>", r"\1", text, flags=re.IGNORECASE)
+
+    # Clean up extra whitespace
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
-def extract_front_matter(text: str) -> Dict[str, str]:
+def extract_front_matter(text: str) -> Dict[str, Any]:
     """
     Extract front matter from a string.
 
@@ -93,7 +149,8 @@ def extract_front_matter(text: str) -> Dict[str, str]:
         text (str): The input string containing front matter.
 
     Returns:
-        str: The extracted front matter as a string.
+        Dict[str, Any]: The extracted front matter as a dictionary,
+                        or empty dict if no valid front matter found.
     """
     front_matter_pattern = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
     matched = front_matter_pattern.match(text)
@@ -103,8 +160,12 @@ def extract_front_matter(text: str) -> Dict[str, str]:
         try:
             front_matter = yaml.safe_load(yaml_content)
             if front_matter is None:
-                front_matter = {}
-            return front_matter
+                return {}
+            # Ensure we return a dictionary, not a string or other type
+            if isinstance(front_matter, dict):
+                return front_matter
+            else:
+                return {}
         except yaml.YAMLError:
             return {}
 
