@@ -1,10 +1,5 @@
 # AGENTS.md - GSGFs-blog-backend
 
-> **Note**: This file is automatically maintained. If you notice any outdated information or missing commands, please
-> update this file and update the last modified date below.
-
-> **Last Modified**: 2026-01-23
-
 ## Project Overview
 
 Django 5.2 + Django-Ninja backend for a personal blog with AI-powered search (vector embeddings), Celery tasks, and
