@@ -81,7 +81,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build the Docker image
-        # use '--load' to load the image to the Docker daemon, otherwise will save a empty image
+        # use '--load' to load the image to the Docker daemon, otherwise will save an empty image
         run: |
           docker buildx build \
             --load \
