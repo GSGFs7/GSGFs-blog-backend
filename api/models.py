@@ -201,8 +201,6 @@ class Post(BaseModel):
         super().save(*args, **kwargs)
 
         # === tags ===
-        # TODO
-        # it not work! WTF???
         if not self.tags.exists():  # must use `.exists()` to check it
             tags_to_set = []
             tag_list = post_metadata["tags"]
