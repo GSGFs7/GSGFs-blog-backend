@@ -128,7 +128,13 @@ def get_post_cards_from_query(
 
     # Assemble into corresponding structure
     paginated_ids = [item[0] for item in paginated_result]
-    posts_dict = Post.objects.in_bulk(paginated_ids)
+    # Replace in_bulk with filter + select_related + prefetch_related to avoid N+1 queries
+    posts_dict = (
+        Post.objects.select_related("category")
+        .prefetch_related("tags")
+        .in_bulk(paginated_ids)
+    )
+
     posts_with_similarity = []
     for post_id, similarity in paginated_result:
         post_obj = posts_dict.get(post_id)
