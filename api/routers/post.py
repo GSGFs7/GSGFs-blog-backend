@@ -1,7 +1,11 @@
 import logging
 
+from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.core.cache import cache
+from django.db.models import F, Q
+from django.views.decorators.cache import cache_page
 from ninja import Router
+from ninja.decorators import decorate_view
 from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
@@ -19,7 +23,7 @@ from ..schemas import (
     PostsSchema,
 )
 
-CONFIDENCE = 0.6
+CONFIDENCE = 0.3
 
 router = Router()
 
@@ -82,6 +86,8 @@ def get_all_post_ids_for_sitemap(request):
     },
 )
 @rate_limit(key_prefix="post_search", max_requests=10, window=1)
+# TODO: use `cache_page` replace cache code below
+@decorate_view(cache_page(3600))
 def get_post_cards_from_query(
     request,
     q: str,
@@ -97,22 +103,32 @@ def get_post_cards_from_query(
         return 400, {"message": "Query too long"}
 
     # find cache
-    if cached is None:
+    if cached is not None:
+        result = cached
+    else:
+        import jieba
+
+        tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
+        search_query = SearchQuery(tokenized_query, config="simple")
+
         task = generate_search_embedding_task.delay(q)
         query_embedding = task.get(timeout=1)
 
         post_query = (
             Post.objects.annotate(
-                similarity=CosineDistance("embedding", query_embedding)
+                fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
+                vec_distance=CosineDistance("embedding", query_embedding),
             )
-            .filter(similarity__lt=CONFIDENCE)
-            .order_by("similarity")
-            .values_list("id", "similarity")
+            .filter(
+                Q(pg_gin_search_vector=search_query) | Q(vec_distance__lt=CONFIDENCE),
+            )
+            .annotate(
+                hybrid_score=(F("fts_rank") * 0.4) + ((1.0 - F("vec_distance")) * 0.6)
+            )
+            .order_by("-hybrid_score")
         )
-        result = list(post_query)
+        result = list(post_query.values("id", "hybrid_score"))
         cache.set(cache_key, result, timeout=3600)  # 1h
-    else:
-        result = cached
 
     # paginate
     total = len(result)
@@ -127,10 +143,12 @@ def get_post_cards_from_query(
         }
 
     # Assemble into corresponding structure
-    paginated_ids = [item[0] for item in paginated_result]
+    paginated_ids = [item["id"] for item in paginated_result]
     posts_dict = Post.objects.in_bulk(paginated_ids)
     posts_with_similarity = []
-    for post_id, similarity in paginated_result:
+    for item in paginated_result:
+        post_id = item["id"]
+        similarity = item["hybrid_score"] or 0.0
         post_obj = posts_dict.get(post_id)
         if post_obj:
             posts_with_similarity.append({"post": post_obj, "similarity": similarity})
