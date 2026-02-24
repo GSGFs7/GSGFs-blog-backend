@@ -8,7 +8,7 @@ from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
-from pgvector.django import VectorField
+from pgvector.django import HnswIndex, VectorField
 
 from .utils import chinese_slugify, extract_metadata
 
@@ -160,6 +160,13 @@ class Post(BaseModel):
         ordering = ["-order", "-created_at"]
         indexes = [
             GinIndex(fields=["pg_gin_search_vector"]),
+            HnswIndex(
+                name="api_post_embedding_cosine_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
         ]
 
     def __str__(self):
