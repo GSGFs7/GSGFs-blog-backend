@@ -54,7 +54,7 @@ def generate_env_file(env_vars: list[str], output_path: str) -> None:
         f.write("# Fill in the values for your environment\n\n")
 
         for var in env_vars:
-            f.write(f"{var}={os.getenv(var, "")}\n")
+            f.write(f"{var}={os.getenv(var, '')}\n")
 
     print(f"✓ Generated {output_path} successfully")
     print(f"  Extracted {len(env_vars)} environment variables")

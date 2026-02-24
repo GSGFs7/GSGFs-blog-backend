@@ -28,16 +28,19 @@ ENV UV_LINK_MODE=copy
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project --no-cache
 
-# Copy application code
-COPY . .
+# Copy download script first to enable early model download
+COPY scripts/download-model.py ./scripts/
 
-# download model
+# download model (before copying application code to avoid cache invalidation)
 # Use --mount=type=secret to safely mount the token
 RUN --mount=type=secret,id=hf_token \
     export HUGGINGFACE_HUB_TOKEN=$(cat /run/secrets/hf_token) && \
     export MODEL_NAME=${MODEL_NAME} && \
     export SENTENCE_TRANSFORMERS_HOME=${SENTENCE_TRANSFORMERS_HOME} && \
     /app/.venv/bin/python /app/scripts/download-model.py
+
+# Copy application code
+COPY . .
 
 FROM python:3.14-slim
 
@@ -57,7 +60,7 @@ ENV MODEL_NAME=${MODEL_NAME}
 ENV SENTENCE_TRANSFORMERS_HOME=${SENTENCE_TRANSFORMERS_HOME}
 
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1 
+ENV PYTHONUNBUFFERED=1
 ENV DOCKER_ENV="True"
 
 # Copy the application from the builder
@@ -77,7 +80,7 @@ RUN mkdir -p /var/log/supervisor && \
 RUN python manage.py collectstatic --noinput
 
 # supervisor needs to run as root
-# USER user 
+# USER user
 
 EXPOSE 8000
 

@@ -1,0 +1,19 @@
+# k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blog-config
+  namespace: blog
+data:
+  DEBUG: "False"
+  DJANGO_LOGLEVEL: "info"
+  DATABASE_ENGINE: "postgresql"
+  DATABASE_NAME: "blog"
+  DATABASE_HOST: "blog-postgres"
+  DATABASE_PORT: "5432"
+  REDIS_HOST: "blog-redis"
+  REDIS_PORT: "6379"
+  MODEL_NAME: "google/embeddinggemma-300m"
+  SENTENCE_TRANSFORMERS_HOME: "/models"
+  #HF_ENDPOINT: "https://hf-mirror.com"
+  K8S_ENV: "True"

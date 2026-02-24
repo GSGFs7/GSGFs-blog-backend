@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 
-# 用于将本地的文件上传至r2的脚本,
-# 如果需要上传远程文件可以先使用rclone挂载到本地的某个文件夹下再上传.
+# Script for uploading local files to R2,
+# If you need to upload remote files,
+# you can first mount them to a local folder using rclone.
 
 
 import argparse

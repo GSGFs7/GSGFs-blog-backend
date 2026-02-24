@@ -9,6 +9,7 @@ __pycache__
 !.env.example
 .ssh/
 hf_token.txt
+.config/k8s/secret.yaml
 
 backups/
 *.dump

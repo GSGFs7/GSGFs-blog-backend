@@ -14,7 +14,7 @@ PostgreSQL with pgvector.
 uv sync
 
 # Run PostgreSQL and Redis
-docker compose up -d "blog-db" "blog-redis"
+docker compose up -d "blog-postgres" "blog-redis"
 
 # Run development server
 uv run manage.py runserver

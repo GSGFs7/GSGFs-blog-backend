@@ -1,0 +1,182 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+      db:
+        image: pgvector/pgvector:pg17-trixie
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: github_action_test
+          POSTGRES_USER: github_action_test_user
+          POSTGRES_PASSWORD: github_action_test_password
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Download model
+        run: uv run scripts/download-model.py
+        env:
+          MODEL_NAME: google/embeddinggemma-300m
+          SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+
+      - name: Run tests
+        run: uv run manage.py test
+        env:
+          DJANGO_SECRET_KEY: github-action-test-django-secret-key
+          DATABASE_ENGINE: postgresql
+          DATABASE_NAME: github_action_test
+          DATABASE_USER: github_action_test_user
+          DATABASE_PASSWORD: github_action_test_password
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MODEL_NAME: google/embeddinggemma-300m
+          SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+          API_KEY: github_action_test_API_KEY
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    if: ${{ github.event_name != 'pull_request' }}
+    strategy:
+      matrix:
+        include:
+          - component: django
+            dockerfile: .config/k8s/containers/django.Dockerfile
+            image_name: blog-django
+          - component: celery-worker
+            dockerfile: .config/k8s/containers/celery-worker.Dockerfile
+            image_name: blog-celery-worker
+          - component: celery-beat
+            dockerfile: .config/k8s/containers/celery-beat.Dockerfile
+            image_name: blog-celery-beat
+          - component: model-downloader
+            dockerfile: .config/k8s/containers/model-downloader.Dockerfile
+            image_name: blog-model-downloader
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Log in to Private Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_DOMAIN }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:latest
+            ${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:${{ github.sha }}
+          secrets: |
+            "hf_token=${{ secrets.HUGGINGFACE_HUB_TOKEN }}"
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Update Kubernetes manifests
+        run: |
+          REGISTRY="${{ secrets.REGISTRY_DOMAIN }}"
+          TAG="${{ github.sha }}"
+          # Replace all of the config to use the new image
+          find .config/k8s -name "*.yaml" -exec sed -i "s|image: localhost/|image: $REGISTRY/|g" {} +
+          find .config/k8s -name "*.yaml" -exec sed -i "s|imagePullPolicy: Never|imagePullPolicy: IfNotPresent|g" {} +
+          # Replace :latest with specific commit tag for consistency
+          find .config/k8s -name "*.yaml" -exec sed -i "s|:latest|:$TAG|g" {} +
+
+      - name: Deploy to k3s
+        env:
+          BACKEND_DOMAIN: ${{ secrets.BACKEND_DOMAIN }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          HUGGINGFACE_HUB_TOKEN: ${{ secrets.HUGGINGFACE_HUB_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          API_KEY: ${{ secrets.API_KEY }}
+          DJANGO_ALLOWED_HOSTS: ${{ secrets.BACKEND_DOMAIN }}
+          DJANGO_CSRF_TRUSTED_ORIGINS: https://${{ secrets.BACKEND_DOMAIN }}
+          FRONTEND_URL: https://${{ secrets.BACKEND_DOMAIN }}
+          SERVER_NAME: ${{ secrets.BACKEND_DOMAIN }}
+          DEFAULT_FROM_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+        run: |
+          # 1. Base resources
+          kubectl apply -f .config/k8s/namespace.yaml
+          kubectl apply -f .config/k8s/configmap.yaml
+
+          # 2. Secret substitution
+          envsubst < .config/k8s/secret.example.yaml | kubectl apply -f -
+
+          # 3. Storage and databases
+          kubectl apply -f .config/k8s/pvc.yaml
+          kubectl apply -f .config/k8s/postgres.yaml
+          kubectl apply -f .config/k8s/redis.yaml
+
+          # 4. Wait for db
+          kubectl wait --for=condition=ready pod -l app=blog-postgres -n blog --timeout=120s
+
+          # 5. Database migrations
+          kubectl delete job blog-django-migrate -n blog --ignore-not-found
+          kubectl apply -f .config/k8s/job-migrate.yaml
+
+          # 6. Wait for migrations to complete
+          kubectl wait --for=condition=complete job/blog-django-migrate -n blog --timeout=300s
+
+          # 7. Deploy applications
+          kubectl apply -f .config/k8s/django.yaml
+          kubectl apply -f .config/k8s/celery-worker.yaml
+          kubectl apply -f .config/k8s/celery-beat.yaml
+
+          # 8. Ingress
+          envsubst < .config/k8s/ingress.yaml | kubectl apply -f -

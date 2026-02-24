@@ -1,0 +1,81 @@
+# k8s/redis.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blog-redis-pvc
+  namespace: blog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-redis
+  namespace: blog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blog-redis
+  template:
+    metadata:
+      labels:
+        app: blog-redis
+    spec:
+      volumes:
+        - name: blog-redis-storage
+          persistentVolumeClaim:
+            claimName: blog-redis-pvc
+      containers:
+        - name: blog-redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - everysec
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: blog-redis-storage
+              mountPath: /data
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-redis
+  namespace: blog
+spec:
+  selector:
+    app: blog-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
