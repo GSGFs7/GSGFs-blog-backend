@@ -1,6 +1,6 @@
 使用 k3s 部署的配置
 
-需要用到 `Dockerfile.*` 这些文件来构建镜像
+需要用到 `containers/*.Dockerfile` 这些文件来构建镜像
 
 步骤:
 

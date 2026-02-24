@@ -29,7 +29,7 @@ docker build \
 echo "All images built successfully!"
 echo ""
 
-for image in model-downloader blog-django blog-celery-worker blog-celery-beat; do
+for image in blog-model-downloader blog-django blog-celery-worker blog-celery-beat; do
     echo "Importing localhost/$image:latest to k3s..."
     docker save localhost/$image:latest | sudo k3s ctr images import -
 done
