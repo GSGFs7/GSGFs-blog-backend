@@ -49,16 +49,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: blog-config
-          env:
-            - name: DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: blog-secrets
-                  key: DATABASE_USER
-            - name: DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: blog-secrets
-                  key: DATABASE_PASSWORD
+            - secretRef:
+                name: blog-secrets
   backoffLimit: 4
   ttlSecondsAfterFinished: 3600 # 1h

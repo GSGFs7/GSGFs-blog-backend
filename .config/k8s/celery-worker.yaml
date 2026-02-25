@@ -59,6 +59,9 @@ spec:
           image: ${REGISTRY_DOMAIN}/blog-model-downloader:latest
           # noinspection KubernetesUnknownValues
           imagePullPolicy: ${IMAGE_PULL_POLICY}
+          command:
+            - python
+            - /app/scripts/download-model.py
           envFrom:
             - configMapRef:
                 name: blog-config
@@ -118,7 +121,7 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: blog-celry-worker-hpa
+  name: blog-celery-worker-hpa
   namespace: blog
 spec:
   maxReplicas: 3

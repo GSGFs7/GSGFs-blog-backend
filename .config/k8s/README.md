@@ -36,4 +36,22 @@
 
 ---
 
+生产环境需要安装 cert-manager 来管理 TLS 证书:
+
+```bash
+# 安装 cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.4/cert-manager.yaml
+
+# 部署 ClusterIssuer（用于 Let's Encrypt 证书）
+envsubst < .config/k8s/clusterissuer.yaml | kubectl apply -f -
+```
+
+需要安装 metrics-server 才能让 HPA 正常工作:
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+---
+
 关于私有 Registry 镜像的拉取, 需要在 k3s 节点上创建 `/etc/rancher/k3s/registries.yaml`, 并进行配置

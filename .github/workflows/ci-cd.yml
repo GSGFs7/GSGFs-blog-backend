@@ -88,6 +88,9 @@ jobs:
           - component: model-downloader
             dockerfile: .config/k8s/containers/model-downloader.Dockerfile
             image_name: blog-model-downloader
+          - component: backup
+            dockerfile: .config/k8s/containers/backup.Dockerfile
+            image_name: blog-backup
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -142,6 +145,9 @@ jobs:
           FRONTEND_URL: https://${{ secrets.BACKEND_DOMAIN }}
           SERVER_NAME: ${{ secrets.BACKEND_DOMAIN }}
           DEFAULT_FROM_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
+          S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
         run: |
           # 1. Base resources
           kubectl apply -f .config/k8s/namespace.yaml
@@ -171,7 +177,9 @@ jobs:
           envsubst < .config/k8s/celery-beat.yaml | kubectl apply -f -
 
           # 8. Ingress
+          # Deploy ClusterIssuer first for TLS certificates
+          envsubst < .config/k8s/clusterissuer.yaml | kubectl apply -f -
           envsubst < .config/k8s/ingress.yaml | kubectl apply -f -
-          
+
           # 9. Set cron job
           envsubst < .config/k8s/job-backup.yaml | kubectl apply -f -
