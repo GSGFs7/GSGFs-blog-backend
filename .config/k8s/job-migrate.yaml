@@ -17,22 +17,35 @@ spec:
       restartPolicy: OnFailure
       initContainers:
         - name: wait-for-postgres
-          image: localhost/blog-django:latest
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-            [
-              "python",
-              "-c",
-              "import socket, time; addr = ('blog-postgres', 5432); \nwhile True: \n    try: socket.create_connection(addr, timeout=2); break \n    except: print('waiting for postgres...'); time.sleep(2)",
-            ]
+            - python
+            - -c
+            - |
+              import socket, time
+              addr = ('blog-postgres', 5432)
+              while True:
+                try: 
+                  socket.create_connection(addr, timeout=2)
+                  break
+                except: 
+                  print('waiting for postgres...')
+                  time.sleep(2)
       volumes:
         - name: staticfiles
-          emptyDir: {}
+          emptyDir: { }
       containers:
         - name: blog-django-migrate
-          image: localhost/blog-django:latest
-          imagePullPolicy: Never
-          command: ["python", "manage.py", "migrate", "--noinput"]
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          command:
+            - python
+            - manage.py
+            - migrate
+            - "--noinput"
           envFrom:
             - configMapRef:
                 name: blog-config

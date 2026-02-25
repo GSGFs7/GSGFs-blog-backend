@@ -22,36 +22,42 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: localhost/blog-celery-beat:latest
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-            [
-              "python",
-              "-c",
-              "import socket, time; addr = ('blog-postgres', 5432); \nwhile True: \n    try: socket.create_connection(addr, timeout=2); break \n    except Exception: print('waiting for db...'); time.sleep(2)",
-            ]
+            - python
+            - -c
+            - "import socket, time; addr = ('blog-postgres', 5432); \nwhile True: \n    try: socket.create_connection(addr, timeout=2); break \n    except Exception: print('waiting for db...'); time.sleep(2)"
         - name: wait-for-redis
-          image: localhost/blog-celery-beat:latest
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-            [
-              "python",
-              "-c",
-              "import socket, time; addr = ('blog-redis', 6379); \nwhile True: \n    try: socket.create_connection(addr, timeout=2); break \n    except Exception: print('waiting for redis...'); time.sleep(2)",
-            ]
+            - python
+            - -c
+            - |
+              import socket, time
+              addr = ('blog-redis', 6379)
+              while True:
+                  try:
+                      socket.create_connection(addr, timeout=2)
+                      break
+                  except Exception:
+                      print('waiting for redis...')
+                      time.sleep(2)
       containers:
         - name: blog-celery-beat
-          image: localhost/blog-celery-beat:latest
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-            [
-              "celery",
-              "-A",
-              "blog",
-              "beat",
-              "--pidfile=/tmp/celerybeat.pid",
-              "--loglevel=info",
-            ]
+            - celery
+            - -A
+            - blog
+            - beat
+            - --pidfile=/tmp/celerybeat.pid
+            - --loglevel=info
           envFrom:
             - configMapRef:
                 name: blog-config

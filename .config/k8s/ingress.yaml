@@ -6,11 +6,9 @@ metadata:
   namespace: blog
   annotations:
     # the entry point used by the route (WebSecure corresponds to HTTPS port 443).
-    traefik.ingress.kubernetes.io/router.entrypoint: websecure
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # enable TLS encryption
     traefik.ingress.kubernetes.io/router.tls: "true"
-    # HTTP redirect to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: blog-blog-redirect-scheme@kubernetescrd
     # rate limiting
     traefik.ingress.kubernetes.io/ratelimit.average: "100"
     # certificate management
@@ -33,18 +31,6 @@ spec:
                 name: blog-django
                 port:
                   number: 8000
-
----
-
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: blog-redirect-scheme
-  namespace: blog
-spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
 
 ---
 

@@ -27,18 +27,27 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: localhost/blog-django:latest # Eliminate dependence on external networks
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           command:
-            [
-              "python",
-              "-c",
-              "import socket, time; addr = ('blog-postgres', 5432); \nwhile True: \n    try: socket.create_connection(addr, timeout=2); break \n    except Exception: print('waiting for db...'); time.sleep(2)",
-            ]
+            - python
+            - -c
+            - |
+              import socket, time
+              addr = ('blog-postgres', 5432)
+              while True:
+                  try:
+                      socket.create_connection(addr, timeout=2)
+                      break
+                  except Exception:
+                      print('waiting for db...')
+                      time.sleep(2)
       containers:
         - name: blog-django
-          image: localhost/blog-django:latest
-          imagePullPolicy: Never
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
           ports:
             - name: http
               containerPort: 8000

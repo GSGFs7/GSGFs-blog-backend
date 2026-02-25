@@ -48,9 +48,13 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 
-ALLOWED_HOSTS = _split_csv(
-    os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
-)
+# 在 K8s 环境中允许所有 hosts 以支持 Pod IP 健康检查
+if is_k8s_env():
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = _split_csv(
+        os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
+    )
 
 # CDN 和代理配置
 USE_X_FORWARDED_HOST = True  # 信任头部设置

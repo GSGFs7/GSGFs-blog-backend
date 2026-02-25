@@ -17,3 +17,4 @@ data:
   SENTENCE_TRANSFORMERS_HOME: "/models"
   #HF_ENDPOINT: "https://hf-mirror.com"
   K8S_ENV: "True"
+  BACKUP_BUCKET: "backup"

@@ -3,6 +3,9 @@
 
 set -e
 
+# Set deployment environment (dev or prod)
+DEPLOY_ENV=${1:-prod}
+
 # Load environment variables from .env file
 if [ -f .env ]; then
     echo "Loading environment variables from .env..."
@@ -13,6 +16,20 @@ if [ -f .env ]; then
 else
     echo "Warning: .env file not found. Variables might not be substituted correctly."
 fi
+
+# Set image registry based on deployment environment
+if [ "$DEPLOY_ENV" = "dev" ]; then
+    echo "Setting up development environment configuration..."
+    export REGISTRY_DOMAIN=localhost
+    export IMAGE_PULL_POLICY=Never
+else
+    echo "Setting up production environment configuration..."
+    export REGISTRY_DOMAIN=${REGISTRY_DOMAIN}
+    export IMAGE_PULL_POLICY=Always
+fi
+
+echo "Image registry: $REGISTRY_DOMAIN"
+echo "Image pull policy: $IMAGE_PULL_POLICY"
 
 echo "Deploying to k3s cluster..."
 
@@ -41,22 +58,25 @@ kubectl wait --for=condition=available deployment/blog-redis -n blog --timeout=3
 echo "7. Running database migrations..."
 # Delete existing job if it exists to allow updates to job spec (which is immutable)
 kubectl delete job blog-django-migrate -n blog --ignore-not-found
-kubectl apply -f .config/k8s/job-migrate.yaml
+envsubst < .config/k8s/job-migrate.yaml | kubectl apply -f -
 
 echo "8. Waiting for migrations to complete..."
 kubectl wait --for=condition=complete --timeout=300s job/blog-django-migrate -n blog
 
 echo "9. Deploying Django application..."
-kubectl apply -f .config/k8s/django.yaml
+envsubst < .config/k8s/django.yaml | kubectl apply -f -
 
 echo "10. Deploying Celery Worker..."
-kubectl apply -f .config/k8s/celery-worker.yaml
+envsubst < .config/k8s/celery-worker.yaml | kubectl apply -f -
 
 echo "11. Deploying Celery Beat..."
-kubectl apply -f .config/k8s/celery-beat.yaml
+envsubst < .config/k8s/celery-beat.yaml | kubectl apply -f -
 
-echo "12. Deploying Ingress..."
-if [ "$1" = "dev" ]; then
+echo "12. Deploying Backup CronJob..."
+envsubst < .config/k8s/job-backup.yaml | kubectl apply -f -
+
+echo "13. Deploying Ingress..."
+if [ "$DEPLOY_ENV" = "dev" ]; then
     echo "Using development environment Ingress configuration..."
     envsubst < .config/k8s/ingress-dev.yaml | kubectl apply -f -
 else
@@ -71,6 +91,7 @@ echo "Check deployment status:"
 echo "  kubectl get -n blog pods"
 echo "  kubectl get -n blog svc"
 echo "  kubectl get -n blog ingress"
+echo "  kubectl get -n blog cronjob"
 echo ""
 echo "View logs:"
 echo "  kubectl logs -f -n blog deployment/blog-django"

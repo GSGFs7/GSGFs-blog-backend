@@ -125,18 +125,10 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      - name: Update Kubernetes manifests
-        run: |
-          REGISTRY="${{ secrets.REGISTRY_DOMAIN }}"
-          TAG="${{ github.sha }}"
-          # Replace all of the config to use the new image
-          find .config/k8s -name "*.yaml" -exec sed -i "s|image: localhost/|image: $REGISTRY/|g" {} +
-          find .config/k8s -name "*.yaml" -exec sed -i "s|imagePullPolicy: Never|imagePullPolicy: IfNotPresent|g" {} +
-          # Replace :latest with specific commit tag for consistency
-          find .config/k8s -name "*.yaml" -exec sed -i "s|:latest|:$TAG|g" {} +
-
       - name: Deploy to k3s
         env:
+          REGISTRY_DOMAIN: ${{ secrets.REGISTRY_DOMAIN }}
+          IMAGE_PULL_POLICY: Always
           BACKEND_DOMAIN: ${{ secrets.BACKEND_DOMAIN }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
@@ -168,15 +160,18 @@ jobs:
 
           # 5. Database migrations
           kubectl delete job blog-django-migrate -n blog --ignore-not-found
-          kubectl apply -f .config/k8s/job-migrate.yaml
+          envsubst < .config/k8s/job-migrate.yaml | kubectl apply -f -
 
           # 6. Wait for migrations to complete
           kubectl wait --for=condition=complete job/blog-django-migrate -n blog --timeout=300s
 
           # 7. Deploy applications
-          kubectl apply -f .config/k8s/django.yaml
-          kubectl apply -f .config/k8s/celery-worker.yaml
-          kubectl apply -f .config/k8s/celery-beat.yaml
+          envsubst < .config/k8s/django.yaml | kubectl apply -f -
+          envsubst < .config/k8s/celery-worker.yaml | kubectl apply -f -
+          envsubst < .config/k8s/celery-beat.yaml | kubectl apply -f -
 
           # 8. Ingress
           envsubst < .config/k8s/ingress.yaml | kubectl apply -f -
+          
+          # 9. Set cron job
+          envsubst < .config/k8s/job-backup.yaml | kubectl apply -f -
