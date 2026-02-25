@@ -2,9 +2,9 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 
-from api.utils import chinese_slugify, extract_front_matter
+from api.utils import chinese_slugify, extract_front_matter, extract_metadata
 
-from .models import Anime, Comment, Gal, Guest, Post
+from .models import Anime, Comment, Gal, Guest, Post, Tag
 
 
 class PostAdminForm(forms.ModelForm):
@@ -42,9 +42,19 @@ class PostAdminForm(forms.ModelForm):
 
         # === content ===
         if content:
-            metadata = extract_front_matter(content)
+            metadata = extract_metadata(content)
         else:
             errors["content"] = "Content field cannot be empty."
+
+        # === tags ===
+        if not cleaned_data.get("tags"):
+            tag_names = metadata.get("tags")
+            if tag_names:
+                tags_to_set = []
+                for tag_name in tag_names:
+                    tag_obj, _ = Tag.objects.get_or_create(name=tag_name)
+                    tags_to_set.append(tag_obj)
+                cleaned_data["tags"] = tags_to_set
 
         # === title ===
         if not title:
