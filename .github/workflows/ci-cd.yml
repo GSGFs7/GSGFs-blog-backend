@@ -125,7 +125,7 @@ jobs:
       - name: Set up Kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Deploy to k3s
@@ -178,7 +178,7 @@ jobs:
 
           # 8. Ingress
           # Deploy ClusterIssuer first for TLS certificates
-          envsubst < .config/k8s/clusterissuer.yaml | kubectl apply -f -
+          envsubst < .config/k8s/cluster-issuer.yaml | kubectl apply -f -
           envsubst < .config/k8s/ingress.yaml | kubectl apply -f -
 
           # 9. Set cron job
