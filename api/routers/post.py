@@ -48,7 +48,11 @@ def get_posts(
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    posts = Post.objects.all()[offset : offset + size]
+    posts = (
+        Post.objects.select_related("category")
+        .prefetch_related("tags")
+        .all()[offset : offset + size]
+    )
     return 200, {
         "posts": list(posts),
         "pagination": {
