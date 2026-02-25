@@ -28,6 +28,11 @@ def is_docker_env() -> bool:
     return os.environ.get("DOCKER_ENV", "False").lower() in ("1", "true", "yes")
 
 
+def is_k8s_env() -> bool:
+    """Check if running in Kubernetes environment"""
+    return os.environ.get("K8S_ENV", "False").lower() in ("1", "true", "yes")
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -43,9 +48,13 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.environ.get("DEBUG", default="False") == "True")
 
-ALLOWED_HOSTS = _split_csv(
-    os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
-)
+# 在 K8s 环境中允许所有 hosts 以支持 Pod IP 健康检查
+if is_k8s_env():
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = _split_csv(
+        os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1, localhost")
+    )
 
 # CDN 和代理配置
 USE_X_FORWARDED_HOST = True  # 信任头部设置
@@ -60,9 +69,10 @@ CSRF_TRUSTED_ORIGINS = (
 )
 
 # 安全设置
-SECURE_SSL_REDIRECT = not DEBUG  # 强制 HTTPS
-SESSION_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 cookie, CF 的请求可能为 http
-CSRF_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 CSRF cookie, 同上
+# 在 K8s 环境中禁用 SSL 重定向以支持内部健康检查
+SECURE_SSL_REDIRECT = not DEBUG and not is_k8s_env()  # 强制 HTTPS (生产环境且非 K8s)
+SESSION_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 cookie
+CSRF_COOKIE_SECURE = not DEBUG  # 仅通过 HTTPS 发送 CSRF cookie
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
@@ -152,10 +162,10 @@ else:
                 os.getenv("DATABASE_ENGINE", "sqlite3")
             ),
             "NAME": os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
-            "USER": os.getenv("DATABASE_USERNAME", "user"),
+            "USER": os.getenv("DATABASE_USER", "user"),
             "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
             "HOST": (
-                "blog-db"  # 写死在 docker 配置中的
+                "blog-postgres"  # 写死在 docker 配置中的
                 if is_docker_env()
                 else os.getenv("DATABASE_HOST", "127.0.0.1")
             ),
@@ -303,3 +313,5 @@ if SENTENCE_TRANSFORMERS_HOME:
 # Test runner configuration
 # Use custom QuietTestRunner to suppress noisy log output during tests
 TEST_RUNNER = "api.tests.runner.QuietTestRunner"
+# Disable hugging face process bar
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"

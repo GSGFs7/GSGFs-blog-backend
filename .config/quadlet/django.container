@@ -2,8 +2,8 @@
 
 [Unit]
 Description=Django Web Application Service
-Requires=blog-db.service blog-redis.service
-After=blog-db.service blog-redis.service
+Requires=blog-postgres.service blog-redis.service
+After=blog-postgres.service blog-redis.service
 
 [Container]
 ContainerName=django

@@ -9,8 +9,11 @@ __pycache__
 !.env.example
 .ssh/
 hf_token.txt
+.config/k8s/secret.yaml
 
 backups/
+*.dump
+
 db.sqlite3
 django.tar.zst
 openapi.json

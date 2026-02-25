@@ -1,0 +1,16 @@
+# k8s/pvc.yaml
+# Shared persistent volume
+
+# machine learning model
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blog-model-pvc
+  namespace: blog
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: local-path

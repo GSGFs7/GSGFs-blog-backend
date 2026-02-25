@@ -1,4 +1,4 @@
-# $HOME/.config/containers/systemd/blog-db.container
+# $HOME/.config/containers/systemd/blog-postgres.container
 
 [Unit]
 Description=PostgreSQL Database Service for Blog
@@ -6,7 +6,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Container]
-ContainerName=blog-db
+ContainerName=blog-postgres
 Image=pgvector/pgvector:pg17-trixie
 EnvironmentFile=/path/to/your/env_file
 #PublishPort=5432:5432
