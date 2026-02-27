@@ -6,6 +6,14 @@ set -e
 # Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
+declare -a IMAGES=(
+    "model-downloader:.config/k8s/containers/model-downloader.Dockerfile"
+    "django:.config/k8s/containers/django.Dockerfile"
+    "celery-worker:.config/k8s/containers/celery-worker.Dockerfile"
+    "celery-beat:.config/k8s/containers/celery-beat.Dockerfile"
+    "backup:.config/k8s/containers/backup.Dockerfile"
+)
+
 detect_container_builder() {
     if command -v podman &> /dev/null; then
         echo "podman"
@@ -16,14 +24,6 @@ detect_container_builder() {
         exit 1
     fi
 }
-
-declare -a IMAGES=(
-    "model-downloader:.config/k8s/containers/model-downloader.Dockerfile"
-    "django:.config/k8s/containers/django.Dockerfile"
-    "celery-worker:.config/k8s/containers/celery-worker.Dockerfile"
-    "celery-beat:.config/k8s/containers/celery-beat.Dockerfile"
-    "backup:.config/k8s/containers/backup.Dockerfile"
-)
 
 build_with_podman() {
     podman build --format oci -f "$2" -t "localhost/blog-$1:latest" .
@@ -48,14 +48,14 @@ build_images() {
             build_with_docker "$name" "$dockerfile"
         fi
     done
-}
-
-import_to_k3s() {
-    local builder=$1
 
     echo ""
     echo "All images built successfully!"
     echo ""
+}
+
+import_to_k3s() {
+    local builder=$1
 
     for image_info in "${IMAGES[@]}"; do
         IFS=':' read -r name dockerfile <<< "$image_info"

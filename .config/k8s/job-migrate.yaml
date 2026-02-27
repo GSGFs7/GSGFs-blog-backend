@@ -52,4 +52,4 @@ spec:
             - secretRef:
                 name: blog-secrets
   backoffLimit: 4
-  ttlSecondsAfterFinished: 3600 # 1h
+  ttlSecondsAfterFinished: 60 # 1min

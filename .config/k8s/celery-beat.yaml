@@ -36,8 +36,8 @@ spec:
                   socket.create_connection(addr, timeout=2)
                   break
                 except Exception:
-                print('waiting for db...')
-                time.sleep(2)
+                  print('waiting for db...')
+                  time.sleep(2)
         - name: wait-for-redis
           image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
           # noinspection KubernetesUnknownValues

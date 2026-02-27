@@ -94,7 +94,7 @@ if [ "$DEPLOY_ENV" = "dev" ]; then
     envsubst < .config/k8s/ingress-dev.yaml | kubectl apply -f -
 else
     echo "Using production environment Ingress configuration..."
-    envsubst < .config/k8s/clusterissuer.yaml | kubectl apply -f -
+    envsubst < .config/k8s/cluster-issuer.yaml | kubectl apply -f -
     envsubst < .config/k8s/ingress.yaml | kubectl apply -f -
 fi
 
