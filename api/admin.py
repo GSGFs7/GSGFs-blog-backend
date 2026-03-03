@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 
-from api.utils import chinese_slugify, extract_front_matter, extract_metadata
+from api.utils import chinese_slugify, extract_metadata
 
 from .models import Anime, Comment, Gal, Guest, Post, Tag
 
