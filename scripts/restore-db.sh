@@ -4,8 +4,8 @@ source .env
 
 BACKUP_FILE="$1"
 
-docker exec -i blog-db psql \
-    -U "${DATABASE_USERNAME}" \
+docker exec -i blog-postgres psql \
+    -U "${DATABASE_USER}" \
     -d "${DATABASE_NAME}" \
     < "${BACKUP_FILE}"
 

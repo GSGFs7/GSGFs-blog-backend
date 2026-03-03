@@ -20,7 +20,7 @@ class AnimeTitles(BaseModel):
     title: str
 
 
-# only i need, not all
+# only i need, not all  # That do I mean?
 class AnimeData(BaseModel):
     mal_id: int
     url: str

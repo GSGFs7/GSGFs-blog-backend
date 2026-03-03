@@ -1,0 +1,33 @@
+# k8s/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-ingress
+  namespace: blog
+  annotations:
+    # the entry point used by the route (WebSecure corresponds to HTTPS port 443).
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # enable TLS encryption
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # rate limiting
+    traefik.ingress.kubernetes.io/ratelimit.average: "100"
+    # certificate management
+    # install cert-manager first, https://cert-manager.io/docs/installation/
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ${BACKEND_DOMAIN}
+      secretName: blog-django-tls-secret
+  rules:
+    - host: ${BACKEND_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-django
+                port:
+                  number: 8000

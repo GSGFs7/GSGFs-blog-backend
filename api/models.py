@@ -1,7 +1,14 @@
+"""
+TODO: split this
+"""
+
+import jieba
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
-from pgvector.django import VectorField
+from pgvector.django import HnswIndex, VectorField
 
 from .utils import chinese_slugify, extract_metadata
 
@@ -140,6 +147,10 @@ class Post(BaseModel):
     # 向量化搜索
     embedding = VectorField(dimensions=768, null=True, blank=True)
 
+    # PG full-text search
+    pg_gin_search_vector = SearchVectorField(null=True, blank=True)
+    tokenized_content = models.TextField(blank=True, null=True)
+
     # update in 'api/signals.py'
     content_update_at = models.DateTimeField(
         null=False, blank=True, help_text="文章正文最后更新时间"
@@ -147,6 +158,16 @@ class Post(BaseModel):
 
     class Meta(BaseModel.Meta):
         ordering = ["-order", "-created_at"]
+        indexes = [
+            GinIndex(fields=["pg_gin_search_vector"]),
+            HnswIndex(
+                name="api_post_embedding_cosine_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            ),
+        ]
 
     def __str__(self):
         return self.title
@@ -166,6 +187,7 @@ class Post(BaseModel):
             self.slug = post_metadata.get("slug")
         if not self.slug and self.title:
             self.slug = chinese_slugify(self.title)
+        # TODO: move to another place
         RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
         if self.slug in RESERVED_SLUGS:
             raise ValidationError(
@@ -192,6 +214,9 @@ class Post(BaseModel):
             category, created = Category.objects.get_or_create(name=category)
             self.category = category
 
+        # === tokenize (PG FTS) ===
+        self.tokenized_content = " ".join(jieba.lcut(self.content, cut_all=True))
+
         # === vector ===
         # Moved to Celery task (see api/tasks.py: generate_post_embedding)
         # The embedding will be generated asynchronously after the post is saved
@@ -210,6 +235,16 @@ class Post(BaseModel):
                 tag_obj, created = Tag.objects.get_or_create(name=tag_name)
                 tags_to_set.append(tag_obj)
             self.tags.set(tags_to_set)
+
+        # === Full-text search ===
+        # generate PG full-text search vector
+        Post.objects.filter(pk=self.pk).update(
+            pg_gin_search_vector=SearchVector(
+                "title",
+                "tokenized_content",
+                config="simple",
+            )
+        )
 
 
 class Page(BaseModel):

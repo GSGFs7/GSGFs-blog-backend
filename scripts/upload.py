@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 
-# 用于将本地的文件上传至r2的脚本,
-# 如果需要上传远程文件可以先使用rclone挂载到本地的某个文件夹下再上传.
+# Script for uploading local files to S3 compatible
+# If you need to upload remote files,
+# you can first mount them to a local folder using rclone.
 
 
 import argparse
@@ -22,23 +23,23 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 dotenv.load_dotenv(os.path.join(project_root, ".env"))
 
 # Config
-# R2_TOKEN = os.environ.get("R2_TOKEN")  # The token given by CF is not used
-R2_ENDPOINT_URL = os.environ.get("R2_ENDPOINT_URL")
-R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID")
-R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY")
+# S3_TOKEN = os.environ.get("S3_TOKEN")  # The token is not used
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL")
+S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY")
 
-# Initializing the R2 Client
-r2_client = boto3.client(
+# Initializing the S3 Client
+s3_client = boto3.client(
     "s3",
-    endpoint_url=R2_ENDPOINT_URL,
-    aws_access_key_id=R2_ACCESS_KEY_ID,
-    aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+    endpoint_url=S3_ENDPOINT_URL,
+    aws_access_key_id=S3_ACCESS_KEY_ID,
+    aws_secret_access_key=S3_SECRET_ACCESS_KEY,
 )
 
 
 def list_buckets() -> None:
     """List all buckets"""
-    for bucket in r2_client.list_buckets()["Buckets"]:
+    for bucket in s3_client.list_buckets()["Buckets"]:
         print(f"{bucket.get('Name', '')}")
 
 
@@ -56,7 +57,7 @@ def upload_file(file_name: str, bucket: str, object_name: Optional[str] = None) 
         object_name = os.path.basename(file_name)
 
     try:
-        r2_client.upload_file(file_name, bucket, object_name)
+        s3_client.upload_file(file_name, bucket, object_name)
     except ClientError as e:
         print(f"Error: {file_name} upload failed. {e}")
         return False
@@ -99,18 +100,18 @@ def upload_directory(dir_path: str, bucket: str, prefix: str = "") -> None:
             # Process object name
             relative_path = os.path.relpath(local_path, dir_path)
             # For Windows users, use / instead of \
-            r2_object_name = os.path.join(prefix, relative_path).replace("\\", "/")
+            s3_object_name = os.path.join(prefix, relative_path).replace("\\", "/")
 
-            print(r2_object_name)
+            print(s3_object_name)
             print(already_existing_file)
-            if already_existing_file.get(r2_object_name):
+            if already_existing_file.get(s3_object_name):
                 print(f"Skipping duplicate file: {local_path}")
                 continue
 
             # Upload files
-            print(f"Loading: {local_path} -> ({bucket}){r2_object_name}")
+            print(f"Loading: {local_path} -> ({bucket}){s3_object_name}")
             total_files += 1
-            if upload_file(local_path, bucket, r2_object_name):
+            if upload_file(local_path, bucket, s3_object_name):
                 uploaded_files += 1
 
     print("-" * shutil.get_terminal_size().columns)
@@ -153,7 +154,7 @@ def list_object(bucket: str, prefix: str = "", delimiter: str = "") -> None:
             print(f"Error writing file: {e}")
 
     try:
-        paginator = r2_client.get_paginator("list_objects_v2")
+        paginator = s3_client.get_paginator("list_objects_v2")
         page_iterator = paginator.paginate(
             Bucket=bucket,
             Prefix=prefix,
@@ -187,10 +188,10 @@ def print_usage() -> None:
 
     print(f"用法: {sys.argv[0]} [命令]")
     print("可用命令")
-    print("  upload <dir> <bucket> [prefix] - 上传文件夹内所有文件至存储桶")
-    print("  list <bucket>                  - 列出所有文件")
-    print("  list_bucket                    - 列出所有存储桶")
-    print("  --zh                           - 显示此帮助信息")
+    print("  upload <path> <bucket> [prefix]    - 上传文件或文件夹至存储桶")
+    print("  list <bucket>                      - 列出所有文件")
+    print("  list_bucket                        - 列出所有存储桶")
+    print("  --zh                               - 显示此帮助信息")
 
 
 def parse_argument() -> argparse.Namespace:
@@ -198,7 +199,7 @@ def parse_argument() -> argparse.Namespace:
 
     # Why English? Because argparse is English.
     parser = argparse.ArgumentParser(
-        description="R2 object storage file uploader",
+        description="S3 object storage file uploader",
         epilog="使用--zh参数查看中文帮助",
     )
     subparser = parser.add_subparsers(dest="command", description="Available commands")
@@ -207,11 +208,11 @@ def parse_argument() -> argparse.Namespace:
     upload_parser = subparser.add_parser(
         "upload",
         aliases=["u"],
-        help="Upload all files in the directory to R2",
+        help="Upload file or directory to S3",
     )
     upload_parser.add_argument(
-        "dir_path",
-        help="The directory where the file is located",
+        "path",
+        help="The local file or directory path to upload",
     )
     upload_parser.add_argument(
         "bucket",
@@ -272,12 +273,23 @@ def main():
     """Main function"""
 
     args = parse_argument()
+    cmd = args.command
 
-    if args.command == "upload":
-        upload_directory(args.dir_path, args.bucket, args.prefix)
-    elif args.command == "list_bucket":
+    if cmd in ["upload", "u"]:
+        if os.path.isfile(args.path):
+            # Process object name with prefix
+            object_name = os.path.join(
+                args.prefix, os.path.basename(args.path)
+            ).replace("\\", "/")
+            print(f"Loading file: {args.path} -> ({args.bucket}){object_name}")
+            upload_file(args.path, args.bucket, object_name)
+        elif os.path.isdir(args.path):
+            upload_directory(args.path, args.bucket, args.prefix)
+        else:
+            print(f"Error: {args.path} is not a valid file or directory")
+    elif cmd in ["list_bucket", "b"]:
         list_buckets()
-    elif args.command == "list":
+    elif cmd in ["list", "l"]:
         list_object(args.bucket, args.prefix, args.delimiter)
     else:
         print_usage()

@@ -31,7 +31,7 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 4. 启动数据库和 Redis
 
    ```bash
-   docker compose up -d "blog-db" "blog-redis"
+   docker compose up -d "blog-postgres" "blog-redis"
    ```
 
 5. 由于搜索功能依赖向量化处理, 需要下载用于生成向量的嵌入模型

@@ -39,3 +39,6 @@ django.tar.zst
 
 # model
 sentence_transformers_models
+
+# config
+.config/

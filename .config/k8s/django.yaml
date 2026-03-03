@@ -1,0 +1,123 @@
+# k8s/django.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-django
+  namespace: blog
+  labels:
+    app: blog-django
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: blog-django
+  template:
+    metadata:
+      labels:
+        app: blog-django
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: wait-for-db
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          command:
+            - python
+            - -c
+            - |
+              import socket, time
+              addr = ('blog-postgres', 5432)
+              while True:
+                  try:
+                      socket.create_connection(addr, timeout=2)
+                      break
+                  except Exception:
+                      print('waiting for db...')
+                      time.sleep(2)
+      containers:
+        - name: blog-django
+          image: ${REGISTRY_DOMAIN}/blog-django:latest
+          # noinspection KubernetesUnknownValues
+          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          ports:
+            - name: http
+              containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: blog-config
+            - secretRef:
+                name: blog-secrets
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              port: 8000
+              path: /api/health/
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              port: 8000
+              path: /api/health/
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-django
+  namespace: blog
+spec:
+  selector:
+    app: blog-django
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: blog-django-hpa
+  namespace: blog
+spec:
+  maxReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: blog-django
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 85
