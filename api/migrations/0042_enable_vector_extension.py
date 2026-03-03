@@ -3,16 +3,6 @@
 from django.db import migrations
 
 
-def create_extension(apps, schema_editor):
-    if schema_editor.connection.vendor == "postgresql":
-        schema_editor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-
-
-def drop_extension(apps, schema_editor):
-    if schema_editor.connection.vendor == "postgresql":
-        schema_editor.execute("DROP EXTENSION IF EXISTS vector;")
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -20,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(create_extension, drop_extension),
+        migrations.RunSQL(
+            sql="CREATE EXTENSION IF NOT EXISTS vector;",
+            reverse_sql="DROP EXTENSION IF EXISTS vector;",
+        ),
     ]
