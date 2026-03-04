@@ -14,7 +14,9 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends git
 
 # Create user early and install dependencies as user to avoid chown
-RUN useradd -m -u 1000 user && mkdir -p /models && chown user:user /models
+RUN useradd -m -u 1000 user && \
+    mkdir -p /models && \
+    chown user:user /app /models
 
 COPY --chown=user:user pyproject.toml uv.lock ./
 
