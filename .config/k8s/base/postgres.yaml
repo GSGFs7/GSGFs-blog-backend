@@ -68,7 +68,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U $POSTGRES_USER
+                - pg_isready -U "$POSTGRES_USER"
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
@@ -76,7 +76,7 @@ spec:
               command:
                 - sh
                 - -c
-                - pg_isready -U $POSTGRES_USER
+                - pg_isready -U "$POSTGRES_USER"
             initialDelaySeconds: 5
             periodSeconds: 5
 
