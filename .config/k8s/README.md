@@ -11,6 +11,9 @@
    ```bash
    # 复制 .env 并填写相关内容
    cp .env.example .env
+
+   # 从 .env 文件创建 secret
+   kubectl create secret generic blog-secrets --from-env-file=.env -n blog
    ```
 
 2. 构建镜像并导入到 k3s
@@ -19,7 +22,7 @@
    ./script/k3s-build.sh
    ```
 
-   这将得到这五个镜像：
+   这将得到这五个镜像:
    - `localhost/blog-django:latest`
    - `localhost/blog-celery-worker:latest`
    - `localhost/blog-celery-beat:latest`
@@ -43,7 +46,7 @@
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.4/cert-manager.yaml
 
 # 部署 ClusterIssuer（用于 Let's Encrypt 证书）
-envsubst < .config/k8s/clusterissuer.yaml | kubectl apply -f -
+envsubst < .config/k8s/cluster-issuer.yaml | kubectl apply -f -
 ```
 
 需要安装 metrics-server 才能让 HPA 正常工作:

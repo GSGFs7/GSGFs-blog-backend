@@ -1,11 +1,22 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # k3s component build script
+# Builds and imports all container images for k3s deployment
 
 set -e
 
 # Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
+# Image list: name:dockerfile_path
+declare -a IMAGES=(
+    "model-downloader:.config/k8s/containers/model-downloader.Dockerfile"
+    "django:.config/k8s/containers/django.Dockerfile"
+    "celery-worker:.config/k8s/containers/celery-worker.Dockerfile"
+    "celery-beat:.config/k8s/containers/celery-beat.Dockerfile"
+    "backup:.config/k8s/containers/backup.Dockerfile"
+)
+
+# Detect available container builder (podman preferred)
 detect_container_builder() {
     if command -v podman &> /dev/null; then
         echo "podman"
@@ -17,22 +28,17 @@ detect_container_builder() {
     fi
 }
 
-declare -a IMAGES=(
-    "model-downloader:.config/k8s/containers/model-downloader.Dockerfile"
-    "django:.config/k8s/containers/django.Dockerfile"
-    "celery-worker:.config/k8s/containers/celery-worker.Dockerfile"
-    "celery-beat:.config/k8s/containers/celery-beat.Dockerfile"
-    "backup:.config/k8s/containers/backup.Dockerfile"
-)
-
+# Build image using podman
 build_with_podman() {
     podman build --format oci -f "$2" -t "localhost/blog-$1:latest" .
 }
 
+# Build image using docker
 build_with_docker() {
-    docker buildx build --output type=oci -f "$2" -t "localhost/blog-$1:latest" .
+    docker build -f "$2" -t "localhost/blog-$1:latest" .
 }
 
+# Build all images in the list
 build_images() {
     local builder=$1
 
@@ -48,14 +54,15 @@ build_images() {
             build_with_docker "$name" "$dockerfile"
         fi
     done
-}
-
-import_to_k3s() {
-    local builder=$1
 
     echo ""
     echo "All images built successfully!"
     echo ""
+}
+
+# Import images into k3s containerd
+import_to_k3s() {
+    local builder=$1
 
     for image_info in "${IMAGES[@]}"; do
         IFS=':' read -r name dockerfile <<< "$image_info"
@@ -65,12 +72,17 @@ import_to_k3s() {
     echo ""
     echo "Images imported successfully!"
     echo ""
+}
+
+print_what_next() {
     echo "Deploy to k3s:"
     echo "  ./scripts/k3s-deploy.sh"
 }
 
+# Main execution
 CONTAINER_BUILDER=$(detect_container_builder)
 echo "Using $CONTAINER_BUILDER as container builder"
 
 build_images "$CONTAINER_BUILDER"
 import_to_k3s "$CONTAINER_BUILDER"
+print_what_next

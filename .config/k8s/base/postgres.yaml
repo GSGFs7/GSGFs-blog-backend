@@ -1,9 +1,8 @@
-# k8s/postgres.yaml
+# k8s/base/postgres.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: blog-postgres-pvc
-  namespace: blog
 spec:
   accessModes:
     - ReadWriteOnce
@@ -18,7 +17,6 @@ apiVersion: apps/v1
 kind: StatefulSet # PostgreSQL is a stateful service
 metadata:
   name: blog-postgres
-  namespace: blog
 spec:
   serviceName: blog-postgres
   replicas: 1 # deploy only 1 replica (single-node PostgreSQL)
@@ -88,7 +86,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: blog-postgres
-  namespace: blog
 spec:
   selector:
     app: blog-postgres

@@ -1,12 +1,12 @@
-# k8s/configmap.yaml
+# k8s/base/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: blog-config
-  namespace: blog
 data:
   DEBUG: "False"
   DJANGO_LOGLEVEL: "info"
+  DJANGO_ALLOWED_HOSTS: "*"
   DATABASE_ENGINE: "postgresql"
   DATABASE_NAME: "blog"
   DATABASE_HOST: "blog-postgres"

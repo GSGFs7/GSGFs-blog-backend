@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ingress.yaml
+  - cluster-issuer.yaml
+
+# Automatically generate secret from .env.prod
+secretGenerator:
+  - name: blog-secrets
+    envs:
+      - .env.prod
+
+# In prod, images are managed by GitHub Action/Argo CD
+images:
+  - name: blog-django
+    newName: blog-django
+    newTag: latest
+  - name: blog-celery-worker
+    newName: blog-celery-worker
+    newTag: latest
+  - name: blog-celery-beat
+    newName: blog-celery-beat
+    newTag: latest
+  - name: blog-model-downloader
+    newName: blog-model-downloader
+    newTag: latest
+  - name: blog-backup
+    newName: blog-backup
+    newTag: latest
