@@ -1,9 +1,8 @@
-# k8s/celery-beat.yaml
+# k8s/base/celery-beat.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: blog-celery-beat
-  namespace: blog
   labels:
     app: blog-celery-beat
 spec:
@@ -22,9 +21,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-beat:latest
           command:
             - python
             - -c
@@ -32,16 +29,14 @@ spec:
               import socket, time
               addr = ('blog-postgres', 5432)
               while True:
-                try:
-                  socket.create_connection(addr, timeout=2)
-                  break
-                except Exception:
-                  print('waiting for db...')
-                  time.sleep(2)
+                  try:
+                      socket.create_connection(addr, timeout=2)
+                      break
+                  except Exception:
+                      print('waiting for db...')
+                      time.sleep(2)
         - name: wait-for-redis
-          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-beat:latest
           command:
             - python
             - -c
@@ -57,9 +52,7 @@ spec:
                       time.sleep(2)
       containers:
         - name: blog-celery-beat
-          image: ${REGISTRY_DOMAIN}/blog-celery-beat:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-beat:latest
           command:
             - celery
             - -A

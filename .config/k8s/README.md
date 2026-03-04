@@ -11,6 +11,9 @@
    ```bash
    # 复制 .env 并填写相关内容
    cp .env.example .env
+
+   # 从 .env 文件创建 secret
+   kubectl create secret generic blog-secrets --from-env-file=.env -n blog
    ```
 
 2. 构建镜像并导入到 k3s

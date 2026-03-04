@@ -1,0 +1,118 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ingress-dev.yaml
+
+# Disable name hash for easier reference in base manifests
+generatorOptions:
+  disableNameSuffixHash: true
+
+# Automatically generate secret from .env.dev
+secretGenerator:
+  - name: blog-secrets
+    envs:
+      - .env.dev
+
+# In dev, we use local images
+images:
+  - name: blog-django
+    newName: localhost/blog-django
+    newTag: latest
+  - name: blog-celery-worker
+    newName: localhost/blog-celery-worker
+    newTag: latest
+  - name: blog-celery-beat
+    newName: localhost/blog-celery-beat
+    newTag: latest
+  - name: blog-model-downloader
+    newName: localhost/blog-model-downloader
+    newTag: latest
+  - name: blog-backup
+    newName: localhost/blog-backup
+    newTag: latest
+
+# Force local image pulling in dev (one patch per resource for precise targeting)
+patches:
+  # blog-django Deployment
+  - target:
+      kind: Deployment
+      name: blog-django
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: blog-django
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: wait-for-db
+                imagePullPolicy: Never
+            containers:
+              - name: blog-django
+                imagePullPolicy: Never
+
+  # blog-celery-worker Deployment
+  - target:
+      kind: Deployment
+      name: blog-celery-worker
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: blog-celery-worker
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: wait-for-db
+                imagePullPolicy: Never
+              - name: wait-for-redis
+                imagePullPolicy: Never
+              - name: download-model
+                imagePullPolicy: Never
+            containers:
+              - name: blog-celery-worker
+                imagePullPolicy: Never
+
+  # blog-celery-beat Deployment
+  - target:
+      kind: Deployment
+      name: blog-celery-beat
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: blog-celery-beat
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: wait-for-db
+                imagePullPolicy: Never
+              - name: wait-for-redis
+                imagePullPolicy: Never
+            containers:
+              - name: blog-celery-beat
+                imagePullPolicy: Never
+
+  # blog-django-migrate Job
+  - target:
+      kind: Job
+      name: blog-django-migrate
+    patch: |-
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: blog-django-migrate
+      spec:
+        template:
+          spec:
+            initContainers:
+              - name: wait-for-postgres
+                imagePullPolicy: Never
+            containers:
+              - name: blog-django-migrate
+                imagePullPolicy: Never

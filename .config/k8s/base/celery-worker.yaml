@@ -1,9 +1,8 @@
-# k8s/celery-worker.yaml
+# k8s/base/celery-worker.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: blog-celery-worker
-  namespace: blog
   labels:
     app: blog-celery-worker
 spec:
@@ -22,9 +21,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: ${REGISTRY_DOMAIN}/blog-celery-worker:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-worker:latest
           command:
             - python
             - -c
@@ -39,9 +36,7 @@ spec:
                       print('waiting for db...')
                       time.sleep(2)
         - name: wait-for-redis
-          image: ${REGISTRY_DOMAIN}/blog-celery-worker:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-worker:latest
           command:
             - python
             - -c
@@ -56,9 +51,7 @@ spec:
                       print('waiting for redis...')
                       time.sleep(2)
         - name: download-model
-          image: ${REGISTRY_DOMAIN}/blog-model-downloader:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-model-downloader:latest
           command:
             - python
             - /app/scripts/download-model.py
@@ -72,9 +65,7 @@ spec:
               mountPath: /models
       containers:
         - name: blog-celery-worker
-          image: ${REGISTRY_DOMAIN}/blog-celery-worker:latest
-          # noinspection KubernetesUnknownValues
-          imagePullPolicy: ${IMAGE_PULL_POLICY}
+          image: blog-celery-worker:latest
           envFrom:
             - configMapRef:
                 name: blog-config
@@ -122,7 +113,6 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: blog-celery-worker-hpa
-  namespace: blog
 spec:
   maxReplicas: 3
   scaleTargetRef:

@@ -1,9 +1,8 @@
-# k8s/job-backup.yaml
+# k8s/base/job-backup.yaml
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: postgres-db-backup
-  namespace: blog
+  name: blog-postgres-db-backup
 spec:
   schedule: "0 4 * * *" # every day 4:00
   timeZone: Asia/Shanghai
@@ -16,9 +15,7 @@ spec:
               emptyDir: { }
           containers:
             - name: blog-postgres-backup
-              image: ${REGISTRY_DOMAIN}/blog-backup:latest
-              # noinspection KubernetesUnknownValues
-              imagePullPolicy: ${IMAGE_PULL_POLICY}
+              image: blog-backup:latest
               volumeMounts:
                 - name: backup-dir
                   mountPath: /backups
@@ -35,7 +32,7 @@ spec:
                   BACKUP_FILE="/backups/blog-$(date +%Y%m%d-%H%M).sql.gz"
                   export PGPASSWORD=$DATABASE_PASSWORD
                   echo "Creating backup: $BACKUP_FILE"
-                  pg_dump -h blog-postgres -U $DATABASE_USER -d $DATABASE_NAME | gzip > "$BACKUP_FILE"
+                  pg_dump -h "$DATABASE_HOST" -U "$DATABASE_USER" -d "$DATABASE_NAME" | gzip > "$BACKUP_FILE"
                   echo "Uploading to object storage..."
                   python3 /app/upload.py upload "$BACKUP_FILE" "$BACKUP_BUCKET" backups/
                   echo "Backup and upload completed successfully."

@@ -1,0 +1,17 @@
+# k8s/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: blog
+
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - postgres.yaml
+  - redis.yaml
+  - django.yaml
+  - celery-worker.yaml
+  - celery-beat.yaml
+  - job-migrate.yaml
+  - job-backup.yaml
+  - configmap.yaml
