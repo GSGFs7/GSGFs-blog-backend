@@ -13,22 +13,19 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends git
 
-COPY pyproject.toml uv.lock ./
+# Create user early and install dependencies as user to avoid chown
+RUN useradd -m -u 1000 user && mkdir -p /models && chown user:user /models
+
+COPY --chown=user:user pyproject.toml uv.lock ./
 
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
+USER user
 RUN uv sync --frozen --no-install-project --no-cache
 
-COPY scripts/download-model.py ./scripts/
+COPY --chown=user:user scripts/download-model.py ./scripts/
 
 ENV PATH="/app/.venv/bin:$PATH"
-
-# avoid file sharing permission issue
-RUN useradd -m -u 1000 user && \
-    mkdir -p /models && \
-    chown -R user:user /app /models
-
-USER user
 
 CMD ["python", "/app/scripts/download-model.py"]

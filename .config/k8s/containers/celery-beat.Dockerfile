@@ -30,8 +30,7 @@ FROM python:3.14-slim
 RUN mkdir -p /app
 WORKDIR /app
 
-RUN useradd -m -u 1000 user && \
-    chown -R user /app
+RUN useradd -m -u 1000 user
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
