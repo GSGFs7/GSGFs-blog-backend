@@ -226,8 +226,9 @@ class Post(BaseModel):
         super().save(*args, **kwargs)
 
         # === tags ===
-        # TODO
-        # it not work! WTF???
+        # NOTE: This logic is already handled in PostAdminForm.clean()
+        # However, it's kept here to support non-Admin post creation (e.g. scripts, API)
+        # This is safe as it checks `if not self.tags.exists()` before processing
         if not self.tags.exists():  # must use `.exists()` to check it
             tags_to_set = []
             tag_list = post_metadata["tags"]

@@ -48,7 +48,11 @@ def get_posts(
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    posts = Post.objects.all()[offset : offset + size]
+    posts = (
+        Post.objects.select_related("category")
+        .prefetch_related("tags")
+        .all()[offset : offset + size]
+    )
     return 200, {
         "posts": list(posts),
         "pagination": {
@@ -144,7 +148,13 @@ def get_post_cards_from_query(
 
     # Assemble into corresponding structure
     paginated_ids = [item["id"] for item in paginated_result]
-    posts_dict = Post.objects.in_bulk(paginated_ids)
+    # Replace in_bulk with filter + select_related + prefetch_related to avoid N+1 queries
+    posts_dict = (
+        Post.objects.select_related("category")
+        .prefetch_related("tags")
+        .in_bulk(paginated_ids)
+    )
+
     posts_with_similarity = []
     for item in paginated_result:
         post_id = item["id"]
