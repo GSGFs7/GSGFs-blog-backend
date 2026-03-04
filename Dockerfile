@@ -51,7 +51,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends supervisor && \
 RUN mkdir -p /app
 WORKDIR /app
 
-RUN useradd -m user
+RUN useradd -m user && \
+    chown user /app
 
 ARG MODEL_NAME
 ARG SENTENCE_TRANSFORMERS_HOME
