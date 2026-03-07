@@ -12,6 +12,9 @@ from pgvector.django import HnswIndex, VectorField
 
 from .utils import chinese_slugify, extract_metadata
 
+# Reserved slug keyword, used for article routing
+POST_RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
+
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -187,9 +190,7 @@ class Post(BaseModel):
             self.slug = post_metadata.get("slug")
         if not self.slug and self.title:
             self.slug = chinese_slugify(self.title)
-        # TODO: move to another place
-        RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
-        if self.slug in RESERVED_SLUGS:
+        if self.slug in POST_RESERVED_SLUGS:
             raise ValidationError(
                 f"Slug '{self.slug}' is a reserved keyword and cannot be used."
             )

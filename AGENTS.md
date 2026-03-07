@@ -107,10 +107,6 @@ api/
 └── utils.py           # Utility functions
 ```
 
-### Reserved Keywords
-
-Avoid these slugs in post route: `posts`, `sitemap`, `search`, `post`, `all`, `query`, `ids`
-
 ### Database
 
 PostgreSQL with pgvector, vector field: `embedding = VectorField(dimensions=768)`, use `CosineDistance` for similarity search, GIN indexes for full-text search with `SearchVectorField`.
