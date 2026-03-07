@@ -88,6 +88,7 @@ else:
 # Application definition
 
 INSTALLED_APPS = [
+    "django.contrib.postgres",
     "django.contrib.admin",
     "django.contrib.auth",  # 验证框架和默认模型
     "django.contrib.contenttypes",  # 内容类型框架
