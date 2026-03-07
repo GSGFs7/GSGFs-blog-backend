@@ -73,8 +73,8 @@ spec:
                 name: blog-secrets
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "100m"
+              memory: "1500Mi"
+              cpu: "300m"
             limits:
               memory: "2Gi"
               cpu: "1000m"
