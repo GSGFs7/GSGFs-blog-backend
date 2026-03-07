@@ -23,7 +23,9 @@ app.autodiscover_tasks()
 
 @worker_process_init.connect
 def preload_ml_model(sender, **kwargs):
-    """Preload ML model in each worker process when it starts to avoid first task timeout."""
+    """
+    Preload ML model in each worker process when it starts to avoid first task timeout.
+    """
     logger.info("Worker process initializing, preloading ML model...")
     try:
         # Import inside signal handler to avoid loading model when importing celery.py
