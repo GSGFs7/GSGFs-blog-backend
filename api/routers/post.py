@@ -1,7 +1,7 @@
 import logging
 
+import jieba
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.core.cache import cache
 from django.db.models import F, Q
 from django.views.decorators.cache import cache_page
 from ninja import Router
@@ -88,7 +88,6 @@ def get_all_post_ids_for_sitemap(request):
     },
 )
 @rate_limit(key_prefix="post_search", max_requests=10, window=1)
-# TODO: use `cache_page` replace cache code below
 @decorate_view(cache_page(3600))
 def get_post_cards_from_query(
     request,
@@ -96,67 +95,56 @@ def get_post_cards_from_query(
     page: PositiveInt = 1,
     size: PositiveInt = 10,
 ):
-    # cache
-    cache_key = f"post_search_results:{hash(q)}"
-    cached = cache.get(cache_key)
-
     # length limit
     if len(q) > 200:
         return 400, {"message": "Query too long"}
 
-    # find cache
-    if cached is not None:
-        result = cached
-    else:
-        import jieba
+    tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
+    search_query = SearchQuery(tokenized_query, config="simple")
 
-        tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
-        search_query = SearchQuery(tokenized_query, config="simple")
+    task = generate_search_embedding_task.delay(q)
+    query_embedding = task.get(timeout=1)
 
-        task = generate_search_embedding_task.delay(q)
-        query_embedding = task.get(timeout=1)
-
-        # Reciprocal Rank Fusion (RRF)
-        candidates = list(
-            Post.objects.annotate(
-                fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
-                vec_distance=CosineDistance("embedding", query_embedding),
-            )
-            .filter(
-                Q(pg_gin_search_vector=search_query) | Q(vec_distance__lt=CONFIDENCE),
-            )
-            .values("id", "fts_rank", "vec_distance")
+    # Reciprocal Rank Fusion (RRF)
+    candidates = list(
+        Post.objects.annotate(
+            fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
+            vec_distance=CosineDistance("embedding", query_embedding),
         )
+        .filter(
+            Q(pg_gin_search_vector=search_query) | Q(vec_distance__lt=CONFIDENCE),
+        )
+        .values("id", "fts_rank", "vec_distance")
+    )
 
-        if not candidates:
-            result = []
-        else:
-            # Rank by FTS (descending) and Vector Distance (ascending)
-            fts_sorted = sorted(candidates, key=lambda x: x["fts_rank"], reverse=True)
-            vec_sorted = sorted(candidates, key=lambda x: x["vec_distance"])
+    if not candidates:
+        result = []
+    else:
+        # Rank by FTS (descending) and Vector Distance (ascending)
+        fts_sorted = sorted(candidates, key=lambda x: x["fts_rank"], reverse=True)
+        vec_sorted = sorted(candidates, key=lambda x: x["vec_distance"])
 
-            fts_ranks = {item["id"]: i + 1 for i, item in enumerate(fts_sorted)}
-            vec_ranks = {item["id"]: i + 1 for i, item in enumerate(vec_sorted)}
+        fts_ranks = {item["id"]: i + 1 for i, item in enumerate(fts_sorted)}
+        vec_ranks = {item["id"]: i + 1 for i, item in enumerate(vec_sorted)}
 
-            k = 60  # RRF constant
-            for item in candidates:
-                # score = 1/(k+r1) + 1/(k+r2)
-                item["hybrid_score"] = (1.0 / (k + fts_ranks[item["id"]])) + (
-                    1.0 / (k + vec_ranks[item["id"]])
-                )
+        k = 60  # RRF constant
+        for item in candidates:
+            # score = 1/(k+r1) + 1/(k+r2)
+            item["hybrid_score"] = (1.0 / (k + fts_ranks[item["id"]])) + (
+                1.0 / (k + vec_ranks[item["id"]])
+            )
 
-            candidates.sort(key=lambda x: x["hybrid_score"], reverse=True)
-            # relative score filter
-            if candidates:
-                top_score = candidates[0]["hybrid_score"]
-                candidates = [
-                    item
-                    for item in candidates
-                    if item["hybrid_score"] >= top_score * RELATIVE_CUTOFF
-                ]
+        candidates.sort(key=lambda x: x["hybrid_score"], reverse=True)
+        # relative score filter
+        if candidates:
+            top_score = candidates[0]["hybrid_score"]
+            candidates = [
+                item
+                for item in candidates
+                if item["hybrid_score"] >= top_score * RELATIVE_CUTOFF
+            ]
 
-            result = candidates
-        cache.set(cache_key, result, timeout=3600)  # 1h
+        result = candidates
 
     # paginate
     total = len(result)
