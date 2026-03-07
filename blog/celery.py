@@ -2,7 +2,7 @@ import logging
 import os
 
 from celery import Celery
-from celery.signals import worker_ready
+from celery.signals import worker_process_init
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +21,10 @@ app.conf.update(
 app.autodiscover_tasks()
 
 
-@worker_ready.connect
+@worker_process_init.connect
 def preload_ml_model(sender, **kwargs):
-    """Preload ML model when worker starts to avoid first task timeout."""
-    logger.info("Worker ready, preloading ML model...")
+    """Preload ML model in each worker process when it starts to avoid first task timeout."""
+    logger.info("Worker process initializing, preloading ML model...")
     try:
         # Import inside signal handler to avoid loading model when importing celery.py
         from api.ml_model import get_sentence_transformer_model
