@@ -6,19 +6,18 @@ from celery.signals import worker_process_init
 
 logger = logging.getLogger(__name__)
 
+
+def is_k8s_env() -> bool:
+    """Check if running in Kubernetes environment"""
+    return os.environ.get("K8S_ENV", "False").lower() in ("1", "true", "yes")
+
+
 # `celery -A blog worker -l info` needs this
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 
 app = Celery("blog")
-
-app.config_from_object("django.conf:settings", namespace="CELERY")
-
-app.conf.update(
-    worker_concurrency=1,  # a worker is enough
-)
-
-# auto discover tasks
-app.autodiscover_tasks()
+app.conf.update(worker_concurrency=1 if is_k8s_env() else 2)
+app.autodiscover_tasks()  # discover tasks for django
 
 
 @worker_process_init.connect

@@ -99,10 +99,10 @@ INSTALLED_APPS = [
     "django_otp",
     "django_otp.plugins.otp_static",
     "django_otp.plugins.otp_totp",
-    "django_otp.plugins.otp_email",  # <- if you want email capability.
+    # "django_otp.plugins.otp_email",  # <- if you want email capability.
     "two_factor",
     # "two_factor.plugins.phonenumber",  # <- if you want phone number capability.
-    "two_factor.plugins.email",  # <- if you want email capability.
+    # "two_factor.plugins.email",  # <- if you want email capability.
     # "two_factor.plugins.yubikey",  # <- for yubikey capability.
     "debug_toolbar",  # debug包
     "django_celery_beat",  # Celery 定时任务
@@ -159,12 +159,10 @@ if _database_url:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.{}".format(
-                os.getenv("DATABASE_ENGINE", "sqlite3")
-            ),
-            "NAME": os.getenv("DATABASE_NAME", BASE_DIR / "db.sqlite3"),
-            "USER": os.getenv("DATABASE_USER", "user"),
-            "PASSWORD": os.getenv("DATABASE_PASSWORD", "password"),
+            "ENGINE": "django.db.backends.{}".format(os.getenv("DATABASE_ENGINE")),
+            "NAME": os.getenv("DATABASE_NAME"),
+            "USER": os.getenv("DATABASE_USER"),
+            "PASSWORD": os.getenv("DATABASE_PASSWORD"),
             "HOST": (
                 "blog-postgres"  # 写死在 docker 配置中的
                 if is_docker_env()
@@ -296,8 +294,9 @@ CELERY_TIMEZONE = "Asia/Shanghai"
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # img bed
-R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
 
 # vector search
 MODEL_NAME = os.environ.get("MODEL_NAME")
