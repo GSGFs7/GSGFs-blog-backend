@@ -16,6 +16,7 @@ def is_k8s_env() -> bool:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 
 app = Celery("blog")
+app.config_from_object("django.conf:settings", namespace="CELERY")
 app.conf.update(worker_concurrency=1 if is_k8s_env() else 2)
 app.autodiscover_tasks()  # discover tasks for django
 
