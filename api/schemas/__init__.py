@@ -20,10 +20,17 @@ from .auth import (
 )
 
 # Base schemas
-from .base import IdSchema, IdsSchema, MessageSchema, PaginationSchema
+from .base import (
+    CategorySchema,
+    IdSchema,
+    IdsSchema,
+    MessageSchema,
+    PaginationSchema,
+    TagsSchema,
+)
 
 # Category schemas
-from .category import CategoryResponseSchema, CategorySchema
+from .category import CategoryResponseSchema
 
 # Comment schemas
 from .comment import (
@@ -61,9 +68,6 @@ from .system import (
     DatabaseStatusSchema,
     SystemInfoSchema,
 )
-
-# Tag schemas
-from .tag import TagsSchema
 
 __all__ = [
     # Base

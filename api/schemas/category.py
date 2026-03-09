@@ -4,12 +4,8 @@ from typing import List
 
 from ninja.schema import Schema
 
-from api.schemas import PaginationSchema, PostsCardSchema
-
-
-class CategorySchema(Schema):
-    id: int
-    name: str
+from .base import PaginationSchema
+from .post import PostsCardSchema
 
 
 class CategoryResponseSchema(Schema):

@@ -5,8 +5,7 @@ from typing import List, Optional
 
 from ninja.schema import Schema
 
-from .base import PaginationSchema
-from .category import CategorySchema, TagsSchema
+from .base import CategorySchema, PaginationSchema, TagsSchema
 
 
 class PostsSchema(Schema):
@@ -45,7 +44,6 @@ class PostsCardSchema(Schema):
 class PostCardsSchema(Schema):
     pagination: PaginationSchema
     posts: List[PostsCardSchema]
-
 
 
 class PostRenderedSchema(Schema):

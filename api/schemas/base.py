@@ -21,3 +21,13 @@ class IdSchema(Schema):
 
 class IdsSchema(Schema):
     ids: List[int]
+
+
+class CategorySchema(Schema):
+    id: int
+    name: str
+
+
+class TagsSchema(Schema):
+    id: int
+    name: str
