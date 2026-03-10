@@ -157,21 +157,31 @@ if _database_url:
         ),
     }
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.{}".format(os.getenv("DATABASE_ENGINE")),
-            "NAME": os.getenv("DATABASE_NAME"),
-            "USER": os.getenv("DATABASE_USER"),
-            "PASSWORD": os.getenv("DATABASE_PASSWORD"),
-            "HOST": (
-                "blog-postgres"  # 写死在 docker 配置中的
-                if is_docker_env()
-                else os.getenv("DATABASE_HOST", "127.0.0.1")
-            ),
-            "PORT": os.getenv("DATABASE_PORT", 5432),
-            "CONN_MAX_AGE": 60,
+    _database_engine = os.getenv("DATABASE_ENGINE")
+    if not _database_engine:
+        # Build-time or local development fallback
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": ":memory:",
+            }
         }
-    }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.{}".format(_database_engine),
+                "NAME": os.getenv("DATABASE_NAME"),
+                "USER": os.getenv("DATABASE_USER"),
+                "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+                "HOST": (
+                    "blog-postgres"  # 写死在 docker 配置中的
+                    if is_docker_env()
+                    else os.getenv("DATABASE_HOST", "127.0.0.1")
+                ),
+                "PORT": os.getenv("DATABASE_PORT", 5432),
+                "CONN_MAX_AGE": 60,
+            }
+        }
 
 _redis_host = os.environ.get("REDIS_HOST", "localhost")
 # 如果是 docker 环境强制使用 "blog-redis" 作为 host, 这是在 docker 配置中写死了的
