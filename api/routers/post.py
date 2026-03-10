@@ -1,7 +1,7 @@
 import logging
 
+import jieba
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.core.cache import cache
 from django.db.models import F, Q
 from django.views.decorators.cache import cache_page
 from ninja import Router
@@ -23,15 +23,14 @@ from ..schemas import (
     PostsSchema,
 )
 
-CONFIDENCE = 0.3
+CONFIDENCE = 0.5
+RELATIVE_CUTOFF = 0.5
 
 router = Router()
 
 
 @router.get("/", response={200: PostCardsSchema, 400: MessageSchema})
-def get_posts(
-    request, page: PositiveInt = 1, size: PositiveInt = 10
-):  # -> tuple[Literal[404], dict[str, str]] | tuple[Literal[400],...:
+def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
     offset = (page - 1) * size
     total = Post.objects.count()
 
@@ -80,7 +79,6 @@ def get_all_post_ids_for_sitemap(request):
     return 200, PostIdsForSitemap(root=post_schemas)
 
 
-# TODO: 优化这里, 准确率太低了.
 @router.get(
     "/search",
     response={
@@ -90,7 +88,6 @@ def get_all_post_ids_for_sitemap(request):
     },
 )
 @rate_limit(key_prefix="post_search", max_requests=10, window=1)
-# TODO: use `cache_page` replace cache code below
 @decorate_view(cache_page(3600))
 def get_post_cards_from_query(
     request,
@@ -98,27 +95,23 @@ def get_post_cards_from_query(
     page: PositiveInt = 1,
     size: PositiveInt = 10,
 ):
-    # cache
-    cache_key = f"post_search_results:{hash(q)}"
-    cached = cache.get(cache_key)
-
     # length limit
     if len(q) > 200:
         return 400, {"message": "Query too long"}
 
-    # find cache
-    if cached is not None:
-        result = cached
-    else:
-        import jieba
+    tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
+    search_query = SearchQuery(tokenized_query, config="simple")
 
-        tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
-        search_query = SearchQuery(tokenized_query, config="simple")
-
+    try:
         task = generate_search_embedding_task.delay(q)
         query_embedding = task.get(timeout=1)
+    except Exception as e:
+        logging.warning(f"Search embedding task failed or timed out: {e}")
+        query_embedding = None
 
-        post_query = (
+    if query_embedding:
+        # Reciprocal Rank Fusion (RRF)
+        candidates = list(
             Post.objects.annotate(
                 fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
                 vec_distance=CosineDistance("embedding", query_embedding),
@@ -126,13 +119,49 @@ def get_post_cards_from_query(
             .filter(
                 Q(pg_gin_search_vector=search_query) | Q(vec_distance__lt=CONFIDENCE),
             )
-            .annotate(
-                hybrid_score=(F("fts_rank") * 0.4) + ((1.0 - F("vec_distance")) * 0.6)
-            )
-            .order_by("-hybrid_score")
+            .values("id", "fts_rank", "vec_distance")
         )
-        result = list(post_query.values("id", "hybrid_score"))
-        cache.set(cache_key, result, timeout=3600)  # 1h
+
+        if not candidates:
+            result = []
+        else:
+            # Rank by FTS (descending) and Vector Distance (ascending)
+            fts_sorted = sorted(candidates, key=lambda x: x["fts_rank"], reverse=True)
+            vec_sorted = sorted(candidates, key=lambda x: x["vec_distance"])
+
+            fts_ranks = {item["id"]: i + 1 for i, item in enumerate(fts_sorted)}
+            vec_ranks = {item["id"]: i + 1 for i, item in enumerate(vec_sorted)}
+
+            k = 60  # RRF constant
+            for item in candidates:
+                # score = 1/(k+r1) + 1/(k+r2)
+                item["hybrid_score"] = (1.0 / (k + fts_ranks[item["id"]])) + (
+                    1.0 / (k + vec_ranks[item["id"]])
+                )
+
+            candidates.sort(key=lambda x: x["hybrid_score"], reverse=True)
+            # relative score filter
+            if candidates:
+                top_score = candidates[0]["hybrid_score"]
+                candidates = [
+                    item
+                    for item in candidates
+                    if item["hybrid_score"] >= top_score * RELATIVE_CUTOFF
+                ]
+
+            result = candidates
+    else:
+        # Fallback to pure FTS
+        result = list(
+            Post.objects.annotate(
+                fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
+            )
+            .filter(pg_gin_search_vector=search_query)
+            .order_by("-fts_rank")
+            .values("id", "fts_rank")
+        )
+        for item in result:
+            item["hybrid_score"] = item.get("fts_rank", 0.0)
 
     # paginate
     total = len(result)
@@ -148,7 +177,6 @@ def get_post_cards_from_query(
 
     # Assemble into corresponding structure
     paginated_ids = [item["id"] for item in paginated_result]
-    # Replace in_bulk with filter + select_related + prefetch_related to avoid N+1 queries
     posts_dict = (
         Post.objects.select_related("category")
         .prefetch_related("tags")

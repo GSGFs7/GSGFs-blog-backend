@@ -89,7 +89,9 @@ Use `TestCase` from `django.test`, `@override_settings` for test config, `CELERY
 ```
 api/
 ├── models.py          # Django models
-├── schemas.py         # Pydantic/Ninja schemas
+├── schemas/           # Pydantic/Ninja schemas
+    ├── post.py
+    └── ...
 ├── routers/           # API endpoints
 │   ├── post.py
 │   ├── comment.py
@@ -98,16 +100,12 @@ api/
 ├── tests/             # Test files
 │   ├── test_posts.py
 │   ├── test_auth.py
-│   └── ...
+│   └── runner.py      # QuietTestRunner
 ├── admin.py           # Django admin
 ├── auth.py            # Authentication
 ├── signals.py         # Django signals
 └── utils.py           # Utility functions
 ```
-
-### Reserved Keywords
-
-Avoid these slugs: `posts`, `sitemap`, `search`, `post`, `all`, `query`, `ids`
 
 ### Database
 

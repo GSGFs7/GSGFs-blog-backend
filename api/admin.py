@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from api.utils import chinese_slugify, extract_metadata
 
-from .models import Anime, Comment, Gal, Guest, Post, Tag
+from .models import POST_RESERVED_SLUGS, Anime, Comment, Gal, Guest, Post, Tag
 
 
 class PostAdminForm(forms.ModelForm):
@@ -37,8 +37,6 @@ class PostAdminForm(forms.ModelForm):
 
         metadata = {}
         errors = {}
-
-        RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
 
         # === content ===
         if content:
@@ -90,7 +88,7 @@ class PostAdminForm(forms.ModelForm):
                 .exists()
             ):
                 errors["slug"] = "The slug already exists."
-        if cleaned_data.get("slug") in RESERVED_SLUGS:
+        if cleaned_data.get("slug") in POST_RESERVED_SLUGS:
             errors["slug"] = (
                 "Slug is reserved and cannot be used. Please choose another."
             )
