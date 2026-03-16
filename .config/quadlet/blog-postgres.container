@@ -7,10 +7,10 @@ After=network-online.target
 
 [Container]
 ContainerName=blog-postgres
-Image=pgvector/pgvector:pg17-trixie
+Image=pgvector/pgvector:pg18-trixie
 EnvironmentFile=/path/to/your/env_file
 #PublishPort=5432:5432
-Volume=postgres_data:/var/lib/postgresql/data
+Volume=postgres_data:/var/lib/postgresql
 Network=app-network
 
 [Service]

@@ -34,12 +34,12 @@ spec:
             claimName: blog-postgres-pvc
       containers:
         - name: blog-postgres
-          image: pgvector/pgvector:pg17-trixie
+          image: pgvector/pgvector:pg18-trixie
           ports:
             - containerPort: 5432
           volumeMounts: # mount the PVC
             - name: blog-postgres-storage
-              mountPath: /var/lib/postgresql/data
+              mountPath: /var/lib/postgresql
           resources:
             requests:
               memory: "256Mi"

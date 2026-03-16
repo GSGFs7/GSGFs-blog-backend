@@ -47,7 +47,7 @@ services:
     #       path: requirements.txt
 
   blog-postgres:
-    image: pgvector/pgvector:pg17-trixie
+    image: pgvector/pgvector:pg18-trixie
     container_name: blog-postgres
     env_file:
       - .env
@@ -56,7 +56,7 @@ services:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/
     ports:
       - "5432:5432"
     networks:
@@ -87,8 +87,6 @@ services:
 
 volumes:
   postgres_data:
-    # external: true # 防止 docker compose down --volumes 删除这个卷
-    name: postgres_data
   redis_date:
 
 networks:
