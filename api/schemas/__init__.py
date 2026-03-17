@@ -50,6 +50,9 @@ from .gal import (
     GalUpdateSchema,
 )
 
+# Image
+from .image import ImageUploadRequestSchema, ImageUploadResponseSchema
+
 # Post schemas
 from .post import (
     PostCardsSchema,
@@ -108,6 +111,9 @@ __all__ = [
     "GalSchema",
     "GalPaginationResponse",
     "GalUpdateSchema",
+    # Image
+    "ImageUploadRequestSchema",
+    "ImageUploadResponseSchema",
     # Anime
     "AnimeId",
     "AnimeIds",

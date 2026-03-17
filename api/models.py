@@ -2,18 +2,25 @@
 TODO: split this
 """
 
+import logging
+import os
+from io import BytesIO
+
+import blake3
 import jieba
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 from pgvector.django import HnswIndex, VectorField
+from PIL import Image as PILImage
 
-from .utils import chinese_slugify, extract_metadata
+from api.constants import POST_RESERVED_SLUGS
+from api.utils import chinese_slugify, extract_metadata
 
-# Reserved slug keyword, used for article routing
-POST_RESERVED_SLUGS = ["posts", "sitemap", "search", "post", "all", "query", "ids"]
+logger = logging.getLogger(__name__)
 
 
 class BaseModel(models.Model):
@@ -395,18 +402,173 @@ class Anime(BaseModel):
         return self.name
 
 
-# class Image(BaseModel):
-#     title = models.CharField(
-#         max_length=100, blank=True, null=True, help_text="图片标题"
-#     )
-#     description = models.TextField(blank=True, null=True, help_text="图片描述")
-#     file_name = models.CharField(max_length=100, unique=True, help_text="图片文件名")
-#     file_size = models.PositiveIntegerField(help_text="图片文件大小（字节）")
-#     file_type = models.CharField(max_length=50, help_text="图片文件类型")
-#     url = models.URLField(max_length=500, help_text="图片URL地址")
+def image_raw_upload_path(instance: "ImageResource", filename: str) -> str:
+    """
+    Generate upload path for images using checksum-based directory structure.
+    Prevent too many files in a single directory by sharding into sub dirs.
+    """
+    ext = os.path.splitext(filename)[1].lower()
+    return (
+        f"images/raw/"
+        f"{instance.checksum[:2]}/"
+        f"{instance.checksum[2:4]}/"
+        f"{instance.checksum}{ext}"
+    )
 
-#     class Meta(BaseModel.Meta):
-#         ordering = ["-created_at"]
 
-#     def __str__(self):
-#         return self.title or self.file_name
+def image_thumbnail_upload_path(instance: "ImageResource", filename: str) -> str:
+    ext = os.path.splitext(filename)[1].lower()
+    return (
+        f"images/thumbnails/"
+        f"{instance.checksum[:2]}/"
+        f"{instance.checksum[2:4]}/"
+        f"{instance.checksum}{ext}"
+    )
+
+
+def image_avif_upload_path(instance: "ImageResource", filename: str) -> str:
+    return (
+        f"images/avif/"
+        f"{instance.checksum[:2]}/"
+        f"{instance.checksum[2:4]}/"
+        f"{instance.checksum}.avif"
+    )
+
+
+def image_webp_upload_path(instance: "ImageResource", filename: str) -> str:
+    return (
+        f"images/webp/"
+        f"{instance.checksum[:2]}/"
+        f"{instance.checksum[2:4]}/"
+        f"{instance.checksum}.webp"
+    )
+
+
+class ImageResource(BaseModel):
+    """
+    single physical file
+    """
+
+    # checksum
+    checksum = models.CharField(max_length=64, unique=True)
+
+    # file
+    file = models.ImageField(upload_to=image_raw_upload_path, null=False, blank=False)
+    avif_file = models.ImageField(
+        upload_to=image_avif_upload_path, null=True, blank=True
+    )
+    webp_file = models.ImageField(
+        upload_to=image_webp_upload_path, null=True, blank=True
+    )
+    thumbnail = models.ImageField(
+        upload_to=image_thumbnail_upload_path, null=True, blank=True
+    )
+
+    # attribute
+    width = models.PositiveIntegerField()
+    height = models.PositiveIntegerField()
+    size = models.PositiveIntegerField()
+    mime_type = models.CharField(max_length=50)
+
+    is_processed = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=["checksum"])]
+
+
+# Create your models here.
+class Image(BaseModel):
+    """
+    logical image file
+    """
+
+    resource = models.ForeignKey(
+        ImageResource, on_delete=models.CASCADE, related_name="references"
+    )
+
+    # image file info
+    original_name = models.CharField(max_length=255, blank=True, null=False)
+
+    # who
+    uploaded_by = models.ForeignKey(
+        "api.Guest",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="images",
+    )
+
+    # Markdown meta info
+    alt_text = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+
+    # image metadata
+    metadata = models.JSONField(default=dict, blank=True, null=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.original_name or f"Image {self.id}"
+
+    @property
+    def url(self) -> str:
+        return self.resource.file.url
+
+    # DRY principle
+    # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
+    @staticmethod
+    def create_from_file(
+        content: BytesIO, filename: str
+    ) -> tuple["Image", ImageResource]:
+
+        # 0. verify
+        try:
+            img = PILImage.open(content)
+            img.verify()
+        except Exception:
+            raise ValidationError("Unrecognizable image file or file is corrupted")
+
+        try:
+            # 1. clean
+            content.seek(0)
+            img = PILImage.open(content)
+            buffer = BytesIO()
+            img.save(buffer, img.format)
+            cleaned_image = buffer.getvalue()
+
+            width = img.width
+            height = img.height
+            size = len(cleaned_image)
+            mime_type = PILImage.MIME.get(img.format)
+            del img
+
+            # 2. checksum
+            checksum = blake3.blake3(cleaned_image).hexdigest()
+        except Exception as e:
+            logger.warning(f"Could not process image: {e}")
+            raise ValidationError("Unknown error occurred")
+
+        # atomicity
+        with transaction.atomic():
+            img_res, created = ImageResource.objects.get_or_create(
+                checksum=checksum,
+                defaults={
+                    "file": ContentFile(cleaned_image, name=filename),
+                    "width": width,
+                    "height": height,
+                    "size": size,
+                    "mime_type": mime_type,
+                },
+            )
+
+            img = Image.objects.create(
+                resource=img_res,
+                original_name=filename,
+                # TODO
+                uploaded_by=None,
+                alt_text="",
+                description="",
+            )
+
+        return img, img_res
