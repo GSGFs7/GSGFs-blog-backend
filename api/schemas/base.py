@@ -31,3 +31,7 @@ class CategorySchema(Schema):
 class TagsSchema(Schema):
     id: int
     name: str
+
+
+class ClientIdSchema(Schema):
+    client_id: str

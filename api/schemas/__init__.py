@@ -22,6 +22,7 @@ from .auth import (
 # Base schemas
 from .base import (
     CategorySchema,
+    ClientIdSchema,
     IdSchema,
     IdsSchema,
     MessageSchema,
@@ -75,6 +76,8 @@ __all__ = [
     "MessageSchema",
     "IdSchema",
     "IdsSchema",
+    # Auth
+    "ClientIdSchema",
     # Category & Tags
     "CategorySchema",
     "TagsSchema",
