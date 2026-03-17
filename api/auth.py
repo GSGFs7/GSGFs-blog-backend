@@ -2,54 +2,60 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import time
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+import uuid
+from typing import Optional
 
-import jwt
 from django.conf import settings
 from django.core.cache import cache
 from ninja.security import HttpBearer
 
-
-def generate_auth_token_cache_key(token: str):
-    return f"auth_token_{token}"
+logger = logging.getLogger()
 
 
+# TODO: Auth,
+#  1. multi-client and corresponding API key verification
+#  2. fine-grained permissions: read/write
 class TimeBaseAuth(HttpBearer):
     def authenticate(self, request, token):
         try:
-            # protect against replay attacks
-            is_cached = cache.touch(generate_auth_token_cache_key(token))
-            if is_cached:
-                return None
-            cache.set(generate_auth_token_cache_key(token), 1, 30)  # 30s
-
-            # 解码 token
+            # decode token
             decoded_token = base64.b64decode(token).decode("utf-8")
             token_data = json.loads(decoded_token)
 
-            # 获取时间和消息
-            current_time = int(time.time() / 10)  # 10s
-            message = str(token_data["message"])
-            client_signature = str(token_data["signature"])
+            # get payload
+            nonce = str(token_data.get("nonce", ""))
+            client_id = str(token_data.get("client_id", ""))
+            client_signature = str(token_data.get("signature", ""))
+            if not nonce or not client_id or not client_signature:
+                return None
 
-            # 生成服务器端签名
-            server_signature = self.generate_signature(current_time, message)
-            server_signature1 = self.generate_signature(current_time - 1, message)
+            # protect against replay attacks
+            cache_key = self.generate_auth_token_cache_key(client_id, nonce)
+            is_new_request = cache.add(cache_key, 1, timeout=30)  # atomicity
+            if not is_new_request:
+                return None
 
-            # 验证
-            if hmac.compare_digest(client_signature, server_signature):
-                return True
-            if hmac.compare_digest(client_signature, server_signature1):
-                return True
+            # verify
+            valid = False
+            current_time_10s = int(time.time() / 10)  # 10s window
+            for t in [current_time_10s, current_time_10s - 1]:
+                server_sig = self.generate_signature(t, nonce, client_id)
+                if hmac.compare_digest(client_signature, server_sig):
+                    valid = True
+                    break
+
+            if valid:
+                # get the 'client_id' in ninja api endpoint 'request.auth'
+                return client_id
             return None
         except Exception as e:
-            print(f"Authentication error: {e}")
+            logger.debug(e)
             return None
 
     @staticmethod
-    def generate_signature(timestamp: int, message: str) -> str:
+    def generate_signature(timestamp: int, nonce: str, client_id: str) -> str:
         if settings.API_KEY is None:
             raise ValueError("API_KEY is not set")
 
@@ -58,58 +64,26 @@ class TimeBaseAuth(HttpBearer):
             str(timestamp).encode(),
             hashlib.sha256,
         )
-        hmac_obj.update(message.encode())
+        hmac_obj.update(nonce.encode())
+        hmac_obj.update(client_id.encode())
         return hmac_obj.hexdigest()
 
     @staticmethod
-    def create_token(message: str, time_10s: Optional[int] = None) -> str:
+    def create_token(client_id: str, time_10s: Optional[int] = None) -> str:
         if time_10s is None:
             # may be floating point accuracy issues
             time_10s = int((time.time() * 1000 / 1000) / 10)
-        signature = TimeBaseAuth.generate_signature(time_10s, message)
+
+        nonce = uuid.uuid4().hex
+        signature = TimeBaseAuth.generate_signature(time_10s, nonce, client_id)
         token_data = {
-            "message": message,
+            "nonce": nonce,
+            "client_id": client_id,
             "signature": signature,
         }
-        token_json = json.dumps(token_data)
-        token = base64.b64encode(token_json.encode("utf-8")).decode("utf-8")
-        return token
-
-
-class JWTAuth(HttpBearer):
-    """JWT auth class, lightweight, faster"""
-
-    def authenticate(self, request, token: str) -> Optional[Dict[str, Any]]:
-        """verify JWT and return a payload"""
-
-        try:
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=["HS256"],
-            )
-
-            exp = payload.get("exp")
-            if exp and int(time.time()) > exp:
-                return None
-
-            return payload
-        except jwt.PyJWTError as e:
-            print(e)
-            return None
+        token_json_str = json.dumps(token_data)
+        return base64.b64encode(token_json_str.encode("utf-8")).decode("utf-8")
 
     @staticmethod
-    def create_token(expiration_in_mins: int = 60 * 24, **extra_data) -> str:
-        """create a new token"""
-
-        expiration = datetime.now(timezone.utc) + timedelta(minutes=expiration_in_mins)
-
-        payload = {
-            "exp": int(expiration.timestamp()),
-            "iat": int(datetime.now(timezone.utc).timestamp()),
-            **extra_data,
-        }
-
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-
-        return token
+    def generate_auth_token_cache_key(client_id: str, nonce: str):
+        return f"auth_token:{client_id}:{nonce}"
