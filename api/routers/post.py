@@ -87,7 +87,7 @@ def get_all_post_ids_for_sitemap(request):
         429: MessageSchema,
     },
 )
-@rate_limit(key_prefix="post_search", max_requests=10, window=1)
+@rate_limit(key_prefix="post_search", max_requests=50, window=1)
 @decorate_view(cache_page(3600))
 def get_post_cards_from_query(
     request,

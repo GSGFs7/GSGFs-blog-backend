@@ -24,6 +24,7 @@ def heath_status(request):
     return {"message": "OK"}
 
 
+# TODO: django-prometheus
 @router.get("/status", response=ApiStatusSchema, auth=TimeBaseAuth())
 def api_status(request):
     system_info = get_system_info()

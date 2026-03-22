@@ -7,9 +7,35 @@ from django.utils import timezone
 
 from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
-from .models import Anime, Gal, Post
-from .tasks import generate_post_embedding
+from .models import Anime, Gal, ImageResource, Post
+from .tasks import generate_post_embedding, process_image
 from .vndb import query_vn
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=ImageResource)
+def trigger_image_processing(sender, instance: ImageResource, created, **kwargs):
+    """
+    Trigger image processing (compression, format conversion) after upload.
+    """
+    if (
+        created
+        or not instance.webp_file
+        or not instance.avif_file
+        or not instance.thumbnail
+    ):
+        try:
+
+            def task():
+                process_image.delay(instance.pk)
+                logger.info(f"Triggered image processing for Image ID {instance.pk}")
+
+            transaction.on_commit(task)
+        except Exception as e:
+            logger.error(
+                f"Failed to trigger image processing for Image ID {instance.pk}: {e}"
+            )
 
 
 @receiver(pre_save, sender=Gal)
@@ -42,7 +68,6 @@ def sync_with_vndb(sender, instance, **kwargs):
             # This is a pre_save signal, should not call `save()`
             # here otherwise it will cause infinite loop
         except Exception as e:
-            logger = logging.getLogger(__name__)
             logger.error(f"Failed to sync VNDB data({instance.vndb_id}): {e}")
 
 
@@ -68,7 +93,6 @@ def sync_with_jikan(sender, instance, **kwargs):
             instance.cover_image = res.images.webp.large_image_url
             instance.rating = res.rating
         except Exception as e:
-            logger = logging.getLogger(__name__)
             logger.error(f"Failed to update Anime data({instance.mal_id}): {e}")
 
 
@@ -84,7 +108,6 @@ def convert_gal_markdown_to_html(sender, instance, **kwargs):
             convert_gal_markdown_to_html, sender=Gal
         )  # Reconnect after save
     except Exception as e:
-        logger = logging.getLogger(__name__)
         logger.error(f"Markdown conversion failed: {e}")
 
 
@@ -97,7 +120,6 @@ def convert_post_markdown_to_html(sender, instance, **kwargs):
         instance.save(update_fields=["content_html"])
         post_save.connect(convert_post_markdown_to_html, sender=Post)
     except Exception as e:
-        logger = logging.getLogger(__name__)
         logger.error(f"Markdown conversion failed: {e}")
 
 
@@ -113,7 +135,7 @@ def update_content_update_at(sender, instance, **kwargs):
             if instance.content_update_at is None:
                 instance.content_update_at = timezone.now()
         except Post.DoesNotExist:
-            instance.content_updata_at = timezone.now()
+            instance.content_update_at = timezone.now()
     else:
         instance.content_update_at = timezone.now()
 
@@ -130,10 +152,10 @@ def generate_post_embedding_async(sender, instance, created, **kwargs):
         def task():
             # Trigger the Celery task asynchronously
             generate_post_embedding.delay(instance.pk)
-            logger = logging.getLogger(__name__)
-            logger.info(f"已触发 embedding 生成任务: Post ID {instance.pk}")
+            logger.info(f"Triggered embedding generate task, post ID {instance.pk}")
 
         transaction.on_commit(task)
     except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.error(f"触发 embedding 任务失败: Post ID {instance.pk}, 错误: {e}")
+        logger.error(
+            f"Failed trigger embedding generate task, post ID {instance.pk}: {e}"
+        )

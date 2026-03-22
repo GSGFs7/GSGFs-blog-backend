@@ -19,5 +19,6 @@ django.tar.zst
 openapi.json
 sentence_transformers_models/
 staticfiles/
+media/
 testapp/
 *.http

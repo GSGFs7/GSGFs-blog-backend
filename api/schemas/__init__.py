@@ -22,6 +22,7 @@ from .auth import (
 # Base schemas
 from .base import (
     CategorySchema,
+    ClientIdSchema,
     IdSchema,
     IdsSchema,
     MessageSchema,
@@ -49,6 +50,9 @@ from .gal import (
     GalUpdateSchema,
 )
 
+# Image
+from .image import ImageUploadRequestSchema, ImageUploadResponseSchema
+
 # Post schemas
 from .post import (
     PostCardsSchema,
@@ -75,6 +79,8 @@ __all__ = [
     "MessageSchema",
     "IdSchema",
     "IdsSchema",
+    # Auth
+    "ClientIdSchema",
     # Category & Tags
     "CategorySchema",
     "TagsSchema",
@@ -105,6 +111,9 @@ __all__ = [
     "GalSchema",
     "GalPaginationResponse",
     "GalUpdateSchema",
+    # Image
+    "ImageUploadRequestSchema",
+    "ImageUploadResponseSchema",
     # Anime
     "AnimeId",
     "AnimeIds",

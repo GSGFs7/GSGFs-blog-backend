@@ -1,10 +1,248 @@
+from io import BytesIO
+
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 
+from api.constants import IMAGE_ALLOWED_FORMAT, POST_RESERVED_SLUGS
+from api.models import (
+    Anime,
+    Comment,
+    Gal,
+    Guest,
+    Image,
+    Post,
+    Tag,
+)
 from api.utils import chinese_slugify, extract_metadata
 
-from .models import POST_RESERVED_SLUGS, Anime, Comment, Gal, Guest, Post, Tag
+
+class ImageAdminForm(forms.ModelForm):
+    file = forms.ImageField(required=True, label="image")
+
+    class Meta:
+        model = Image
+        fields = ["original_name", "alt_text", "description", "uploaded_by"]
+        help_texts = {
+            "checksum": "blake3 算法得到的哈希值",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk is None:
+            self.fields["file"] = forms.ImageField(required=True, label="image")
+        else:
+            if "file" in self.fields:
+                del self.fields["file"]
+
+    def clean_file(self):
+        file = self.cleaned_data.get("file")
+        if not file:
+            return file
+
+        if file.content_type not in IMAGE_ALLOWED_FORMAT:
+            raise ValidationError(
+                f"Not allowed format: {file.content_type}. "
+                f"Allowed format: {', '.join(IMAGE_ALLOWED_FORMAT)}"
+            )
+        return file
+
+    def save(self, commit=True):
+        # Call super().save(commit=False) to ensure self.save_m2m is initialized by Django
+        instance = super().save(commit=False)
+        file = self.cleaned_data.get("file")
+
+        if file:
+            file.seek(0)
+            content = BytesIO(file.read())
+            img, _ = Image.create_from_file(content, file.name)
+
+            img.original_name = self.cleaned_data.get("original_name") or file.name
+            img.alt_text = self.cleaned_data.get("alt_text", "")
+            img.description = self.cleaned_data.get("description", "")
+            img.uploaded_by = self.cleaned_data.get("uploaded_by")
+
+            if commit:
+                img.save()
+
+            return img
+
+        if commit:
+            instance.save()
+            # self.save_m2m()
+
+        return instance
+
+
+class ImageAdmin(admin.ModelAdmin):
+    form = ImageAdminForm
+    readonly_fields = [
+        "preview_large",
+        "resource_info",
+        "mime_type",
+        "size",
+        "size_formatted",
+        "width",
+        "height",
+        "checksum",
+        "created_at",
+        "updated_at",
+        "id",
+        "width_px",
+        "height_px",
+    ]
+
+    def get_fieldsets(self, request, obj=None):
+        if obj is None:
+            # new
+            return [
+                (
+                    None,
+                    {
+                        "fields": [
+                            "file",
+                            "preview_large",
+                            "original_name",
+                            "alt_text",
+                            "description",
+                        ]
+                    },
+                ),
+                (
+                    "upload info",
+                    {
+                        "fields": [
+                            "uploaded_by",
+                            "created_at",
+                            "updated_at",
+                        ]
+                    },
+                ),
+            ]
+        else:
+            # edit
+            return [
+                (
+                    None,
+                    {
+                        "fields": [
+                            "id",
+                            "preview_large",
+                            "original_name",
+                            "alt_text",
+                            "description",
+                        ]
+                    },
+                ),
+                (
+                    "resource info",
+                    {
+                        "fields": [
+                            "resource_info",
+                            "mime_type",
+                            "size_formatted",
+                            "width_px",
+                            "height_px",
+                            "checksum",
+                        ],
+                    },
+                ),
+                (
+                    "upload info",
+                    {
+                        "fields": [
+                            "uploaded_by",
+                            "created_at",
+                            "updated_at",
+                        ]
+                    },
+                ),
+            ]
+
+    list_display = [
+        "original_name",
+        "preview_icon",
+        "mime_type",
+        "size_formatted",
+        "created_at",
+    ]
+    list_filter = ["created_at"]
+    search_fields = ["original_name", "alt_text", "description"]
+    date_hierarchy = "created_at"
+
+    @admin.display(description="size")
+    def size_formatted(self, obj: Image):
+        size = obj.resource.size
+        if size < 1024:
+            return f"{size} B"
+        elif size < 1024 * 1024:
+            return f"{size / 1024:.1f} KiB"
+        else:
+            return f"{size / (1024 * 1024):.1f} MiB"
+
+    @admin.display(description="thumbnail")
+    def preview_icon(self, obj: Image):
+        if obj.resource and obj.resource.file:
+            return mark_safe(
+                f'<img src="{
+                    obj.resource.thumbnail.url
+                    if obj.resource.thumbnail
+                    else obj.resource.file.url
+                }"'
+                f' height="100px"'
+                f' style="width: auto; max-width: 100%; object-fit: contain;"'
+                f"/>"
+            )
+        return "no img"
+
+    @admin.display(description="image preview")
+    def preview_large(self, obj: Image):
+        if obj.resource and obj.resource.file:
+            return mark_safe(
+                f'<img src="{
+                    obj.resource.thumbnail.url
+                    if obj.resource.thumbnail
+                    else obj.resource.file.url
+                }"'
+                f' style="max-width: 300px; max-height: 300px;"'
+                f"/>"
+            )
+        return "no img"
+
+    @admin.display(description="resource info")
+    def resource_info(self, obj: Image):
+        if obj.resource:
+            return f"ID: {obj.resource.id}"
+        return "no resource"
+
+    @admin.display(description="MIME type")
+    def mime_type(self, obj: Image):
+        return obj.resource.mime_type if obj.resource else "-"
+
+    @admin.display(description="width")
+    def width(self, obj: Image):
+        return obj.resource.width if obj.resource else "-"
+
+    @admin.display(description="height")
+    def height(self, obj: Image):
+        return obj.resource.height if obj.resource else "-"
+
+    @admin.display(description="checksum")
+    def checksum(self, obj: Image):
+        return obj.resource.checksum if obj.resource else "-"
+
+    @admin.display(description="size")
+    def size(self, obj: Image):
+        return obj.resource.size if obj.resource else 0
+
+    @admin.display(description="width")
+    def width_px(self, obj: Image):
+        return f"{obj.resource.width} px"
+
+    @admin.display(description="height")
+    def height_px(self, obj: Image):
+        return f"{obj.resource.width} px"
 
 
 class PostAdminForm(forms.ModelForm):
@@ -283,3 +521,4 @@ admin.site.register(Guest, GuestAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Gal, GalAdmin)
 admin.site.register(Anime, AnimeAdmin)
+admin.site.register(Image, ImageAdmin)

@@ -90,8 +90,8 @@ Use `TestCase` from `django.test`, `@override_settings` for test config, `CELERY
 api/
 ├── models.py          # Django models
 ├── schemas/           # Pydantic/Ninja schemas
-    ├── post.py
-    └── ...
+│   ├── post.py
+│   └── ...
 ├── routers/           # API endpoints
 │   ├── post.py
 │   ├── comment.py
@@ -100,7 +100,7 @@ api/
 ├── tests/             # Test files
 │   ├── test_posts.py
 │   ├── test_auth.py
-│   └── runner.py      # QuietTestRunner
+│   └── ...
 ├── admin.py           # Django admin
 ├── auth.py            # Authentication
 ├── signals.py         # Django signals
@@ -111,17 +111,12 @@ api/
 
 PostgreSQL with pgvector, vector field: `embedding = VectorField(dimensions=768)`, use `CosineDistance` for similarity search, GIN indexes for full-text search with `SearchVectorField`.
 
-### ML/Embeddings
-
-Model: `google/embeddinggemma-300m` (default), embeddings stored in `Post.embedding`, generated asynchronously via Celery task `generate_post_embedding`, search uses cosine similarity with threshold `CONFIDENCE = 0.3`.
-
 ### Common Issues
 
-1. **Test database errors**: Ensure test database created or use `DATABASE_URL`
+1. **Test database errors**: Ensure test database is running or use `DATABASE_URL`
 2. **Celery tasks not running**: Set `CELERY_TASK_ALWAYS_EAGER=True` in tests
-3. **Embedding generation fails**: Ensure model downloaded and `SENTENCE_TRANSFORMERS_HOME` set
-4. **Reserved slug error**: Check `RESERVED_SLUGS` in `api/models.py`
-5. **Import errors**: Run `ruff check --select I` to fix import order
+3. **Embedding generation fails**: Ensure model downloaded and `SENTENCE_TRANSFORMERS_HOME` set or celery worker is running
+4. **Import errors**: Run `ruff check --select I` to fix import order
 
 ### Key Files
 

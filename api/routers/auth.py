@@ -1,12 +1,11 @@
 from ninja import Router
 
-from ..auth import JWTAuth, TimeBaseAuth
-from ..schemas import TokenSchema
+from api.auth import TimeBaseAuth
+from api.schemas import ClientIdSchema
 
 router = Router()
 
 
-@router.get("/login", response={200: TokenSchema}, auth=TimeBaseAuth())
-def JWT_login(request):
-    token = JWTAuth.create_token()
-    return 200, {"token": token, "token_type": "bearer"}
+@router.get("/me", auth=TimeBaseAuth(), response={200: ClientIdSchema})
+def get_client_id(request):
+    return {"client_id": str(request.auth)}

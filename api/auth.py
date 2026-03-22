@@ -1,115 +1,71 @@
 import base64
 import hashlib
-import hmac
-import json
-import time
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+import logging
+import uuid
 
-import jwt
+from cryptography.fernet import Fernet
 from django.conf import settings
 from django.core.cache import cache
 from ninja.security import HttpBearer
 
-
-def generate_auth_token_cache_key(token: str):
-    return f"auth_token_{token}"
+logger = logging.getLogger(__name__)
 
 
+# TODO: Auth,
+#  1. multi-client and corresponding API key verification
+#  2. fine-grained permissions: read/write
 class TimeBaseAuth(HttpBearer):
+    """
+    S2S authentication based on Fernet. TTL: 30s
+
+    token format: client_id:nonce
+    """
+
     def authenticate(self, request, token):
         try:
-            # protect against replay attacks
-            is_cached = cache.touch(generate_auth_token_cache_key(token))
-            if is_cached:
+            # fernet decrypt
+            f = self.get_fernet()
+            decrypt_token = f.decrypt(token.encode(), ttl=30).decode("utf-8")
+
+            # get payload
+            client_id, nonce = decrypt_token.split(":", 1)
+            if not client_id or not nonce:
                 return None
-            cache.set(generate_auth_token_cache_key(token), 1, 30)  # 30s
 
-            # 解码 token
-            decoded_token = base64.b64decode(token).decode("utf-8")
-            token_data = json.loads(decoded_token)
+            cache_key = self.generate_auth_token_cache_key(client_id, nonce)
+            # TODO: Auth, cache storage DOS protection
+            is_new_request = cache.add(cache_key, 1, timeout=30)  # atomicity
+            if not is_new_request:
+                # protect against replay attacks
+                return None
 
-            # 获取时间和消息
-            current_time = int(time.time() / 10)  # 10s
-            message = str(token_data["message"])
-            client_signature = str(token_data["signature"])
-
-            # 生成服务器端签名
-            server_signature = self.generate_signature(current_time, message)
-            server_signature1 = self.generate_signature(current_time - 1, message)
-
-            # 验证
-            if hmac.compare_digest(client_signature, server_signature):
-                return True
-            if hmac.compare_digest(client_signature, server_signature1):
-                return True
-            return None
+            return client_id
         except Exception as e:
-            print(f"Authentication error: {e}")
+            # ban attackers?
+            logger.debug(e)
             return None
 
     @staticmethod
-    def generate_signature(timestamp: int, message: str) -> str:
-        if settings.API_KEY is None:
-            raise ValueError("API_KEY is not set")
+    def create_token(client_id: str, nonce: str = None) -> str:
+        if nonce is None:
+            nonce = uuid.uuid4().hex
 
-        hmac_obj = hmac.new(
-            settings.API_KEY.encode(),
-            str(timestamp).encode(),
-            hashlib.sha256,
-        )
-        hmac_obj.update(message.encode())
-        return hmac_obj.hexdigest()
+        f = TimeBaseAuth.get_fernet()
+        payload = TimeBaseAuth.generate_token_format(client_id, nonce).encode("utf-8")
+        return f.encrypt(payload).decode("utf-8")
 
     @staticmethod
-    def create_token(message: str, time_10s: Optional[int] = None) -> str:
-        if time_10s is None:
-            # may be floating point accuracy issues
-            time_10s = int((time.time() * 1000 / 1000) / 10)
-        signature = TimeBaseAuth.generate_signature(time_10s, message)
-        token_data = {
-            "message": message,
-            "signature": signature,
-        }
-        token_json = json.dumps(token_data)
-        token = base64.b64encode(token_json.encode("utf-8")).decode("utf-8")
-        return token
-
-
-class JWTAuth(HttpBearer):
-    """JWT auth class, lightweight, faster"""
-
-    def authenticate(self, request, token: str) -> Optional[Dict[str, Any]]:
-        """verify JWT and return a payload"""
-
-        try:
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=["HS256"],
-            )
-
-            exp = payload.get("exp")
-            if exp and int(time.time()) > exp:
-                return None
-
-            return payload
-        except jwt.PyJWTError as e:
-            print(e)
-            return None
+    def generate_auth_token_cache_key(client_id: str, nonce: str):
+        return f"auth_token:{client_id}:{nonce}"
 
     @staticmethod
-    def create_token(expiration_in_mins: int = 60 * 24, **extra_data) -> str:
-        """create a new token"""
+    def generate_token_format(client_id: str, nonce: str):
+        return f"{client_id}:{nonce}"
 
-        expiration = datetime.now(timezone.utc) + timedelta(minutes=expiration_in_mins)
+    @staticmethod
+    def get_fernet():
+        if not settings.API_KEY:
+            raise ValueError
 
-        payload = {
-            "exp": int(expiration.timestamp()),
-            "iat": int(datetime.now(timezone.utc).timestamp()),
-            **extra_data,
-        }
-
-        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-
-        return token
+        key = hashlib.sha256(settings.API_KEY.encode()).digest()
+        return Fernet(base64.urlsafe_b64encode(key))
