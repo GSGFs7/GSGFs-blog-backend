@@ -13,6 +13,7 @@ hf_token.txt
 
 backups/
 *.dump
+*.sql.gz
 
 db.sqlite3
 django.tar.zst

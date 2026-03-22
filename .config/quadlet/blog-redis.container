@@ -10,7 +10,7 @@ ContainerName=blog-redis
 Image=redis:7
 #PublishPort=6379:6379
 Volume=redis_date:/data
-Network=app-network
+Network=blog-network
 
 [Service]
 Restart=always

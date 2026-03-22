@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django_prometheus import urls as prometheus_url
 from two_factor.urls import urlpatterns as tf_urls
 
 from api.urls import api
@@ -27,6 +28,7 @@ from api.urls import api
 urlpatterns = [
     path("not-admin/", admin.site.urls),
     path("api/", api.urls),
+    path("prometheus/", include(prometheus_url)),
     path("", include(tf_urls)),
 ] + debug_toolbar_urls()
 
