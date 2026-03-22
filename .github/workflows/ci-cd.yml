@@ -55,6 +55,7 @@ jobs:
       - name: Run tests
         run: uv run manage.py test
         env:
+          DEBUG: True
           DJANGO_SECRET_KEY: github-action-test-django-secret-key
           DATABASE_ENGINE: postgresql
           DATABASE_NAME: github_action_test
