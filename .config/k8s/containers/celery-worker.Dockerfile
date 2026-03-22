@@ -45,4 +45,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 USER user
 
-CMD [ "celery", "-A", "blog", "worker", "--loglevel=info" ]
+CMD [ "celery", "-A", "blog", "worker", "--loglevel=info", "--concurrency=1" ]

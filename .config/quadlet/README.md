@@ -5,7 +5,7 @@
 - 需要预先创建一个容器网络
 
 ```bash
-podman network create app-network
+podman network create blog-network
 ```
 
 - 如果是 Rootless 需要设置会话驻留

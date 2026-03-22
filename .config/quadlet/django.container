@@ -10,7 +10,7 @@ ContainerName=django
 Image=django
 WorkingDir=/app
 PublishPort=8000:8000
-Network=app-network
+Network=blog-network
 EnvironmentFile=/path/to/your/env_file
 
 [Service]

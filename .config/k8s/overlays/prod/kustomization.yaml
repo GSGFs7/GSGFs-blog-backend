@@ -6,13 +6,7 @@ resources:
   - ingress.yaml
   - cluster-issuer.yaml
 
-# Automatically generate secret from .env.prod
-secretGenerator:
-  - name: blog-secrets
-    envs:
-      - .env.prod
-
-# In prod, images are managed by GitHub Action/Argo CD
+# In prod, images are managed by GitHub Argo CD
 images:
   - name: blog-django
     newName: blog-django

@@ -11,7 +11,7 @@ Image=pgvector/pgvector:pg18-trixie
 EnvironmentFile=/path/to/your/env_file
 #PublishPort=5432:5432
 Volume=postgres_data:/var/lib/postgresql
-Network=app-network
+Network=blog-network
 
 [Service]
 Restart=always
