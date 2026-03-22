@@ -50,6 +50,12 @@ if [ ! -f "$OVERLAY_DIR/.env.$DEPLOY_ENV" ]; then
     exit 1
 fi
 
+echo "Creating/updating secret 'blog-secrets' from $OVERLAY_DIR/.env.$DEPLOY_ENV..."
+kubectl create secret generic blog-secrets \
+    --from-env-file="$OVERLAY_DIR/.env.$DEPLOY_ENV" \
+    -n blog \
+    --dry-run=client -o yaml | kubectl apply -f -
+
 # Jobs are immutable; delete existing before applying new
 echo "Preparing migration job..."
 kubectl delete job blog-django-migrate -n blog --ignore-not-found

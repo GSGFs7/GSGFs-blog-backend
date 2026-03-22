@@ -9,12 +9,6 @@ resources:
 generatorOptions:
   disableNameSuffixHash: true
 
-# Automatically generate secret from .env.dev
-secretGenerator:
-  - name: blog-secrets
-    envs:
-      - .env.dev
-
 # In dev, we use local images
 images:
   - name: blog-django
