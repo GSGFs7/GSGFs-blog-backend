@@ -5,13 +5,14 @@ from io import BytesIO
 import blake3
 import requests
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from PIL import Image as PILImage
 
 from api.auth import TimeBaseAuth
 from api.models import Image
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ImageUploadTest(TestCase):
     def setUp(self):
         self.client = Client()
@@ -42,6 +43,7 @@ class ImageUploadTest(TestCase):
         self.assertTrue(Image.objects.filter(resource__checksum=checksum).exists())
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ImageDeduplicationTest(TestCase):
     def setUp(self):
         self.client = Client()
@@ -93,6 +95,7 @@ class ImageDeduplicationTest(TestCase):
         self.assertTrue(os.path.exists(file_path_1))
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class WebImageUploadTest(TestCase):
     def setUp(self):
         self.client = Client()
