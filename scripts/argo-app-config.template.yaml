@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blog-backend
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/GSGFs7/GSGFs-blog-backend.git
+    targetRevision: HEAD
+    path: .config/k8s/overlays/prod
+    kustomize:
+      images:
+        - blog-django=${REGISTRY_DOMAIN}/blog-django
+        - blog-celery-worker=${REGISTRY_DOMAIN}/blog-celery-worker
+        - blog-celery-beat=${REGISTRY_DOMAIN}/blog-celery-beat
+        - blog-model-downloader=${REGISTRY_DOMAIN}/blog-model-downloader
+        - blog-backup=${REGISTRY_DOMAIN}/blog-backup
+  destination:
+    server: https://kubernetes.default.svc # current cluster
+    namespace: blog
+  syncPolicy:
+    automated:
+      prune: true # Automatically delete resources that no longer exist in Git
+      selfHeal: true # Automatically correct back to Git status
