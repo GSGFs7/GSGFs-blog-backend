@@ -16,6 +16,24 @@ spec:
         - blog-celery-beat=${REGISTRY_DOMAIN}/blog-celery-beat
         - blog-model-downloader=${REGISTRY_DOMAIN}/blog-model-downloader
         - blog-backup=${REGISTRY_DOMAIN}/blog-backup
+      patches:
+        - target:
+            kind: Ingress
+            name: blog-ingress
+          patch: |-
+            - op: replace
+              path: /spec/rules/0/host
+              value: ${BACKEND_DOMAIN}
+            - op: replace
+              path: /spec/tls/0/hosts/0
+              value: ${BACKEND_DOMAIN}
+        - target:
+            kind: ClusterIssuer
+            name: letsencrypt-prod
+          patch: |-
+            - op: replace
+              path: /spec/acme/email
+              value: ${ADMIN_EMAIL}
   destination:
     server: https://kubernetes.default.svc # current cluster
     namespace: blog

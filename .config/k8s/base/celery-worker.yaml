@@ -6,7 +6,6 @@ metadata:
   labels:
     app: blog-celery-worker
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: blog-celery-worker
@@ -73,7 +72,7 @@ spec:
                 name: blog-secrets
           resources:
             requests:
-              memory: "1500Mi"
+              memory: "1800Mi"
               cpu: "300m"
             limits:
               memory: "2Gi"
@@ -114,6 +113,7 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: blog-celery-worker-hpa
 spec:
+  minReplicas: 1
   maxReplicas: 3
   scaleTargetRef:
     apiVersion: apps/v1
@@ -125,10 +125,10 @@ spec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 90
+          averageUtilization: 85
     - type: Resource
       resource:
         name: memory
         target:
           type: Utilization
-          averageUtilization: 90
+          averageUtilization: 95
