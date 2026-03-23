@@ -42,3 +42,6 @@ sentence_transformers_models
 
 # config
 .config/
+
+# ci/cd
+.github/

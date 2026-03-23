@@ -6,7 +6,7 @@ resources:
   - ingress.yaml
   - cluster-issuer.yaml
 
-# In prod, images are managed by GitHub Argo CD
+# In prod, images are managed by Argo CD
 images:
   - name: blog-django
     newName: blog-django
