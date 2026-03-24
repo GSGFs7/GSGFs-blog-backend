@@ -10,18 +10,18 @@ resources:
 
 # In prod, images are managed by GitHub action & Argo CD
 images:
-  - name: blog-django
-    newName: blog-django
-    newTag: latest
-  - name: blog-celery-worker
-    newName: blog-celery-worker
-    newTag: latest
-  - name: blog-celery-beat
-    newName: blog-celery-beat
-    newTag: latest
-  - name: blog-model-downloader
-    newName: blog-model-downloader
-    newTag: latest
-  - name: blog-backup
-    newName: blog-backup
-    newTag: latest
+- name: blog-backup
+  newName: registry.gsgfs.sh/blog-backup
+  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+- name: blog-celery-beat
+  newName: registry.gsgfs.sh/blog-celery-beat
+  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+- name: blog-celery-worker
+  newName: registry.gsgfs.sh/blog-celery-worker
+  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+- name: blog-django
+  newName: registry.gsgfs.sh/blog-django
+  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+- name: blog-model-downloader
+  newName: registry.gsgfs.sh/blog-model-downloader
+  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
