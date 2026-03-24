@@ -29,10 +29,10 @@ spec:
                 - secretRef:
                     name: blog-secrets
               command:
-                - sh
+                - /bin/bash
                 - -c
                 - |
-                  set -e
+                  set -eo pipefail
                   if [ -z "$DATABASE_HOST" ] || [ -z "$DATABASE_NAME" ]; then
                     echo "Error: DATABASE_HOST or DATABASE_NAME is not set."
                     exit 1

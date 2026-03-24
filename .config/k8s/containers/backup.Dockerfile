@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 # Backup image with PostgreSQL client tools and upload script
 
-FROM python:3.14-slim
+FROM archlinux:latest
 
-# Install PostgreSQL client and dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
-    postgresql-common \
-    && rm -rf /var/lib/apt/lists/*
+# Install PostgreSQL client
+RUN pacman -Syu --noconfirm \
+    postgresql \
+    python-pip \
+    && pacman -Scc --noconfirm
 
 # Create working directory
 WORKDIR /app
@@ -15,8 +15,9 @@ WORKDIR /app
 # Copy upload script
 COPY scripts/upload.py /app/
 
-# Install Python dependencies
-RUN pip install --no-cache-dir boto3 boto3-stubs[s3] python-dotenv
+# Install Python dependencies (from pypi)
+# Using --break-system-packages because Arch Linux is an externally managed environment
+RUN pip install --no-cache-dir boto3 boto3-stubs[s3] python-dotenv --break-system-packages
 
 ENV PYTHONUNBUFFERED=1
 
