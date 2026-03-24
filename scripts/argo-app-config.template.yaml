@@ -10,12 +10,6 @@ spec:
     targetRevision: HEAD
     path: .config/k8s/overlays/prod
     kustomize:
-      images:
-        - blog-django=${REGISTRY_DOMAIN}/blog-django
-        - blog-celery-worker=${REGISTRY_DOMAIN}/blog-celery-worker
-        - blog-celery-beat=${REGISTRY_DOMAIN}/blog-celery-beat
-        - blog-model-downloader=${REGISTRY_DOMAIN}/blog-model-downloader
-        - blog-backup=${REGISTRY_DOMAIN}/blog-backup
       patches:
         - target:
             kind: Ingress

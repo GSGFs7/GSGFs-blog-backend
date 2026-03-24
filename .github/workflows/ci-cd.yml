@@ -139,15 +139,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Pin image tags to current commit SHA (Short names only)
+      - name: Pin image tags to current commit SHA
         run: |
           cd ${{ env.OVERLAY_DIR }}
           kustomize edit set image \
-            blog-django=blog-django:${{ github.sha }} \
-            blog-celery-worker=blog-celery-worker:${{ github.sha }} \
-            blog-celery-beat=blog-celery-beat:${{ github.sha }} \
-            blog-model-downloader=blog-model-downloader:${{ github.sha }} \
-            blog-backup=blog-backup:${{ github.sha }}
+            blog-django=${{ secrets.REGISTRY_DOMAIN }}/blog-django:${{ github.sha }} \
+            blog-celery-worker=${{ secrets.REGISTRY_DOMAIN }}/blog-celery-worker:${{ github.sha }} \
+            blog-celery-beat=${{ secrets.REGISTRY_DOMAIN }}/blog-celery-beat:${{ github.sha }} \
+            blog-model-downloader=${{ secrets.REGISTRY_DOMAIN }}/blog-model-downloader:${{ github.sha }} \
+            blog-backup=${{ secrets.REGISTRY_DOMAIN }}/blog-backup:${{ github.sha }}
 
       - name: Commit and push changes
         run: |
