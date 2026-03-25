@@ -64,11 +64,10 @@ echo "Applying K8s manifests using Kustomize and envsubst..."
 # Images and pull policy are fully controlled by the overlay kustomization.yaml.
 # envsubst handles runtime variables like $BACKEND_DOMAIN and $ADMIN_EMAIL.
 pushd "$OVERLAY_DIR" > /dev/null
-kustomize build . | envsubst | kubectl apply -f -
-
+kubectl kustomize . | envsubst | kubectl apply -f -
 popd > /dev/null
-echo ""
 
+echo ""
 echo "Deployment completed!"
 echo ""
 echo "Check deployment status:"
