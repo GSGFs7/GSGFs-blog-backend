@@ -78,19 +78,24 @@ jobs:
       matrix:
         include:
           - component: django
-            dockerfile: .config/k8s/containers/django.Dockerfile
+            dockerfile: .config/k8s/containers/app.Dockerfile
+            target: django
             image_name: blog-django
           - component: celery-worker
-            dockerfile: .config/k8s/containers/celery-worker.Dockerfile
+            dockerfile: .config/k8s/containers/app.Dockerfile
+            target: worker
             image_name: blog-celery-worker
           - component: celery-beat
-            dockerfile: .config/k8s/containers/celery-beat.Dockerfile
+            dockerfile: .config/k8s/containers/app.Dockerfile
+            target: beat
             image_name: blog-celery-beat
           - component: model-downloader
-            dockerfile: .config/k8s/containers/model-downloader.Dockerfile
+            dockerfile: .config/k8s/containers/app.Dockerfile
+            target: downloader
             image_name: blog-model-downloader
           - component: backup
             dockerfile: .config/k8s/containers/backup.Dockerfile
+            target: ""
             image_name: blog-backup
     steps:
       - name: Checkout repository
@@ -117,13 +122,14 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
           push: true
           tags: |
             ${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:latest
             ${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:${{ github.sha }}
-          # Layer cache backed by the registry — speeds up incremental builds significantly
-          cache-from: type=registry,ref=${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.REGISTRY_DOMAIN }}/${{ matrix.image_name }}:buildcache,mode=max
+          # Shared buildcache for all components using app.Dockerfile
+          cache-from: type=registry,ref=${{ secrets.REGISTRY_DOMAIN }}/blog-buildcache:app
+          cache-to: type=registry,ref=${{ secrets.REGISTRY_DOMAIN }}/blog-buildcache:app,mode=max
           secrets: |
             "hf_token=${{ secrets.HUGGINGFACE_HUB_TOKEN }}"
 

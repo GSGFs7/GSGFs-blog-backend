@@ -34,7 +34,7 @@ django.tar.zst
 .env
 .env.example
 
-# github
+# ci/cd
 .github
 
 # model
@@ -42,6 +42,3 @@ sentence_transformers_models
 
 # config
 .config/
-
-# ci/cd
-.github/
