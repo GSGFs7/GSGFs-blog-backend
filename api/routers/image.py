@@ -1,6 +1,6 @@
 import logging
-from io import BytesIO
 
+from django.conf import settings
 from ninja import Router, UploadedFile
 
 from api.auth import TimeBaseAuth
@@ -31,10 +31,10 @@ def upload_test(
     if file.content_type not in IMAGE_ALLOWED_FORMAT:
         return 400, {"message": "not allowed image types"}
 
-    file.seek(0)
-    content = BytesIO(file.read())
+    if file.size > settings.IMAGE_UPLOAD_MAX_SIZE:
+        return 400, {"message": "image size exceeds maximum limit"}
 
-    img, img_res = Image.create_from_file(content, filename=file.name)
+    img, img_res, _ = Image.create_from_file(file, filename=file.name)
 
     return 201, ImageUploadResponseSchema(
         id=img.id,

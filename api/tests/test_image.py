@@ -111,6 +111,8 @@ class WebImageUploadTest(TestCase):
             self.skipTest(f"Failed to fetch image: {e}")
 
     def test_image_upload(self):
+        from api.exiftool import ExifTool
+
         file = SimpleUploadedFile("test_image.jpg", self.image_content, "image/jpeg")
         token = TimeBaseAuth.create_token(f"test_{time.time()}")
         response = self.client.post(
@@ -120,15 +122,16 @@ class WebImageUploadTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(Image.objects.filter(original_name="test_image.jpg").exists())
+        self.assertTrue(Image.objects.filter(original_name="test_image.png").exists())
 
-        # clean exif
-        img = PILImage.open(BytesIO(self.image_content))
-        buffer = BytesIO()
-        img.save(buffer, format=img.format)
+        # Clean metadata using the same tool as the implementation
+        cleaned_io = ExifTool().clean(
+            BytesIO(self.image_content), filename="test_image.jpg"
+        )
 
-        # hash
+        # Compute hash of the cleaned data
         hasher = blake3.blake3()
-        hasher.update(buffer.getvalue())
+        hasher.update(cleaned_io.getvalue())
         checksum = hasher.hexdigest()
+
         self.assertTrue(Image.objects.filter(resource__checksum=checksum).exists())

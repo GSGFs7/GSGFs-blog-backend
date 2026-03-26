@@ -1,0 +1,89 @@
+import tempfile
+import unittest
+from io import BytesIO
+
+import requests
+from django.test import TestCase
+from PIL import Image as PILImage
+
+from api.exiftool import ExifTool
+
+# About:
+#   Everson Museum of Art, Syracuse, New York, 1969. Photo by Carol M. Highsmith.
+#   From the Carol M. Highsmith Archive, Library of Congress.
+# License: CC-BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+# Source: https://commons.wikimedia.org/wiki/File:Everson_Museum_of_Art,_Syracuse,_New_York,_1969,_currently_digitized.jpg
+test_image_url = "https://img.gsgfs.moe/img/e4846b98c3a31f6139ac51922477fd52.jpg"
+
+
+class ExifToolTest(TestCase):
+    test_image_data = None
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        if not ExifTool.is_available():
+            raise unittest.SkipTest("exiftool is not available")
+
+        url = test_image_url
+        try:
+            resp = requests.get(url, timeout=5)
+            resp.raise_for_status()
+            cls.test_image_data = resp.content
+        except Exception as e:
+            raise unittest.SkipTest(f"Failed to fetch image: {e}")
+
+    def test_single_instance(self):
+        et1 = ExifTool()
+        et2 = ExifTool()
+        self.assertIs(et1, et2)
+
+    def test_is_available(self):
+        """If initialization is complete is_available must return True"""
+        self.assertTrue(ExifTool.is_available())
+
+    def test_clean_metadata(self):
+        if not self.test_image_data:
+            self.skipTest("No test image data available")
+
+        et = ExifTool()
+        original_data = self.test_image_data
+
+        # clean metadata
+        cleaned_io = et.clean(BytesIO(original_data), "test.jpg")
+        cleaned_data = cleaned_io.getvalue()
+
+        # The data should be different
+        self.assertNotEqual(original_data, cleaned_data)
+
+        # verify the metadata is gone
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=True) as tmp:
+            tmp.write(cleaned_data)
+            tmp_name = tmp.name
+
+            result = ExifTool().execute(
+                "-Software", "-CreatorTool", "-HistoryAction", tmp_name
+            )
+            # metadata should be removed
+            self.assertEqual(result.strip(), "")
+
+    def test_clean_invalid_data(self):
+        et = ExifTool()
+        invalid_data = b"not an image file content"
+
+        with self.assertRaises(RuntimeError):
+            et.clean(BytesIO(invalid_data), filename="test.jpg")
+
+    def test_persistence(self):
+        et = ExifTool()
+        buffer = BytesIO()
+        PILImage.new("RGB", (1, 1)).save(buffer, "PNG")
+
+        buffer.seek(0)
+        et.clean(buffer, filename="test.png")
+        process_id = et.process.pid
+        self.assertIsNotNone(et.process)
+
+        buffer.seek(0)
+        et.clean(buffer, filename="test.png")
+        self.assertEqual(et.process.pid, process_id)
