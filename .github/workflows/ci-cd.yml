@@ -19,6 +19,11 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
       db:
         image: pgvector/pgvector:pg18-trixie
@@ -28,6 +33,11 @@ jobs:
           POSTGRES_DB: github_action_test
           POSTGRES_USER: github_action_test_user
           POSTGRES_PASSWORD: github_action_test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
