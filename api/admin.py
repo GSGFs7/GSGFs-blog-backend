@@ -49,14 +49,15 @@ class ImageAdminForm(forms.ModelForm):
         return file
 
     def save(self, commit=True):
-        # Call super().save(commit=False) to ensure self.save_m2m is initialized by Django
+        # Call super().save(commit=False) to ensure self.save_m2m
+        # is initialized by Django
         instance = super().save(commit=False)
         file = self.cleaned_data.get("file")
 
         if file:
             file.seek(0)
             content = BytesIO(file.read())
-            img, _ = Image.create_from_file(content, file.name)
+            img, *_ = Image.create_from_file(content, file.name)
 
             img.original_name = self.cleaned_data.get("original_name") or file.name
             img.alt_text = self.cleaned_data.get("alt_text", "")

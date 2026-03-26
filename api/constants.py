@@ -1,4 +1,4 @@
-IMAGE_ALLOWED_FORMAT = {
+IMAGE_ALLOWED_FORMAT: set[str] = {
     "image/apng",  # Animated PNG
     "image/avif",  # AV1 encoded image
     "image/bmp",  # Windows bitmap image, uncompressed, needs convert
@@ -25,7 +25,7 @@ IMAGE_ALLOWED_FORMAT = {
 }
 
 # Reserved slug keyword, used for article routing
-POST_RESERVED_SLUGS = {
+POST_RESERVED_SLUGS: set[str] = {
     "about",
     "admin",
     "all",

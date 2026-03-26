@@ -7,13 +7,13 @@ set -e
 # Ensure we are in the project root
 cd "$(dirname "$0")/.."
 
-# Image list: name:dockerfile_path
+# Image list: dockerfile_path:target:name
 declare -a IMAGES=(
-    "model-downloader:.config/k8s/containers/model-downloader.Dockerfile"
-    "django:.config/k8s/containers/django.Dockerfile"
-    "celery-worker:.config/k8s/containers/celery-worker.Dockerfile"
-    "celery-beat:.config/k8s/containers/celery-beat.Dockerfile"
-    "backup:.config/k8s/containers/backup.Dockerfile"
+    ".config/k8s/containers/app.Dockerfile:django:django"
+    ".config/k8s/containers/app.Dockerfile:worker:celery-worker"
+    ".config/k8s/containers/app.Dockerfile:beat:celery-beat"
+    ".config/k8s/containers/app.Dockerfile:downloader:model-downloader"
+    ".config/k8s/containers/backup.Dockerfile::backup"
 )
 
 # Detect available container builder (podman preferred)
@@ -30,12 +30,22 @@ detect_container_builder() {
 
 # Build image using podman
 build_with_podman() {
-    podman build --format oci -f "$2" -t "localhost/blog-$1:latest" .
+    local name=$1
+    local dockerfile=$2
+    local target=$3
+    local target_arg=""
+    if [ -n "$target" ]; then target_arg="--target $target"; fi
+    podman build "$target_arg" -f "$dockerfile" -t "localhost/blog-$name:latest" .
 }
 
 # Build image using docker
 build_with_docker() {
-    docker build -f "$2" -t "localhost/blog-$1:latest" .
+    local name=$1
+    local dockerfile=$2
+    local target=$3
+    local target_arg=""
+    if [ -n "$target" ]; then target_arg="--target $target"; fi
+    docker build "$target_arg" -f "$dockerfile" -t "localhost/blog-$name:latest" .
 }
 
 # Build all images in the list
@@ -46,12 +56,12 @@ build_images() {
     echo ""
 
     for image_info in "${IMAGES[@]}"; do
-        IFS=':' read -r name dockerfile <<< "$image_info"
-        echo "Building $name image..."
+        IFS=':' read -r dockerfile target name <<< "$image_info"
+        echo "Building $name image (target: ${target:-N/A})..."
         if [ "$builder" == "podman" ]; then
-            build_with_podman "$name" "$dockerfile"
+            build_with_podman "$name" "$dockerfile" "$target"
         elif [ "$builder" == "docker" ]; then
-            build_with_docker "$name" "$dockerfile"
+            build_with_docker "$name" "$dockerfile" "$target"
         fi
     done
 
@@ -65,7 +75,7 @@ import_to_k3s() {
     local builder=$1
 
     for image_info in "${IMAGES[@]}"; do
-        IFS=':' read -r name dockerfile <<< "$image_info"
+        IFS=':' read -r dockerfile target name <<< "$image_info"
         echo "Importing localhost/blog-$name:latest to k3s..."
         $builder save "localhost/blog-$name:latest" | sudo k3s ctr images import -
     done

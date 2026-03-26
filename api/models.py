@@ -5,19 +5,21 @@ TODO: split this
 import logging
 import os
 from io import BytesIO
+from typing import IO
 
 import blake3
 import jieba
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
+from django.core.files import File
 from django.db import models, transaction
 from django.utils.text import Truncator, slugify
 from pgvector.django import HnswIndex, VectorField
 from PIL import Image as PILImage
 
-from api.constants import POST_RESERVED_SLUGS
+from api.constants import IMAGE_ALLOWED_FORMAT, POST_RESERVED_SLUGS
+from api.exiftool import ExifTool
 from api.utils import chinese_slugify, extract_metadata
 
 logger = logging.getLogger(__name__)
@@ -452,8 +454,10 @@ class ImageResource(BaseModel):
     # checksum
     checksum = models.CharField(max_length=64, unique=True)
 
-    # file
+    # TODO: s3
+    # files
     file = models.ImageField(upload_to=image_raw_upload_path, null=False, blank=False)
+    # other files auto generate by django signal & celery task
     avif_file = models.ImageField(
         upload_to=image_avif_upload_path, null=True, blank=True
     )
@@ -519,42 +523,63 @@ class Image(BaseModel):
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
     @staticmethod
     def create_from_file(
-        content: BytesIO, filename: str
-    ) -> tuple["Image", ImageResource]:
+        content: IO, filename: str
+    ) -> tuple["Image", ImageResource, bool]:
 
-        # 0. verify
+        # NOTE: There are some problem here
+        #  1. image workflow is too long & complex, sync blocking in front, reduce QPS.
+        #  2. if calculate hash only, EXIF clean and duplicates removing will invalid,
+        #     and hash remap is too unelegant.
+        #  Feature-rich & High-concurrency can't have it both ways?
+        #  just like CAP theorem?
+
+        # 0. extract basic info and verify file integrity
         try:
-            img = PILImage.open(content)
-            img.verify()
+            content.seek(0)
+            with PILImage.open(content) as img:
+                width = img.width
+                height = img.height
+                mime_type = PILImage.MIME.get(img.format)
+
+                if mime_type not in IMAGE_ALLOWED_FORMAT:
+                    raise ValidationError("Not allowed image types")
+
+                # scans the file structure
+                img.verify()
         except Exception:
             raise ValidationError("Unrecognizable image file or file is corrupted")
 
+        # TODO: some photography may keep some EXIF
+        # 1. clean metadata
         try:
-            # 1. clean
             content.seek(0)
-            img = PILImage.open(content)
-            buffer = BytesIO()
-            img.save(buffer, img.format)
-            cleaned_image = buffer.getvalue()
-
-            width = img.width
-            height = img.height
-            size = len(cleaned_image)
-            mime_type = PILImage.MIME.get(img.format)
-            del img
-
-            # 2. checksum
-            checksum = blake3.blake3(cleaned_image).hexdigest()
+            # ExifTool, no PIL re-encoding, more efficient
+            if ExifTool.is_available():
+                cleaned_io = ExifTool().clean(content, filename=filename)
+                size = cleaned_io.getbuffer().nbytes
+            else:
+                img = PILImage.open(content)
+                cleaned_io = BytesIO()
+                img.save(cleaned_io, quality=100, save_all=True, format=img.format)
+                size = cleaned_io.getbuffer().nbytes
         except Exception as e:
-            logger.warning(f"Could not process image: {e}")
-            raise ValidationError("Unknown error occurred")
+            logger.warning(f"ExifTool could not process image: {e}")
+            raise ValidationError("Could not clean image metadata")
+
+        # 2. checksum
+        cleaned_io.seek(0)
+        hasher = blake3.blake3()
+        while chunk := cleaned_io.read(65536):  # 64KiB chunks
+            hasher.update(chunk)
+        checksum = hasher.hexdigest()
 
         # atomicity
         with transaction.atomic():
+            cleaned_io.seek(0)
             img_res, created = ImageResource.objects.get_or_create(
                 checksum=checksum,
                 defaults={
-                    "file": ContentFile(cleaned_image, name=filename),
+                    "file": File(cleaned_io, name=filename),
                     "width": width,
                     "height": height,
                     "size": size,
@@ -565,10 +590,10 @@ class Image(BaseModel):
             img = Image.objects.create(
                 resource=img_res,
                 original_name=filename,
-                # TODO
+                # TODO: add user context here
                 uploaded_by=None,
                 alt_text="",
                 description="",
             )
 
-        return img, img_res
+        return img, img_res, created
