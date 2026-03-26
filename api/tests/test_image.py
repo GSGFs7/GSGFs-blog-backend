@@ -113,7 +113,8 @@ class WebImageUploadTest(TestCase):
     def test_image_upload(self):
         from api.exiftool import ExifTool
 
-        file = SimpleUploadedFile("test_image.jpg", self.image_content, "image/jpeg")
+        # PNG???
+        file = SimpleUploadedFile("test_image.png", self.image_content, "image/png")
         token = TimeBaseAuth.create_token(f"test_{time.time()}")
         response = self.client.post(
             "/api/image/upload",
@@ -126,7 +127,7 @@ class WebImageUploadTest(TestCase):
 
         # Clean metadata using the same tool as the implementation
         cleaned_io = ExifTool().clean(
-            BytesIO(self.image_content), filename="test_image.jpg"
+            BytesIO(self.image_content), filename="test_image.png"
         )
 
         # Compute hash of the cleaned data
