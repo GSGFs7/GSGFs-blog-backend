@@ -47,21 +47,20 @@ class ExifTool:
 
         self._counter = 0
 
+    def _ensure_process_running(self):
+        if self.process is None or self.process.poll() is not None:
+            self._start_process()
+
+        if self.process is None:
+            raise RuntimeError("ExifTool process is not running.")
+
     def execute(self, *args: str) -> str:
         """
         Execute a custom ExifTool command.
-        Args:
-            *args: Command line arguments for exiftool.
-        Returns:
-            The stdout response from ExifTool.
         """
 
         with self._lock:
-            if self.process is None or self.process.poll() is not None:
-                self._start_process()
-
-            if self.process is None:
-                raise RuntimeError("ExifTool process is not running.")
+            self._ensure_process_running()
 
             try:
                 self._counter += 1
@@ -90,17 +89,14 @@ class ExifTool:
                     .strip()
                 )
             except Exception as e:
-                logger.error(f"ExifTool execution failed: {e}")
                 self.terminate()  # Reset process on error
                 raise e
 
     def clean(self, data: IO, filename: str = None) -> BytesIO:
-        with self._lock:
-            if self.process is None or self.process.poll() is not None:
-                self._start_process()
+        """clean image EXIF data"""
 
-            if self.process is None:
-                raise RuntimeError("ExifTool process is not running.")
+        with self._lock:
+            self._ensure_process_running()
 
             # prefer /dev/shm, makesure we are using tmpfs
             tmp_base = (
@@ -110,7 +106,7 @@ class ExifTool:
             )
 
             with tempfile.TemporaryDirectory(
-                dir=tmp_base, prefix="blog-exiftool-"
+                dir=tmp_base, prefix="blog-exiftool-", delete=True
             ) as tmp_dir:
                 ext = os.path.splitext(filename)[-1] if filename else ""
                 tmp_in_path = os.path.join(tmp_dir, f"input{ext}")
@@ -170,7 +166,6 @@ class ExifTool:
                     with open(tmp_out_path, "rb") as f:
                         return BytesIO(f.read())
                 except Exception as e:
-                    logger.error(f"ExifTool cleaning failed: {e}")
                     self.terminate()  # Reset process on error
                     raise e
 

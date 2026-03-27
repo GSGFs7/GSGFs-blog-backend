@@ -549,19 +549,21 @@ class Image(BaseModel):
         except Exception:
             raise ValidationError("Unrecognizable image file or file is corrupted")
 
-        # TODO: some photography may keep some EXIF
+        # TODO: some photography may needs keep some EXIF
         # 1. clean metadata
         try:
             content.seek(0)
-            # ExifTool, no PIL re-encoding, more efficient
             if ExifTool.is_available():
+                # ExifTool, no PIL re-encoding, more efficient
                 cleaned_io = ExifTool().clean(content, filename=filename)
                 size = cleaned_io.getbuffer().nbytes
             else:
+                # fallback
                 img = PILImage.open(content)
                 cleaned_io = BytesIO()
                 img.save(cleaned_io, quality=100, save_all=True, format=img.format)
                 size = cleaned_io.getbuffer().nbytes
+            del content
         except Exception as e:
             logger.warning(f"ExifTool could not process image: {e}")
             raise ValidationError("Could not clean image metadata")

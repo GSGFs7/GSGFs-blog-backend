@@ -32,6 +32,9 @@ def preload_ml_model(sender, **kwargs):
         from api.ml_model import get_sentence_transformer_model
 
         model = get_sentence_transformer_model()
-        logger.info(f"ML model preloaded successfully: {model}")
+        if model:
+            logger.info("ML model preloaded successfully.")
+        else:
+            logger.warning("ML model preloaded failed.")
     except Exception as e:
         logger.warning(f"ML model preload failed: {e}")
