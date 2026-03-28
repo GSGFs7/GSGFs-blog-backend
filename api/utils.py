@@ -145,6 +145,21 @@ def remove_code_blocks(text: str) -> str:
     return text.strip()
 
 
+# TODO: optimize chunking
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
+    text = remove_code_blocks(text)
+    text = remove_markdown(text)
+    text = remove_html_tags(text)
+
+    chunk = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk.append(text[start:end])
+        start += chunk_size - overlap
+    return chunk
+
+
 def extract_front_matter(text: str) -> Dict[str, Any]:
     """
     Extract front matter from a string.

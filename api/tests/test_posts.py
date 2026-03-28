@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
 from api.models import Post
-from api.tasks import generate_post_embedding
+from api.tasks import generate_post_chunks_embedding_task as generate_post_embedding
 
 
 @override_settings(
@@ -24,7 +24,7 @@ class TestPost(TestCase):
 
     def test_post_embedding_generation(self):
         post = Post.objects.get(title="test")
-        self.assertIsNotNone(post.embedding)
+        self.assertTrue(post.chunks.exists())
 
     def test_post_api(self):
         post = Post.objects.get(title="test")

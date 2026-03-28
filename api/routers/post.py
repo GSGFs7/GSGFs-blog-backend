@@ -1,19 +1,14 @@
 import logging
 
-import jieba
-from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.db.models import F, Q
 from django.views.decorators.cache import cache_page
 from ninja import Router
 from ninja.decorators import decorate_view
-from pgvector.django import CosineDistance
 from pydantic import PositiveInt
 
+from api.models import Post
+from api.post_search import post_search
 from api.rate_limit import rate_limit
-from api.tasks import generate_search_embedding_task
-
-from ..models import Post
-from ..schemas import (
+from api.schemas import (
     IdsSchema,
     MessageSchema,
     PostCardsSchema,
@@ -22,9 +17,6 @@ from ..schemas import (
     PostSitemapSchema,
     PostsSchema,
 )
-
-CONFIDENCE = 0.5
-RELATIVE_CUTOFF = 0.5
 
 router = Router()
 
@@ -99,69 +91,7 @@ def get_post_cards_from_query(
     if len(q) > 200:
         return 400, {"message": "Query too long"}
 
-    tokenized_query = " ".join(jieba.lcut(q, cut_all=True))
-    search_query = SearchQuery(tokenized_query, config="simple")
-
-    try:
-        task = generate_search_embedding_task.delay(q)
-        query_embedding = task.get(timeout=1)
-    except Exception as e:
-        logging.warning(f"Search embedding task failed or timed out: {e}")
-        query_embedding = None
-
-    if query_embedding:
-        # Reciprocal Rank Fusion (RRF)
-        candidates = list(
-            Post.objects.annotate(
-                fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
-                vec_distance=CosineDistance("embedding", query_embedding),
-            )
-            .filter(
-                Q(pg_gin_search_vector=search_query) | Q(vec_distance__lt=CONFIDENCE),
-            )
-            .values("id", "fts_rank", "vec_distance")
-        )
-
-        if not candidates:
-            result = []
-        else:
-            # Rank by FTS (descending) and Vector Distance (ascending)
-            fts_sorted = sorted(candidates, key=lambda x: x["fts_rank"], reverse=True)
-            vec_sorted = sorted(candidates, key=lambda x: x["vec_distance"])
-
-            fts_ranks = {item["id"]: i + 1 for i, item in enumerate(fts_sorted)}
-            vec_ranks = {item["id"]: i + 1 for i, item in enumerate(vec_sorted)}
-
-            k = 60  # RRF constant
-            for item in candidates:
-                # score = 1/(k+r1) + 1/(k+r2)
-                item["hybrid_score"] = (1.0 / (k + fts_ranks[item["id"]])) + (
-                    1.0 / (k + vec_ranks[item["id"]])
-                )
-
-            candidates.sort(key=lambda x: x["hybrid_score"], reverse=True)
-            # relative score filter
-            if candidates:
-                top_score = candidates[0]["hybrid_score"]
-                candidates = [
-                    item
-                    for item in candidates
-                    if item["hybrid_score"] >= top_score * RELATIVE_CUTOFF
-                ]
-
-            result = candidates
-    else:
-        # Fallback to pure FTS
-        result = list(
-            Post.objects.annotate(
-                fts_rank=SearchRank(F("pg_gin_search_vector"), search_query),
-            )
-            .filter(pg_gin_search_vector=search_query)
-            .order_by("-fts_rank")
-            .values("id", "fts_rank")
-        )
-        for item in result:
-            item["hybrid_score"] = item.get("fts_rank", 0.0)
+    result = post_search(q)
 
     # paginate
     total = len(result)

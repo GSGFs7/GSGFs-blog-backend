@@ -156,8 +156,8 @@ class Post(BaseModel):
         default="draft",
     )
 
-    # 向量化搜索
-    embedding = VectorField(dimensions=768, null=True, blank=True)
+    # 向量化搜索已迁移至 PostChunk
+    # embedding = VectorField(dimensions=768, null=True, blank=True)
 
     # PG full-text search
     pg_gin_search_vector = SearchVectorField(null=True, blank=True)
@@ -172,13 +172,6 @@ class Post(BaseModel):
         ordering = ["-order", "-created_at"]
         indexes = [
             GinIndex(fields=["pg_gin_search_vector"]),
-            HnswIndex(
-                name="api_post_embedding_cosine_idx",
-                fields=["embedding"],
-                m=16,
-                ef_construction=64,
-                opclasses=["vector_cosine_ops"],
-            ),
         ]
 
     def __str__(self):
@@ -256,6 +249,24 @@ class Post(BaseModel):
                 config="simple",
             )
         )
+
+
+class PostChunk(BaseModel):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="chunks")
+    content = models.TextField()
+    embedding = VectorField(dimensions=768)
+    chunk_index = models.IntegerField()  # The order of the block in the original text
+
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name="post_chunk_embedding_idx",
+                fields=["embedding"],
+                m=32,
+                ef_construction=256,
+                opclasses=["vector_cosine_ops"],
+            )
+        ]
 
 
 class Page(BaseModel):
