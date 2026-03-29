@@ -18,6 +18,7 @@ from api.rate_limit import rate_limit
 from api.schemas import (
     IdsSchema,
     MessageSchema,
+    PaginationSchema,
     PostCardSchema,
     PostCardWithSimilarity,
     PostIdsForSitemap,
@@ -54,6 +55,12 @@ class PostSimilarityPagination(Pagination):
         page: int = Field(1, ge=1)
         size: int = Field(30, ge=1, le=100)  # 30 results by default
 
+    class Output(Schema):
+        posts_with_similarity: List[PostCardWithSimilarity]
+        pagination: PaginationSchema
+
+    items_attribute: str = "posts_with_similarity"
+
     async def apaginate_queryset(
         self,
         queryset_with_similarities: Tuple[List[Post], List[float]],
@@ -66,7 +73,7 @@ class PostSimilarityPagination(Pagination):
         total = len(queryset)
 
         return {
-            "result": [
+            "posts_with_similarity": [
                 {"post": q, "similarity": similarities[offset + i]}
                 for i, q in enumerate(queryset[offset : offset + pagination.size])
             ],

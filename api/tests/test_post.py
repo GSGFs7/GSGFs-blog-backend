@@ -220,7 +220,7 @@ class TestHybridSearch(TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = response.json()
-        self.assertIn("result", data)
+        self.assertIn("posts_with_similarity", data)
         self.assertIn("pagination", data)
 
     def test_search_pagination(self):
@@ -229,7 +229,7 @@ class TestHybridSearch(TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = response.json()
-        self.assertLessEqual(len(data["result"]), 2)
+        self.assertLessEqual(len(data["posts_with_similarity"]), 2)
         self.assertEqual(data["pagination"]["page"], 1)
         self.assertEqual(data["pagination"]["size"], 2)
         self.assertGreater(data["pagination"]["total"], 0)
@@ -246,9 +246,9 @@ class TestHybridSearch(TestCase):
         response = self.client.get("/api/post/search?q=Django")
         data = response.json()
 
-        self.assertGreater(len(data["result"]), 0)
+        self.assertGreater(len(data["posts_with_similarity"]), 0)
 
-        result = data["result"][0]
+        result = data["posts_with_similarity"][0]
         self.assertIn("post", result)
         self.assertIn("similarity", result)
 
@@ -259,5 +259,5 @@ class TestHybridSearch(TestCase):
         response = self.client.get("/api/post/search?q=nonexistent123456")
         data = response.json()
 
-        self.assertEqual(len(data["result"]), 0)
+        self.assertEqual(len(data["posts_with_similarity"]), 0)
         self.assertEqual(data["pagination"]["total"], 0)
