@@ -12,7 +12,7 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from api.models import Post
-from api.pagination import Pagination
+from api.pagination import Pagination, paginate_as
 from api.post_search import post_search
 from api.rate_limit import rate_limit
 from api.schemas import (
@@ -29,35 +29,8 @@ from api.schemas import (
 router = Router()
 
 
-class PostPagination(Pagination):
-    class Output(Schema):
-        posts: List[PostCardSchema]
-        pagination: PaginationSchema
-
-    items_attribute: str = "posts"
-
-    async def apaginate_queryset(
-        self,
-        queryset,
-        pagination,
-        request,
-        **params,
-    ):
-        offset = (pagination.page - 1) * pagination.size
-        total = await self._aitems_count(queryset)
-
-        return {
-            "posts": [p async for p in queryset[offset : offset + pagination.size]],
-            "pagination": {
-                "page": pagination.page,
-                "size": pagination.size,
-                "total": total,
-            },
-        }
-
-
 @router.get("/", response=List[PostCardSchema])
-@paginate(PostPagination)
+@paginate(paginate_as("posts", PostCardSchema))
 async def get_all_posts(request):
     return Post.objects.select_related("category").prefetch_related("tags").all()
 

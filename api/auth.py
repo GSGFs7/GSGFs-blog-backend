@@ -66,7 +66,7 @@ class TimeBaseAuth(HttpBearer):
     @staticmethod
     def get_fernet():
         if not settings.API_KEY:
-            raise ValueError
+            raise ValueError("API_KEY is not configured")
 
         key = hashlib.sha256(settings.API_KEY.encode()).digest()
         return Fernet(base64.urlsafe_b64encode(key))

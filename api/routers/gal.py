@@ -1,10 +1,11 @@
 from typing import List
 
 from ninja import Router
-from ninja.pagination import PageNumberPagination, paginate
+from ninja.pagination import paginate
 
 from api.auth import TimeBaseAuth
 from api.models import Gal
+from api.pagination import paginate_as
 from api.schemas import (
     GalSchema,
     GalUpdateSchema,
@@ -17,7 +18,7 @@ router = Router()
 
 
 @router.get("/", response=List[GalSchema])
-@paginate(PageNumberPagination, page_size=10)
+@paginate(paginate_as("gals", GalSchema))
 async def get_all_gal(request):
     # makesure here is MainThread
     # print(threading.current_thread().name)
