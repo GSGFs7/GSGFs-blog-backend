@@ -2,7 +2,7 @@
 
 ## Core Tech Stack
 
-Django 5.2 + Django-Ninja + pgvector + Celery + uv/ruff.
+Asynchronous Django + Django-Ninja + pgvector + Celery + uv/ruff.
 
 ## CLI Workflow
 

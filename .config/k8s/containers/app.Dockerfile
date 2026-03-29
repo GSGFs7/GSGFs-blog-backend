@@ -32,7 +32,7 @@ COPY --chown=user:user . .
 # --- Target: Django ---
 FROM base AS django
 EXPOSE 8000
-CMD [ "gunicorn", "-c", "gunicorn.conf.py", "blog.wsgi:application" ]
+CMD [ "gunicorn", "-c", "gunicorn.conf.py", "blog.asgi:application" ]
 
 # --- Target: Celery Worker ---
 FROM base AS worker

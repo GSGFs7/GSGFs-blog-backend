@@ -8,5 +8,5 @@ router = Router()
 
 
 @router.get("/", response=MessageSchema)
-def heath_status(request):
+async def heath_status(request):
     return {"message": "OK"}

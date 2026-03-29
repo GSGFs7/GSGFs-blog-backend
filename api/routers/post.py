@@ -1,140 +1,144 @@
 import logging
+from typing import Any, List, Tuple
 
+import blake3
+from asgiref.sync import sync_to_async
+from django.core.cache import cache
+from django.http import HttpRequest
 from django.views.decorators.cache import cache_page
-from ninja import Router
+from ninja import Field, Router, Schema
 from ninja.decorators import decorate_view
-from pydantic import PositiveInt
+from ninja.errors import HttpError
+from ninja.pagination import PageNumberPagination, paginate
 
 from api.models import Post
+from api.pagination import Pagination
 from api.post_search import post_search
 from api.rate_limit import rate_limit
 from api.schemas import (
     IdsSchema,
     MessageSchema,
-    PostCardsSchema,
-    PostCardsWithSimilaritySchema,
+    PostCardSchema,
+    PostCardWithSimilarity,
     PostIdsForSitemap,
+    PostSchema,
     PostSitemapSchema,
-    PostsSchema,
 )
 
 router = Router()
 
 
-@router.get("/", response={200: PostCardsSchema, 400: MessageSchema})
-def get_posts(request, page: PositiveInt = 1, size: PositiveInt = 10):
-    offset = (page - 1) * size
-    total = Post.objects.count()
-
-    if total == 0:
-        return 200, {
-            "posts": [],
-            "pagination": {
-                "total": total,
-                "page": page,
-                "size": size,
-            },
-        }
-
-    if offset >= total:
-        return 400, {"message": "Out of range"}
-
-    posts = (
-        Post.objects.select_related("category")
-        .prefetch_related("tags")
-        .all()[offset : offset + size]
-    )
-    return 200, {
-        "posts": list(posts),
-        "pagination": {
-            "total": total,  # 一共有多少个
-            "page": page,  # 当前是第几页
-            "size": size,  # 一页的数量
-        },
-    }
+@router.get("/", response=List[PostCardSchema])
+@paginate(PageNumberPagination, page_size=10)
+async def get_all_posts(request):
+    return Post.objects.select_related("category").prefetch_related("tags").all()
 
 
 @router.get("/ids", response=IdsSchema)
-def get_all_post_ids(request):
-    # QuerySet的values_list()方法与values类似
-    # 不过返回的是一个元组而非字典
-    # flat可以使返回一个值时返回那个值而非一个一元组
-    # print(Post.objects.values_list("id", flat=True))
-    return {"ids": list(Post.objects.values_list("id", flat=True))}
+async def get_all_post_ids(request):
+    return {
+        "ids": [i async for i in Post.objects.values_list("id", flat=True)],
+    }
 
 
-@router.get("/sitemap", response={200: PostIdsForSitemap})
-def get_all_post_ids_for_sitemap(request):
+@router.get("/sitemap", response=PostIdsForSitemap)
+async def get_all_post_ids_for_sitemap(request):
     posts = Post.objects.values("id", "slug", "content_update_at")
     # transform to Pydantic model
-    post_schemas = [PostSitemapSchema(**post) for post in posts]
-    return 200, PostIdsForSitemap(root=post_schemas)
+    post_schemas = [PostSitemapSchema(**post) async for post in posts]
+    return PostIdsForSitemap(root=post_schemas)
+
+
+class PostSimilarityPagination(Pagination):
+    class Input(Schema):
+        page: int = Field(1, ge=1)
+        size: int = Field(30, ge=1, le=100)  # 30 results by default
+
+    async def apaginate_queryset(
+        self,
+        queryset_with_similarities: Tuple[List[Post], List[float]],
+        pagination: Pagination.Input,
+        request: HttpRequest,
+        **params: Any,
+    ) -> dict:
+        queryset, similarities = queryset_with_similarities
+        offset = (pagination.page - 1) * pagination.size
+        total = len(queryset)
+
+        return {
+            "result": [
+                {"post": q, "similarity": similarities[offset + i]}
+                for i, q in enumerate(queryset[offset : offset + pagination.size])
+            ],
+            "pagination": {
+                "page": pagination.page,
+                "size": pagination.size,
+                "total": total,
+            },
+        }
 
 
 @router.get(
     "/search",
     response={
-        200: PostCardsWithSimilaritySchema,
+        200: List[PostCardWithSimilarity],
         400: MessageSchema,
         429: MessageSchema,
     },
 )
 @rate_limit(key_prefix="post_search", max_requests=50, window=1)
-@decorate_view(cache_page(3600))
-def get_post_cards_from_query(
-    request,
-    q: str,
-    page: PositiveInt = 1,
-    size: PositiveInt = 10,
-):
+@decorate_view(cache_page(3600))  # 1h
+@paginate(PostSimilarityPagination)
+async def get_post_cards_from_query(request, q: str):
     # length limit
+    q = q.strip()
     if len(q) > 200:
-        return 400, {"message": "Query too long"}
+        # use an error to passby paginate decorator
+        raise HttpError(400, "Query too long")
 
-    result = post_search(q)
+    # caching
+    hashed_query = blake3.blake3().update(q.encode()).hexdigest()
+    cache_key = f"post_search:{hashed_query}"
+    if not (result := await cache.aget(cache_key, False)):
+        # query the search
+        result = await sync_to_async(post_search)(q)
+        await cache.aset(cache_key, result, timeout=7200)  # 2h
 
-    # paginate
-    total = len(result)
-    offset = (page - 1) * size
-    paginated_result = result[offset : offset + size]
+    # map the relation
+    similarities_map = {r["id"]: r["hybrid_score"] for r in result}
+    post_ids = [r["id"] for r in result]
 
-    # if empty
-    if not paginated_result:
-        return 200, {
-            "posts_with_similarity": [],
-            "pagination": {"total": total, "page": page, "size": size},
-        }
-
-    # Assemble into corresponding structure
-    paginated_ids = [item["id"] for item in paginated_result]
-    posts_dict = (
-        Post.objects.select_related("category")
+    # query from db, maybe disordered
+    posts_dict = {
+        p.id: p
+        async for p in Post.objects.filter(id__in=post_ids)
+        .select_related("category")
         .prefetch_related("tags")
-        .in_bulk(paginated_ids)
-    )
-
-    posts_with_similarity = []
-    for item in paginated_result:
-        post_id = item["id"]
-        similarity = item["hybrid_score"] or 0.0
-        post_obj = posts_dict.get(post_id)
-        if post_obj:
-            posts_with_similarity.append({"post": post_obj, "similarity": similarity})
-
-    return 200, {
-        "posts_with_similarity": posts_with_similarity,
-        "pagination": {"total": total, "page": page, "size": size},
     }
+
+    # recover the relation
+    ordered_posts = []
+    ordered_similarities = []
+    for pid in post_ids:
+        if pid in posts_dict:
+            ordered_posts.append(posts_dict[pid])
+            ordered_similarities.append(similarities_map[pid])
+
+    # return to paginate decorative
+    return ordered_posts, ordered_similarities
 
 
 @router.get(
     "/{int:post_id}",
-    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
+    response={200: PostSchema, 404: MessageSchema, 500: MessageSchema},
 )
-def get_post(request, post_id: int):
+async def get_post(request, post_id: int):
     try:
-        post = Post.objects.get(pk=post_id)
-        return post
+        return (
+            await Post.objects.select_related("category")
+            .prefetch_related("tags")
+            .aget(pk=post_id)
+        )
     except Post.DoesNotExist:
         return 404, {"message": "Not found"}
     except Exception as e:
@@ -148,12 +152,15 @@ def get_post(request, post_id: int):
 # at 'api/admin.py' and 'api/models.py'
 @router.get(
     "/{str:post_slug}",
-    response={200: PostsSchema, 404: MessageSchema, 500: MessageSchema},
+    response={200: PostSchema, 404: MessageSchema, 500: MessageSchema},
 )
-def get_post_from_slug(request, post_slug: str):
+async def get_post_from_slug(request, post_slug: str):
     try:
-        post = Post.objects.get(slug=post_slug)
-        return post
+        return (
+            await Post.objects.select_related("category")
+            .prefetch_related("tags")
+            .aget(slug=post_slug)
+        )
     except Post.DoesNotExist:
         return 404, {"message": "Not found"}
     except Exception as e:

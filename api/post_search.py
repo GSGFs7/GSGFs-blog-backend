@@ -68,6 +68,7 @@ def perform_semantic_search(query: str) -> Optional[List[ScoreItem]]:
     return [ScoreItem(id=r["post_id"], score=r["min_dist"]) for r in rows]
 
 
+# TODO: asynchronization
 def post_search(query: str) -> List[SearchResult]:
     vec_candidates = perform_semantic_search(query)
     fts_candidates = perform_full_text_search(query)

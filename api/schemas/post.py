@@ -8,7 +8,7 @@ from ninja.schema import Schema
 from .base import CategorySchema, PaginationSchema, TagsSchema
 
 
-class PostsSchema(Schema):
+class PostSchema(Schema):
     id: int
     category: Optional[CategorySchema] = None
     content: str
@@ -28,7 +28,7 @@ class PostsSchema(Schema):
     view_count: int
 
 
-class PostsCardSchema(Schema):
+class PostCardSchema(Schema):
     id: int
     title: str
     slug: str
@@ -43,7 +43,7 @@ class PostsCardSchema(Schema):
 
 class PostCardsSchema(Schema):
     pagination: PaginationSchema
-    posts: List[PostsCardSchema]
+    posts: List[PostCardSchema]
 
 
 class PostRenderedSchema(Schema):
@@ -59,7 +59,7 @@ class PostRenderedSchema(Schema):
 
 
 class PostCardWithSimilarity(Schema):
-    post: PostsCardSchema
+    post: PostCardSchema
     similarity: float
 
 

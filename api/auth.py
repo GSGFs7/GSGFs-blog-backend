@@ -21,10 +21,11 @@ class TimeBaseAuth(HttpBearer):
     token format: client_id:nonce
     """
 
-    def authenticate(self, request, token):
+    async def authenticate(self, request, token):
         try:
             # fernet decrypt
             f = self.get_fernet()
+            # TODO: put this to threading pool
             decrypt_token = f.decrypt(token.encode(), ttl=30).decode("utf-8")
 
             # get payload
@@ -34,7 +35,7 @@ class TimeBaseAuth(HttpBearer):
 
             cache_key = self.generate_auth_token_cache_key(client_id, nonce)
             # TODO: Auth, cache storage DOS protection
-            is_new_request = cache.add(cache_key, 1, timeout=30)  # atomicity
+            is_new_request = await cache.aadd(cache_key, 1, timeout=30)  # atomicity
             if not is_new_request:
                 # protect against replay attacks
                 return None

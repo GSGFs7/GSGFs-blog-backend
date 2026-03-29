@@ -72,3 +72,10 @@ class TestComment(TestCase):
             self.assertEqual(response.status_code, 200)
             response_data = json.loads(response.content)
             self.assertEqual(len(response_data["comments"]), 5)
+
+    def test_get_all_comment_from_non_existent_post(self):
+        response = self.client.get("/api/comment/post/99999/all")
+        self.assertEqual(response.status_code, 404)
+
+        response = self.client.get("/api/comment/post/99999/ids")
+        self.assertEqual(response.status_code, 404)

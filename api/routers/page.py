@@ -1,7 +1,7 @@
 from ninja import Router
 
-from ..models import Page
-from ..schemas import IdsSchema
+from api.models import Page
+from api.schemas import IdsSchema
 
 router = Router()
 

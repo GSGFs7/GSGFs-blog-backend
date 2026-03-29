@@ -12,8 +12,7 @@ bind = "0.0.0.0:8000"
 
 # Workers and threads
 workers = 1 if is_k8s_env() else 3
-threads = 1
-worker_class = "sync"
+worker_class = "uvicorn.workers.UvicornWorker"
 
 # Logging
 accesslog = "-"

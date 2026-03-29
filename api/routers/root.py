@@ -11,5 +11,5 @@ router = Router()
 # @router.api_operation(
 #     ["GET", "POST", "PUT", "DELETE", "PATCH"], "/", response={418: None}
 # )
-def root_router_response(request):
+async def root_router_response(request):
     return 418, None

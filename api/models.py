@@ -530,6 +530,7 @@ class Image(BaseModel):
     def url(self) -> str:
         return self.resource.file.url
 
+    # TODO: image asynchronization
     # DRY principle
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
     @staticmethod

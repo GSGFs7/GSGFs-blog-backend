@@ -1,8 +1,9 @@
 import copy
 import hashlib
+import inspect
 import re
 from functools import wraps
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Callable, Dict, List, Optional, TypedDict
 
 import yaml
 from django.utils.text import Truncator
@@ -521,6 +522,14 @@ def convert_openapi(func):
         return _openapi_convert(spec)
 
     return wrapper
+
+
+def is_async(func: Callable):
+    is_async_function = inspect.iscoroutinefunction(func)
+    is_async_callable_object = inspect.iscoroutinefunction(
+        getattr(func, "__call__", None)
+    )
+    return is_async_function or is_async_callable_object
 
 
 if __name__ == "__main__":

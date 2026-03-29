@@ -145,6 +145,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "blog.wsgi.application"
+ASGI_APPLICATION = "blog.asgi.application"
 
 
 # Database
@@ -303,6 +304,9 @@ CELERY_TIMEZONE = "Asia/Shanghai"
 # Celery scheduled tasks use database storage,
 # if not it django_celery_beat will not work
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# Django-ninja
+NINJA_PAGINATION_CLASS = "api.pagination.Pagination"
 
 # img bed
 S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
