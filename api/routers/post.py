@@ -9,7 +9,7 @@ from django.views.decorators.cache import cache_page
 from ninja import Field, Router, Schema
 from ninja.decorators import decorate_view
 from ninja.errors import HttpError
-from ninja.pagination import PageNumberPagination, paginate
+from ninja.pagination import paginate
 
 from api.models import Post
 from api.pagination import Pagination
@@ -29,8 +29,35 @@ from api.schemas import (
 router = Router()
 
 
+class PostPagination(Pagination):
+    class Output(Schema):
+        posts: List[PostCardSchema]
+        pagination: PaginationSchema
+
+    items_attribute: str = "posts"
+
+    async def apaginate_queryset(
+        self,
+        queryset,
+        pagination,
+        request,
+        **params,
+    ):
+        offset = (pagination.page - 1) * pagination.size
+        total = await self._aitems_count(queryset)
+
+        return {
+            "posts": [p async for p in queryset[offset : offset + pagination.size]],
+            "pagination": {
+                "page": pagination.page,
+                "size": pagination.size,
+                "total": total,
+            },
+        }
+
+
 @router.get("/", response=List[PostCardSchema])
-@paginate(PageNumberPagination, page_size=10)
+@paginate(PostPagination)
 async def get_all_posts(request):
     return Post.objects.select_related("category").prefetch_related("tags").all()
 
@@ -68,14 +95,14 @@ class PostSimilarityPagination(Pagination):
         request: HttpRequest,
         **params: Any,
     ) -> dict:
-        queryset, similarities = queryset_with_similarities
+        posts, similarities = queryset_with_similarities
         offset = (pagination.page - 1) * pagination.size
-        total = len(queryset)
+        total = len(posts)
 
         return {
             "posts_with_similarity": [
                 {"post": q, "similarity": similarities[offset + i]}
-                for i, q in enumerate(queryset[offset : offset + pagination.size])
+                for i, q in enumerate(posts[offset : offset + pagination.size])
             ],
             "pagination": {
                 "page": pagination.page,
