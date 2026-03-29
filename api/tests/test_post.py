@@ -49,6 +49,66 @@ class TestPost(TestCase):
         response = self.client.get("/api/post/search?q=test")
         self.assertContains(response, "test content", status_code=200)
 
+    def test_post_list_structure(self):
+        response = self.client.get("/api/post/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("posts", data)
+        self.assertIn("pagination", data)
+        self.assertIsInstance(data["posts"], list)
+        self.assertGreater(len(data["posts"]), 0)
+        post = data["posts"][0]
+        for field in ("id", "title", "slug", "meta_description", "created_at"):
+            self.assertIn(field, post)
+        pagination = data["pagination"]
+        for field in ("page", "size", "total"):
+            self.assertIn(field, pagination)
+
+    def test_post_ids_structure(self):
+        response = self.client.get("/api/post/ids")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("ids", data)
+        self.assertIsInstance(data["ids"], list)
+        self.assertGreater(len(data["ids"]), 0)
+
+    def test_post_detail_structure(self):
+        post = Post.objects.get(title="test")
+        response = self.client.get(f"/api/post/{post.pk}")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        for field in (
+            "id",
+            "title",
+            "slug",
+            "content",
+            "meta_description",
+            "status",
+            "view_count",
+            "created_at",
+            "updated_at",
+            "content_update_at",
+        ):
+            self.assertIn(field, data, f"Missing field: {field}")
+
+    def test_post_detail_by_slug_structure(self):
+        response = self.client.get("/api/post/test")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["slug"], "test")
+        for field in ("id", "title", "content", "created_at"):
+            self.assertIn(field, data)
+
+    def test_post_sitemap_structure(self):
+        response = self.client.get("/api/post/sitemap")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIsInstance(data, list)
+        self.assertGreater(len(data), 0)
+        item = data[0]
+        for field in ("id", "slug", "updated_at"):
+            self.assertIn(field, item, f"Missing field: {field}")
+
     def test_reserve_slug(self):
         # ORM methods, 'api/admin.py' not work
         error_post = None

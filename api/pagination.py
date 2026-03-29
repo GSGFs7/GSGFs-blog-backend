@@ -15,7 +15,7 @@ class Pagination(AsyncPaginationBase):
         size: int = Field(10, ge=1, le=100)
 
     class Output(Schema):
-        result: List[Any]
+        result: List[Any]  # in API endpoint definition, MUST use List[...]
         pagination: PaginationSchema
 
     # tall pagination which is result field
