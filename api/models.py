@@ -2,13 +2,15 @@
 TODO: split this
 """
 
+import asyncio
 import logging
 import os
+from dataclasses import dataclass
 from io import BytesIO
 from typing import IO
 
-import blake3
 import jieba
+from asgiref.sync import sync_to_async
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
@@ -19,8 +21,8 @@ from pgvector.django import HnswIndex, VectorField
 from PIL import Image as PILImage
 
 from api.constants import IMAGE_ALLOWED_FORMAT, POST_RESERVED_SLUGS
-from api.exiftool import ExifTool
-from api.utils import chinese_slugify, extract_metadata
+from api.exiftool import AsyncExifTool, ExifTool
+from api.utils import calculate_blake3_hash, chinese_slugify, extract_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -490,6 +492,13 @@ class ImageResource(BaseModel):
     class Meta:
         indexes = [models.Index(fields=["checksum"])]
 
+    @dataclass
+    class ImageResourceMeta:
+        width: int
+        height: int
+        size: int
+        mime_type: str
+
 
 # Create your models here.
 class Image(BaseModel):
@@ -530,7 +539,6 @@ class Image(BaseModel):
     def url(self) -> str:
         return self.resource.file.url
 
-    # TODO: image asynchronization
     # DRY principle
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
     @staticmethod
@@ -547,67 +555,160 @@ class Image(BaseModel):
 
         # 0. extract basic info and verify file integrity
         try:
-            content.seek(0)
-            with PILImage.open(content) as img:
-                width = img.width
-                height = img.height
-                mime_type = PILImage.MIME.get(img.format)
-
-                if mime_type not in IMAGE_ALLOWED_FORMAT:
-                    raise ValidationError("Not allowed image types")
-
-                # scans the file structure
-                img.verify()
+            width, height, mime_type = Image._process_image_verify(content)
         except Exception:
             raise ValidationError("Unrecognizable image file or file is corrupted")
 
         # TODO: some photography may needs keep some EXIF
         # 1. clean metadata
         try:
-            content.seek(0)
-            if ExifTool.is_available():
-                # ExifTool, no PIL re-encoding, more efficient
-                cleaned_io = ExifTool().clean(content, filename=filename)
-                size = cleaned_io.getbuffer().nbytes
-            else:
-                # fallback
-                img = PILImage.open(content)
-                cleaned_io = BytesIO()
-                img.save(cleaned_io, quality=100, save_all=True, format=img.format)
-                size = cleaned_io.getbuffer().nbytes
+            cleaned_io, size = Image._process_clean_metadata(content, filename)
             del content
         except Exception as e:
-            logger.warning(f"ExifTool could not process image: {e}")
+            logger.warning(f"Could not process image: {e}")
             raise ValidationError("Could not clean image metadata")
 
         # 2. checksum
+        checksum = Image._calculate_file_checksum(cleaned_io)
+
+        # 3. write to db
+        res_meta = ImageResource.ImageResourceMeta(width, height, size, mime_type)
+        return Image._create_from_file__write_db(
+            cleaned_io=cleaned_io,
+            checksum=checksum,
+            filename=filename,
+            res_meta=res_meta,
+        )
+
+    @staticmethod
+    async def acreate_from_file(
+        content: IO[bytes], filename: str
+    ) -> tuple["Image", ImageResource, bool]:
+        # 0. verify
+        width, height, mime_type = await Image._aprocess_image_verify(content)
+
+        # 1. clean EXIF data
+        try:
+            cleaned_io, size = await Image._aprocess_clean_metadata(content, filename)
+            del content
+        except Exception as e:
+            logger.warning(f"Could not process image (async): {e}")
+            raise ValidationError("Could not clean image metadata")
+
+        # 2. checksum
+        checksum = await Image._acalculate_file_checksum(cleaned_io)
+
+        # 3. write to db
+        res_meta = ImageResource.ImageResourceMeta(width, height, size, mime_type)
+        return await Image._acreate_from_file__write_db(
+            cleaned_io=cleaned_io,
+            checksum=checksum,
+            filename=filename,
+            res_meta=res_meta,
+        )
+
+    # --- verify ---
+
+    @staticmethod
+    def _process_image_verify(content: IO[bytes]) -> tuple[int, int, str]:
+        content.seek(0)
+        with PILImage.open(content) as img:
+            width, height = img.size
+            mime_type = PILImage.MIME.get(img.format)
+            if mime_type not in IMAGE_ALLOWED_FORMAT:
+                raise ValidationError("Not allowed image types")
+            img.verify()
+            return width, height, mime_type
+
+    @staticmethod
+    async def _aprocess_image_verify(content: IO[bytes]) -> tuple[int, int, str]:
+        return await asyncio.to_thread(Image._process_image_verify, content)
+
+    # --- clean metadata ---
+
+    @staticmethod
+    def _process_clean_metadata_fallback(content: IO[bytes]) -> tuple[BytesIO, int]:
+        img = PILImage.open(content)
+        cleaned_io = BytesIO()
+        img.save(cleaned_io, quality=100, save_all=True, format=img.format)
+        size = cleaned_io.getbuffer().nbytes
+        return cleaned_io, size
+
+    @staticmethod
+    def _process_clean_metadata(content: IO[bytes], filename) -> tuple[BytesIO, int]:
+        content.seek(0)
+        if ExifTool.is_available():
+            # ExifTool, no PIL re-encoding, more efficient
+            cleaned_io = ExifTool().clean(content, filename=filename)
+            size = cleaned_io.getbuffer().nbytes
+            return cleaned_io, size
+        # fallback
+        return Image._process_clean_metadata_fallback(content)
+
+    @staticmethod
+    async def _aprocess_clean_metadata(
+        content: IO[bytes], filename: str
+    ) -> tuple[BytesIO, int]:
+        content.seek(0)
+        if await AsyncExifTool().is_available():
+            cleaned_io = await AsyncExifTool().clean(content, filename)
+            size = cleaned_io.getbuffer().nbytes
+            return cleaned_io, size
+        return await asyncio.to_thread(Image._process_clean_metadata_fallback, content)
+
+    # --- checksum ---
+
+    @staticmethod
+    def _calculate_file_checksum(cleaned_io: IO) -> str:
+        return calculate_blake3_hash(cleaned_io)
+
+    @staticmethod
+    async def _acalculate_file_checksum(cleaned_io: IO) -> str:
+        return await asyncio.to_thread(calculate_blake3_hash, cleaned_io)
+
+    # --- db ---
+
+    @staticmethod
+    @transaction.atomic
+    def _create_from_file__write_db(
+        *,
+        cleaned_io: BytesIO,
+        checksum: str,
+        filename: str,
+        res_meta: ImageResource.ImageResourceMeta,
+    ) -> tuple["Image", ImageResource, bool]:
         cleaned_io.seek(0)
-        hasher = blake3.blake3()
-        while chunk := cleaned_io.read(65536):  # 64KiB chunks
-            hasher.update(chunk)
-        checksum = hasher.hexdigest()
-
-        # atomicity
-        with transaction.atomic():
-            cleaned_io.seek(0)
-            img_res, created = ImageResource.objects.get_or_create(
-                checksum=checksum,
-                defaults={
-                    "file": File(cleaned_io, name=filename),
-                    "width": width,
-                    "height": height,
-                    "size": size,
-                    "mime_type": mime_type,
-                },
-            )
-
-            img = Image.objects.create(
-                resource=img_res,
-                original_name=filename,
-                # TODO: add user context here
-                uploaded_by=None,
-                alt_text="",
-                description="",
-            )
-
+        img_res, created = ImageResource.objects.get_or_create(
+            checksum=checksum,
+            defaults={
+                "file": File(cleaned_io, name=filename),
+                "width": res_meta.width,
+                "height": res_meta.height,
+                "size": res_meta.size,
+                "mime_type": res_meta.mime_type,
+            },
+        )
+        img = Image.objects.create(
+            resource=img_res,
+            original_name=filename,
+            # TODO: add user context here
+            uploaded_by=None,
+            alt_text="",
+            description="",
+        )
         return img, img_res, created
+
+    @staticmethod
+    async def _acreate_from_file__write_db(
+        *,
+        cleaned_io: BytesIO,
+        checksum: str,
+        filename: str,
+        res_meta: ImageResource.ImageResourceMeta,
+    ) -> tuple["Image", ImageResource, bool]:
+        return await sync_to_async(Image._create_from_file__write_db)(
+            cleaned_io=cleaned_io,
+            checksum=checksum,
+            filename=filename,
+            res_meta=res_meta,
+        )

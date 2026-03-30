@@ -3,8 +3,10 @@ import hashlib
 import inspect
 import re
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypedDict
+from io import BytesIO
+from typing import IO, Any, Callable, Dict, List, Optional, TypedDict
 
+import blake3
 import yaml
 from django.utils.text import Truncator
 from jieba import analyse as jieba_analyse
@@ -530,6 +532,24 @@ def is_async(func: Callable):
         getattr(func, "__call__", None)
     )
     return is_async_function or is_async_callable_object
+
+
+def calculate_blake3_hash(
+    data: IO | str | bytes,
+    *,
+    max_threads: int = 1,  # blake3 multi-thread acceleration
+    used_for_security: bool = False,
+) -> str:
+    if isinstance(data, str):
+        data = BytesIO(data.encode())
+    elif isinstance(data, bytes):
+        data = BytesIO(data)
+
+    data.seek(0)
+    hasher = blake3.blake3(max_threads=max_threads, usedforsecurity=used_for_security)
+    while chunk := data.read(65536):
+        hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 if __name__ == "__main__":
