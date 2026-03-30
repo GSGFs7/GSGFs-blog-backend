@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
   workflow_dispatch: # manual triggering
 
 permissions:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: false # GitHub Action has some problem
+    # if: false
     services:
       redis:
         image: redis:7-alpine
@@ -83,7 +83,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    # needs: test
+    needs: test
     if: ${{ github.event_name != 'pull_request' }}
     strategy:
       matrix:
@@ -170,20 +170,20 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add ${{ env.OVERLAY_DIR }}/kustomization.yaml
-          
+
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
-          
+
           git commit -m "chore(ops): update prod image tags to ${{ github.sha }} [skip ci]"
           git push origin main
 
   mirror:
     runs-on: ubuntu-latest
-    needs: [test, update-manifests]
+    needs: [ test, update-manifests ]
     if: always() && (needs.test.result == 'success') && (needs.update-manifests.result == 'success' || needs.update-manifests.result == 'skipped')
     steps:
       - name: Checkout repository

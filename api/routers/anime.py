@@ -7,10 +7,10 @@ from api.schemas import AnimeIds, AnimeSchema, MessageSchema
 router = Router()
 
 
-@router.get("/", response={200: AnimeIds, 400: MessageSchema, 404: MessageSchema})
-def get_all_anime_ids(request, page: PositiveInt = 1, size: PositiveInt = 10):
+@router.get("/ids", response={200: AnimeIds, 400: MessageSchema, 404: MessageSchema})
+async def get_all_anime_ids(request, page: PositiveInt = 1, size: PositiveInt = 10):
     offset = (page - 1) * size
-    total = Anime.objects.count()
+    total = await Anime.objects.acount()
 
     if total == 0:
         return 404, {"message": "Empty"}
@@ -18,8 +18,7 @@ def get_all_anime_ids(request, page: PositiveInt = 1, size: PositiveInt = 10):
     if offset >= total:
         return 400, {"message": "Out of range"}
 
-    anime = Anime.objects.all()[offset : offset + size]
-    print(anime)
+    anime = [a async for a in Anime.objects.all()[offset : offset + size]]
     return 200, {
         "ids": anime,
         "pagination": {
@@ -31,9 +30,8 @@ def get_all_anime_ids(request, page: PositiveInt = 1, size: PositiveInt = 10):
 
 
 @router.get("/{int:anime_id}", response={200: AnimeSchema, 404: MessageSchema})
-def get_anime(request, anime_id: int):
+async def get_anime(request, anime_id: int):
     try:
-        anime = Anime.objects.get(pk=anime_id)
-        return anime
+        return await Anime.objects.aget(pk=anime_id)
     except Anime.DoesNotExist:
         return 404, {"message": "Not found"}

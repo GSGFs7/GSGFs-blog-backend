@@ -55,12 +55,12 @@ from .image import ImageUploadRequestSchema, ImageUploadResponseSchema
 
 # Post schemas
 from .post import (
+    PostCardSchema,
     PostCardsSchema,
     PostCardsWithSimilaritySchema,
     PostCardWithSimilarity,
     PostRenderedSchema,
-    PostsCardSchema,
-    PostsSchema,
+    PostSchema,
 )
 
 # Sitemap schemas
@@ -92,8 +92,8 @@ __all__ = [
     "NewCommentMetadataSchema",
     "NewCommentSchema",
     # Posts
-    "PostsSchema",
-    "PostsCardSchema",
+    "PostSchema",
+    "PostCardSchema",
     "PostCardsSchema",
     "CategoryResponseSchema",
     "PostRenderedSchema",

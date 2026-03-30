@@ -4,11 +4,13 @@ from io import BytesIO
 from celery import shared_task
 from django.core.files.base import ContentFile
 from django.core.mail import mail_admins
+from django.db import transaction
 from django.utils import timezone
 from PIL import Image as PILImage
 
 from .ml_model import get_sentence_transformer_model
-from .models import Gal, ImageResource, Post
+from .models import Gal, ImageResource, Post, PostChunk
+from .utils import chunk_text
 from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
@@ -71,24 +73,29 @@ def mail_admins_task(subject: str, message: str):
 
 
 @shared_task
-def generate_post_embedding(post_id: int):
-    """
-    Celery task to generate embedding for a post.
-    """
-    try:
-        post = Post.objects.get(id=post_id)
-        model = get_sentence_transformer_model()
+@transaction.atomic
+def generate_post_chunks_embedding_task(post_id: int):
+    post = Post.objects.get(id=post_id)
+    model = get_sentence_transformer_model()
 
-        embedding = model.encode_document(post.content)
+    # clean old chunk
+    post.chunks.all().delete()
 
-        # Update the embedding field
-        Post.objects.filter(id=post_id).update(embedding=embedding)
+    text_chunk = chunk_text(post.content)
 
-        logger.info(f"成功生成文章 embedding: Post ID {post_id}")
-    except Post.DoesNotExist:
-        logger.error(f"文章不存在: Post ID {post_id}")
-    except Exception as e:
-        logger.error(f"生成 embedding 失败: Post ID {post_id}, 错误: {e}")
+    new_chunks = []
+    for i, content in enumerate(text_chunk):
+        vector = model.encode_document(content)
+        new_chunks.append(
+            PostChunk(
+                post=post,
+                content=content,
+                embedding=vector,
+                chunk_index=i,
+            )
+        )
+
+    PostChunk.objects.bulk_create(new_chunks)
 
 
 @shared_task

@@ -4,5 +4,5 @@ router = Router()
 
 
 @router.get("/")
-def test_mail(request):
+async def test_mail(request):
     pass

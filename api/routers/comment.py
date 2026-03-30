@@ -2,7 +2,7 @@ import logging
 
 from ninja import Router
 
-from api.auth import TimeBaseAuth
+from api.auth import AsyncTimeBaseAuth
 from api.models import Comment, Guest, Post
 from api.schemas import (
     CommentIdsSchema,
@@ -17,15 +17,14 @@ from api.tasks import mail_admins_task
 router = Router()
 
 
-# 从id获取评论
+# get comment from id
 @router.get(
     "/{int:comment_id}",
     response={200: CommentSchema, 404: MessageSchema, 500: MessageSchema},
 )
-def get_comment(request, comment_id: int):
+async def get_comment(request, comment_id: int):
     try:
-        comment = Comment.objects.select_related("guest").get(pk=comment_id)
-        return comment
+        return await Comment.objects.select_related("guest").aget(pk=comment_id)
     except Comment.DoesNotExist:
         return 404, {"message": "Not found"}
     except Exception as e:
@@ -33,18 +32,22 @@ def get_comment(request, comment_id: int):
         return 500, {"message": "Internal Server Error"}
 
 
-# 从文章获取评论id
+# get comment ids from post id
 @router.get(
-    "/post/{int:post_id}",
+    "/post/{int:post_id}/ids",
     response={200: CommentIdsSchema, 404: MessageSchema, 500: MessageSchema},
 )
-def get_comment_from_post(request, post_id: int):
+async def get_comment_ids_from_post(request, post_id: int):
     try:
-        post = Post.objects.get(pk=post_id)
-        comment_ids = post.comments.values_list("id", flat=True)  # type: ignore
-        return 200, {"ids": list(comment_ids)}
-    except Post.DoesNotExist:
-        return 404, {"message": "Not found"}
+        if not await Post.objects.filter(pk=post_id).aexists():
+            return 404, {"message": "Post not found"}
+        comment_ids = [
+            i
+            async for i in Comment.objects.filter(post_id=post_id).values_list(
+                "id", flat=True
+            )
+        ]
+        return 200, {"ids": comment_ids}
     except Exception as e:
         logging.error(e)
         return 500, {"message": "Internal Server Error"}
@@ -52,16 +55,25 @@ def get_comment_from_post(request, post_id: int):
 
 # get all comment with content
 @router.get(
+    "/post/{int:post_id}",
+    response={200: CommentResponse, 404: MessageSchema, 500: MessageSchema},
+)
+@router.get(
     "/post/{int:post_id}/all",
     response={200: CommentResponse, 404: MessageSchema, 500: MessageSchema},
 )
-def get_all_comment_from_post(request, post_id: int):
+async def get_all_comment_from_post(request, post_id: int):
     try:
-        post = Post.objects.get(pk=post_id)
-        comments = post.comments.select_related("guest").all()  # type: ignore
-        return 200, {"comments": list(comments)}
-    except Post.DoesNotExist:
-        return 404, {"message": "Not found"}
+        if not await Post.objects.filter(pk=post_id).aexists():
+            return 404, {"message": "Post not found"}
+
+        comments = [
+            post_comment
+            async for post_comment in Comment.objects.select_related("guest").filter(
+                post_id=post_id
+            )
+        ]
+        return 200, {"comments": comments}
     except Exception as e:
         logging.error(e)
         return 500, {"message": "Internal Server Error"}
@@ -70,21 +82,23 @@ def get_all_comment_from_post(request, post_id: int):
 @router.post(
     "/new",
     response={200: IdSchema, 404: MessageSchema, 500: MessageSchema},
-    auth=TimeBaseAuth(),
+    auth=AsyncTimeBaseAuth(),
 )
-def new_comment(request, body: NewCommentSchema):
+async def new_comment(request, body: NewCommentSchema):
     try:
-        post = Post.objects.get(pk=body.post_id)
-        guest = Guest.objects.get(unique_id=body.unique_id)
+        post = await Post.objects.aget(pk=body.post_id)
+        guest = await Guest.objects.aget(unique_id=body.unique_id)
 
-        comment = Comment.objects.create(content=body.content, post=post, guest=guest)
+        comment = await Comment.objects.acreate(
+            content=body.content, post=post, guest=guest
+        )
         if body.metadata is not None:
             comment.OS = body.metadata.OS
             comment.user_agent = body.metadata.user_agent
             comment.browser = body.metadata.browser
             comment.browser_version = body.metadata.browser_version
             comment.platform = body.metadata.platform
-            comment.save()
+            await comment.asave()
 
         # tall admin had a new comment
         mail_admins_task.delay(

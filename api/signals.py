@@ -8,7 +8,7 @@ from django.utils import timezone
 from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
 from .models import Anime, Gal, ImageResource, Post
-from .tasks import generate_post_embedding, process_image
+from .tasks import generate_post_chunks_embedding_task, process_image
 from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
@@ -150,9 +150,10 @@ def generate_post_embedding_async(sender, instance, created, **kwargs):
     try:
 
         def task():
-            # Trigger the Celery task asynchronously
-            generate_post_embedding.delay(instance.pk)
-            logger.info(f"Triggered embedding generate task, post ID {instance.pk}")
+            generate_post_chunks_embedding_task.delay(instance.pk)
+            logger.info(
+                f"Triggered chunk embedding generate task, post ID {instance.pk}"
+            )
 
         transaction.on_commit(task)
     except Exception as e:

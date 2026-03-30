@@ -58,6 +58,12 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
    ./manage.py runserver
    ```
 
+## 可选依赖
+
+- **ExifTool**: 用于清理上传图片的 EXIF 元数据. 如果系统中安装了 `exiftool`, 后端会自动调用它来处理图片以保护隐私. 如果没有, 则使用 PIL 对图片进行重编码来去除 EXIF 信息.
+  - Arch Linux: `sudo pacman -S perl-image-exiftool`
+  - Debian/Ubuntu: `sudo apt install libimage-exiftool-perl`
+
 ## 目录
 
 ```text

@@ -1,9 +1,12 @@
 import copy
 import hashlib
+import inspect
 import re
 from functools import wraps
-from typing import Any, Dict, List, Optional, TypedDict
+from io import BytesIO
+from typing import IO, Any, Callable, Dict, List, Optional, TypedDict
 
+import blake3
 import yaml
 from django.utils.text import Truncator
 from jieba import analyse as jieba_analyse
@@ -143,6 +146,21 @@ def remove_code_blocks(text: str) -> str:
     # Clean up extra whitespace
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
+
+
+# TODO: optimize chunking
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
+    text = remove_code_blocks(text)
+    text = remove_markdown(text)
+    text = remove_html_tags(text)
+
+    chunk = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunk.append(text[start:end])
+        start += chunk_size - overlap
+    return chunk
 
 
 def extract_front_matter(text: str) -> Dict[str, Any]:
@@ -506,6 +524,32 @@ def convert_openapi(func):
         return _openapi_convert(spec)
 
     return wrapper
+
+
+def is_async(func: Callable):
+    is_async_function = inspect.iscoroutinefunction(func)
+    is_async_callable_object = inspect.iscoroutinefunction(
+        getattr(func, "__call__", None)
+    )
+    return is_async_function or is_async_callable_object
+
+
+def calculate_blake3_hash(
+    data: IO | str | bytes,
+    *,
+    max_threads: int = 1,  # blake3 multi-thread acceleration
+    used_for_security: bool = False,
+) -> str:
+    if isinstance(data, str):
+        data = BytesIO(data.encode())
+    elif isinstance(data, bytes):
+        data = BytesIO(data)
+
+    data.seek(0)
+    hasher = blake3.blake3(max_threads=max_threads, usedforsecurity=used_for_security)
+    while chunk := data.read(65536):
+        hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 if __name__ == "__main__":

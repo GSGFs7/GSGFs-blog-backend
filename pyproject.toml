@@ -21,6 +21,7 @@ dependencies = [
     "flower>=2.0.1",
     "gunicorn>=23.0.0",
     # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
+    "httpx>=0.28.1",
     "jieba @ git+https://github.com/GSGFs7/jieba.git@master",
     "pgvector>=0.4.1",
     "phonenumbers>=9.0.12",
@@ -33,6 +34,7 @@ dependencies = [
     "resend>=2.19.0",
     "sentence-transformers>=5.1.2",
     "torch>=2.9.0",
+    "uvicorn[standard]>=0.42.0",
     "whitenoise>=6.11.0",
 ]
 

@@ -32,7 +32,7 @@ class QuietTestRunner(DiscoverRunner):
             "django_celery_beat": logging.WARNING,
             "django.request": logging.CRITICAL,  # Suppress Unauthorized messages
             "django.db.backends": logging.WARNING,
-            "api.exiftool": logging.CRITICAL,  # Suppress ExifTool error messages during tests
+            "api.exiftool": logging.CRITICAL,  # Suppress ExifTool error messages
         }
         for name, level in logger_configs.items():
             logger = logging.getLogger(name)

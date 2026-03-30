@@ -9,7 +9,7 @@ metadata:
     # enable TLS encryption
     traefik.ingress.kubernetes.io/router.tls: "true"
     # rate limiting
-    traefik.ingress.kubernetes.io/ratelimit.average: "100"
+    traefik.ingress.kubernetes.io/ratelimit.average: "1000"
     # certificate management
     # install cert-manager first, https://cert-manager.io/docs/installation/
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -24,6 +24,31 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-django
+                port:
+                  number: 8000
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: blog-prometheus-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: blog-prometheus-whitelist@kubernetescrd
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: $BACKEND_DOMAIN
+      http:
+        paths:
+          - path: /prometheus
             pathType: Prefix
             backend:
               service:

@@ -5,10 +5,10 @@ from typing import List
 from ninja.schema import Schema
 
 from .base import PaginationSchema
-from .post import PostsCardSchema
+from .post import PostCardSchema
 
 
 class CategoryResponseSchema(Schema):
     name: str
     pagination: PaginationSchema
-    posts: List[PostsCardSchema]
+    posts: List[PostCardSchema]

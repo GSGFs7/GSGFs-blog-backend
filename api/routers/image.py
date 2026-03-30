@@ -3,7 +3,7 @@ import logging
 from django.conf import settings
 from ninja import Router, UploadedFile
 
-from api.auth import TimeBaseAuth
+from api.auth import AsyncTimeBaseAuth
 from api.constants import IMAGE_ALLOWED_FORMAT
 from api.models import Image
 from api.schemas import (
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 @router.post(
     "/upload",
     response={201: ImageUploadResponseSchema, 400: MessageSchema},
-    auth=TimeBaseAuth(),
+    auth=AsyncTimeBaseAuth(),
 )
-def upload_test(
+async def upload_test(
     request,
     file: UploadedFile,
     data: ImageUploadRequestSchema | None = None,
@@ -34,7 +34,7 @@ def upload_test(
     if file.size > settings.IMAGE_UPLOAD_MAX_SIZE:
         return 400, {"message": "image size exceeds maximum limit"}
 
-    img, img_res, _ = Image.create_from_file(file, filename=file.name)
+    img, img_res, _ = await Image.acreate_from_file(file, filename=file.name)
 
     return 201, ImageUploadResponseSchema(
         id=img.id,

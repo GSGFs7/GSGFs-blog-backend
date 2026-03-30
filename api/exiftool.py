@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import shutil
@@ -11,16 +12,19 @@ from typing import IO
 logger = logging.getLogger(__name__)
 
 
-class ExifTool:
-    # single instance
-    _instance = None
-    # thread safety
-    _lock = threading.Lock()
+class SyncExifTool:
+    # class attribute
+    _instance = None  # single instance
+    _lock = threading.RLock()  # thread safety, nested lock (in clean method), use RLock
+
+    # instance attribute
+    process: subprocess.Popen | None
+    _counter: int
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
             if cls._instance is None:
-                cls._instance = super(ExifTool, cls).__new__(cls, *args, **kwargs)
+                cls._instance = super(SyncExifTool, cls).__new__(cls, *args, **kwargs)
                 cls._instance._start_process()
         return cls._instance
 
@@ -47,21 +51,20 @@ class ExifTool:
 
         self._counter = 0
 
+    def _ensure_process_running(self):
+        if self.process is None or self.process.poll() is not None:
+            self._start_process()
+
+        if self.process is None:
+            raise RuntimeError("ExifTool process is not running.")
+
     def execute(self, *args: str) -> str:
         """
         Execute a custom ExifTool command.
-        Args:
-            *args: Command line arguments for exiftool.
-        Returns:
-            The stdout response from ExifTool.
         """
 
         with self._lock:
-            if self.process is None or self.process.poll() is not None:
-                self._start_process()
-
-            if self.process is None:
-                raise RuntimeError("ExifTool process is not running.")
+            self._ensure_process_running()
 
             try:
                 self._counter += 1
@@ -90,17 +93,14 @@ class ExifTool:
                     .strip()
                 )
             except Exception as e:
-                logger.error(f"ExifTool execution failed: {e}")
                 self.terminate()  # Reset process on error
                 raise e
 
-    def clean(self, data: IO, filename: str = None) -> BytesIO:
-        with self._lock:
-            if self.process is None or self.process.poll() is not None:
-                self._start_process()
+    def clean(self, data: IO[bytes], filename: str = None) -> BytesIO:
+        """clean image EXIF data"""
 
-            if self.process is None:
-                raise RuntimeError("ExifTool process is not running.")
+        with self._lock:
+            self._ensure_process_running()
 
             # prefer /dev/shm, makesure we are using tmpfs
             tmp_base = (
@@ -110,69 +110,29 @@ class ExifTool:
             )
 
             with tempfile.TemporaryDirectory(
-                dir=tmp_base, prefix="blog-exiftool-"
+                dir=tmp_base, prefix="blog-exiftool-", delete=True
             ) as tmp_dir:
                 ext = os.path.splitext(filename)[-1] if filename else ""
-                tmp_in_path = os.path.join(tmp_dir, f"input{ext}")
-                tmp_out_path = os.path.join(tmp_dir, f"output{ext}")
+                tmp_in = os.path.join(tmp_dir, f"input{ext}")
+                tmp_out = os.path.join(tmp_dir, f"output{ext}")
 
-                # Ensure data pointer is at the beginning
                 if hasattr(data, "seekable") and data.seekable():
                     data.seek(0)
 
-                with open(tmp_in_path, "wb") as f:
+                with open(tmp_in, "wb") as f:
                     # noinspection PyTypeChecker
                     shutil.copyfileobj(data, f)
 
-                try:
-                    # file unique identifier
-                    self._counter += 1
-                    exec_id = self._counter
-                    sentinel = f"{{ready{exec_id}}}".encode("utf-8")
+                # execute clean
+                response = self.execute("-all=", tmp_in, "-o", tmp_out)
 
-                    # disable formater here, multiple lines is easy to read
-                    # fmt: off
-                    args = (
-                        "-all=\n"
-                        f"{tmp_in_path}\n"
-                        "-o\n"
-                        f"{tmp_out_path}\n"
-                        f"-execute{exec_id}\n"
-                    ).encode("utf-8")
-                    # fmt: on
+                if not os.path.exists(tmp_out):
+                    raise RuntimeError(
+                        f"ExifTool failed: {response or 'No output file created'}"
+                    )
 
-                    # send args
-                    self.process.stdin.write(args)
-                    self.process.stdin.flush()
-
-                    # Read from stdout until we see the sentinel
-                    response = bytearray()
-                    while True:
-                        chunk = self.process.stdout.read(4096)  # 4KiB
-                        if not chunk:
-                            break
-                        response.extend(chunk)
-                        if sentinel in response:
-                            break
-
-                    # Check if output file exists
-                    if not os.path.exists(tmp_out_path):
-                        # response might contain the error message
-                        error_msg = (
-                            response.decode("utf-8", errors="ignore")
-                            .replace(f"{{ready{exec_id}}}", "")
-                            .strip()
-                        )
-                        raise RuntimeError(
-                            f"ExifTool failed: {error_msg or 'No output file created'}"
-                        )
-
-                    with open(tmp_out_path, "rb") as f:
-                        return BytesIO(f.read())
-                except Exception as e:
-                    logger.error(f"ExifTool cleaning failed: {e}")
-                    self.terminate()  # Reset process on error
-                    raise e
+                with open(tmp_out, "rb") as f:
+                    return BytesIO(f.read())
 
     def terminate(self):
         if self.process:
@@ -201,3 +161,189 @@ class ExifTool:
             return True
         except Exception:
             return False
+
+
+class AsyncExifTool:
+    # class attribute
+    _instance = None
+    _lock = asyncio.Lock()
+    _is_available = None
+
+    # instance attribute
+    process: asyncio.subprocess.Process | None
+    _counter: int
+    _loop: asyncio.AbstractEventLoop | None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(AsyncExifTool, cls).__new__(cls)
+            cls._instance.process = None
+            cls._instance._counter = 0
+            # prevent calling across event loops
+            # in product, there is only one event loop normally
+            cls._instance._loop = None
+        return cls._instance
+
+    async def _start_process(self):
+        current_loop = asyncio.get_running_loop()
+        if (
+            self.process is not None
+            and self.process.returncode is None
+            and self._loop == current_loop
+        ):
+            return
+
+        try:
+            args = ["exiftool", "-stay_open", "True", "-@", "-"]
+            self.process = await asyncio.create_subprocess_exec(
+                *args,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+            self._loop = current_loop
+        except FileNotFoundError:
+            logger.info("ExifTool not found. Some features will be disabled.")
+            self.process = None
+
+    async def _ensure_process(self):
+        current_loop = asyncio.get_running_loop()
+        if (
+            self.process is None
+            or self.process.returncode is not None
+            or self._loop != current_loop
+        ):
+            await self._start_process()
+        if self.process is None:
+            raise RuntimeError("ExifTool process failed to start.")
+
+    async def _execute(self, *args: str) -> str:
+        """core execute logic, without lock"""
+
+        await self._ensure_process()
+
+        try:
+            self._counter += 1
+            exec_id = self._counter
+            sentinel = f"{{ready{exec_id}}}".encode()
+
+            cmd = "\n".join(args) + "\n" + f"-execute{exec_id}\n"
+            self.process.stdin.write(cmd.encode())
+            await self.process.stdin.drain()
+
+            response = bytearray()
+            while True:
+                chunk = await self.process.stdout.read(4096)
+                if not chunk:
+                    break
+                response.extend(chunk)
+                if sentinel in response:
+                    break
+
+            return (
+                response.decode("utf-8", errors="ignore")
+                .replace(f"{{ready{exec_id}}}", "")
+                .strip()
+            )
+        except Exception as e:
+            await self.terminate()
+            raise e
+
+    async def execute(self, *args: str) -> str:
+        """Execute any ExifTool command."""
+
+        async with self._lock:
+            return await self._execute(*args)
+
+    async def clean(self, data: IO[bytes], filename: str = None) -> BytesIO:
+        """clean image EXIF data"""
+
+        async with self._lock:
+            tmp_base = (
+                "/dev/shm"
+                if os.path.exists("/dev/shm") and os.access("/dev/shm", os.W_OK)
+                else None
+            )
+
+            tmp_dir = await asyncio.to_thread(
+                tempfile.mkdtemp, dir=tmp_base, prefix="blog-async-exif-"
+            )
+
+            try:
+                ext = os.path.splitext(filename)[-1] if filename else ""
+                tmp_in = os.path.join(tmp_dir, f"input{ext}")
+                tmp_out = os.path.join(tmp_dir, f"output{ext}")
+
+                def _prepare():
+                    if hasattr(data, "seekable") and data.seekable():
+                        data.seek(0)
+                    with open(tmp_in, "wb") as f:
+                        # noinspection PyTypeChecker
+                        shutil.copyfileobj(data, f)
+
+                await asyncio.to_thread(_prepare)
+
+                # execute without lock
+                response = await self._execute("-all=", tmp_in, "-o", tmp_out)
+
+                def _read():
+                    if not os.path.exists(tmp_out):
+                        raise RuntimeError(f"ExifTool failed: {response}")
+                    with open(tmp_out, "rb") as f:
+                        return BytesIO(f.read())
+
+                return await asyncio.to_thread(_read)
+            except Exception as e:
+                # reset
+                await self.terminate()
+                raise e
+            finally:
+                await asyncio.to_thread(
+                    lambda: shutil.rmtree(tmp_dir, ignore_errors=True)
+                )
+
+    async def terminate(self):
+        if self.process:
+            # If the process belongs to a dead/different loop, don't try async terminate
+            try:
+                current_loop = asyncio.get_running_loop()
+                if self._loop != current_loop:
+                    self.process = None
+                    return
+            except RuntimeError:  # No running loop
+                self.process = None
+                return
+
+            try:
+                if self.process.stdin:
+                    self.process.stdin.write(b"-stay_open\nFalse\n")
+                    await self.process.stdin.drain()
+                self.process.terminate()
+                await asyncio.wait_for(self.process.wait(), timeout=5)
+            except Exception:
+                if self.process:
+                    self.process.kill()
+                    await self.process.wait()
+            finally:
+                self.process = None
+
+    @staticmethod
+    async def is_available() -> bool:
+        # lru_cache not support async
+        # use a class var store the result
+        if AsyncExifTool._is_available is not None:
+            return AsyncExifTool._is_available
+
+        try:
+            args = ["exiftool", "-ver"]
+            process = await asyncio.create_subprocess_exec(
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            await process.communicate()
+            AsyncExifTool._is_available = process.returncode == 0
+        except Exception:
+            AsyncExifTool._is_available = False
+
+        return AsyncExifTool._is_available

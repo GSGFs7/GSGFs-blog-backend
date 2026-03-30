@@ -11,6 +11,8 @@ from PIL import Image as PILImage
 from api.auth import TimeBaseAuth
 from api.models import Image
 
+# TODO: more test cases
+
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class ImageUploadTest(TestCase):
@@ -111,7 +113,7 @@ class WebImageUploadTest(TestCase):
             self.skipTest(f"Failed to fetch image: {e}")
 
     def test_image_upload(self):
-        from api.exiftool import ExifTool
+        from api.exiftool import SyncExifTool
 
         # PNG???
         file = SimpleUploadedFile("test_image.png", self.image_content, "image/png")
@@ -126,7 +128,7 @@ class WebImageUploadTest(TestCase):
         self.assertTrue(Image.objects.filter(original_name="test_image.png").exists())
 
         # Clean metadata using the same tool as the implementation
-        cleaned_io = ExifTool().clean(
+        cleaned_io = SyncExifTool().clean(
             BytesIO(self.image_content), filename="test_image.png"
         )
 

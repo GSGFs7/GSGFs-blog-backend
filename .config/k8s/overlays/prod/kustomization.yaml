@@ -6,6 +6,7 @@ resources:
   - ../../base
   - ingress.yaml
   - cluster-issuer.yaml
+  - middleware-whitelist.yaml
 
 # In prod, images are managed by GitHub action & Argo CD
 images:

@@ -11,21 +11,21 @@ router = Router()
     "/{int:category_id}",
     response={200: CategoryResponseSchema, 400: MessageSchema, 404: MessageSchema},
 )
-def category_get_post(
+async def category_get_post(
     request, category_id: int, page: PositiveInt = 1, size: PositiveInt = 10
 ):
     try:
-        category = Category.objects.get(pk=category_id)
-        posts = Post.objects.filter(category=category)
+        category = await Category.objects.aget(pk=category_id)
+        posts_qs = Post.objects.filter(category=category)
 
         offset = (page - 1) * size
-        total = posts.count()
+        total = await posts_qs.acount()
 
-        if offset >= total:
+        if 0 < total <= offset:
             return 400, {"message": "Out of range"}
 
         return 200, {
-            "posts": list(posts),
+            "posts": [p async for p in posts_qs[offset : offset + size]],
             "pagination": {
                 "total": total,
                 "page": page,
