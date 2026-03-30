@@ -11,6 +11,8 @@ from PIL import Image as PILImage
 from api.auth import TimeBaseAuth
 from api.models import Image
 
+# TODO: more test cases
+
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class ImageUploadTest(TestCase):

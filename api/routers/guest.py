@@ -1,13 +1,13 @@
 from ninja import Router
 
-from api.auth import TimeBaseAuth
+from api.auth import AsyncTimeBaseAuth
 from api.models import Guest
 from api.schemas import GuestLoginSchema, GuestSchema, IdSchema, MessageSchema
 
 router = Router()
 
 
-@router.post("/login", response=IdSchema, auth=TimeBaseAuth())
+@router.post("/login", response=IdSchema, auth=AsyncTimeBaseAuth())
 async def guest_login(request, body: GuestLoginSchema):
     unique_id = f"{body.provider}-{body.provider_id}"
 
@@ -32,7 +32,7 @@ async def guest_login(request, body: GuestLoginSchema):
 @router.get(
     "/{int:guest_id}",
     response={200: GuestSchema, 404: MessageSchema},
-    auth=TimeBaseAuth(),
+    auth=AsyncTimeBaseAuth(),
 )
 async def get_guest(request, guest_id: int):
     try:

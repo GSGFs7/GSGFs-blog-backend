@@ -2,7 +2,7 @@ import logging
 
 from ninja import Router
 
-from api.auth import TimeBaseAuth
+from api.auth import AsyncTimeBaseAuth
 from api.models import Comment, Guest, Post
 from api.schemas import (
     CommentIdsSchema,
@@ -82,7 +82,7 @@ async def get_all_comment_from_post(request, post_id: int):
 @router.post(
     "/new",
     response={200: IdSchema, 404: MessageSchema, 500: MessageSchema},
-    auth=TimeBaseAuth(),
+    auth=AsyncTimeBaseAuth(),
 )
 async def new_comment(request, body: NewCommentSchema):
     try:
