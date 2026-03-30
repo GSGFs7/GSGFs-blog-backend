@@ -28,12 +28,8 @@ ruff check --fix && ruff format .       # Lint and format
 
 ### API Development (api/routers/ & api/schemas/)
 
-- **Auth**: Authenticated endpoints use `auth=TimeBaseAuth()`.
+- **Auth**: Authenticated endpoints use `auth=AsyncTimeBaseAuth()` (async endpoint).
 - **Responses**: Return as `(status_code, response_dict)`. Use Pydantic schemas for serialization.
-
-### Async Tasks (api/tasks.py)
-
-- Use `@shared_task`. In tests, use `task.apply()` or set `CELERY_TASK_ALWAYS_EAGER=True`.
 
 ### Testing (api/tests/)
 

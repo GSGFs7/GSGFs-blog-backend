@@ -12,7 +12,7 @@ from typing import IO
 logger = logging.getLogger(__name__)
 
 
-class ExifTool:
+class SyncExifTool:
     # class attribute
     _instance = None  # single instance
     _lock = threading.RLock()  # thread safety, nested lock (in clean method), use RLock
@@ -24,7 +24,7 @@ class ExifTool:
     def __new__(cls, *args, **kwargs):
         with cls._lock:
             if cls._instance is None:
-                cls._instance = super(ExifTool, cls).__new__(cls, *args, **kwargs)
+                cls._instance = super(SyncExifTool, cls).__new__(cls, *args, **kwargs)
                 cls._instance._start_process()
         return cls._instance
 

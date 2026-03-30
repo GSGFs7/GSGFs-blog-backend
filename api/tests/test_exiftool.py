@@ -7,7 +7,7 @@ import requests
 from django.test import TestCase
 from PIL import Image as PILImage
 
-from api.exiftool import AsyncExifTool, ExifTool
+from api.exiftool import AsyncExifTool, SyncExifTool
 
 # About:
 #   Everson Museum of Art, Syracuse, New York, 1969. Photo by Carol M. Highsmith.
@@ -23,7 +23,7 @@ class ExifToolTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        if not ExifTool.is_available():
+        if not SyncExifTool.is_available():
             raise unittest.SkipTest("exiftool is not available")
 
         url = test_image_url
@@ -35,19 +35,19 @@ class ExifToolTest(TestCase):
             raise unittest.SkipTest(f"Failed to fetch image: {e}")
 
     def test_single_instance(self):
-        et1 = ExifTool()
-        et2 = ExifTool()
+        et1 = SyncExifTool()
+        et2 = SyncExifTool()
         self.assertIs(et1, et2)
 
     def test_is_available(self):
         """If initialization is complete is_available must return True"""
-        self.assertTrue(ExifTool.is_available())
+        self.assertTrue(SyncExifTool.is_available())
 
     def test_clean_metadata(self):
         if not self.test_image_data:
             self.skipTest("No test image data available")
 
-        et = ExifTool()
+        et = SyncExifTool()
         original_data = self.test_image_data
 
         # clean metadata
@@ -62,21 +62,21 @@ class ExifToolTest(TestCase):
             tmp.write(cleaned_data)
             tmp_name = tmp.name
 
-            result = ExifTool().execute(
+            result = SyncExifTool().execute(
                 "-Software", "-CreatorTool", "-HistoryAction", tmp_name
             )
             # metadata should be removed
             self.assertEqual(result.strip(), "")
 
     def test_clean_invalid_data(self):
-        et = ExifTool()
+        et = SyncExifTool()
         invalid_data = b"not an image file content"
 
         with self.assertRaises(RuntimeError):
             et.clean(BytesIO(invalid_data), filename="test.jpg")
 
     def test_persistence(self):
-        et = ExifTool()
+        et = SyncExifTool()
         buffer = BytesIO()
         PILImage.new("RGB", (1, 1)).save(buffer, "PNG")
 
@@ -96,7 +96,7 @@ class AsyncExifToolTest(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        if not ExifTool.is_available():
+        if not SyncExifTool.is_available():
             raise unittest.SkipTest("exiftool is not available")
 
         url = test_image_url

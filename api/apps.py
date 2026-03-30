@@ -1,6 +1,6 @@
-from django.apps import AppConfig
+import sys
 
-from api.exiftool import ExifTool
+from django.apps import AppConfig
 
 
 class ApiConfig(AppConfig):
@@ -11,8 +11,12 @@ class ApiConfig(AppConfig):
         # Import signals to make sure they are registered
         import api.signals  # noqa: F401
 
-        # run exiftool process
-        if ExifTool.is_available():
-            ExifTool()
+        # if don't need init
+        if "manage.py" in sys.argv:
+            if not any(arg in sys.argv for arg in ["runserver", "shell"]):
+                return None
 
-        return super().ready()
+        # if SyncExifTool.is_available():
+        #     SyncExifTool()
+
+        return None

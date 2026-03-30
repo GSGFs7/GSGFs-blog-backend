@@ -21,7 +21,7 @@ from pgvector.django import HnswIndex, VectorField
 from PIL import Image as PILImage
 
 from api.constants import IMAGE_ALLOWED_FORMAT, POST_RESERVED_SLUGS
-from api.exiftool import AsyncExifTool, ExifTool
+from api.exiftool import AsyncExifTool, SyncExifTool
 from api.utils import calculate_blake3_hash, chinese_slugify, extract_metadata
 
 logger = logging.getLogger(__name__)
@@ -637,9 +637,9 @@ class Image(BaseModel):
     @staticmethod
     def _process_clean_metadata(content: IO[bytes], filename) -> tuple[BytesIO, int]:
         content.seek(0)
-        if ExifTool.is_available():
-            # ExifTool, no PIL re-encoding, more efficient
-            cleaned_io = ExifTool().clean(content, filename=filename)
+        if SyncExifTool.is_available():
+            # SyncExifTool, no PIL re-encoding, more efficient
+            cleaned_io = SyncExifTool().clean(content, filename=filename)
             size = cleaned_io.getbuffer().nbytes
             return cleaned_io, size
         # fallback
