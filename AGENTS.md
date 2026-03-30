@@ -15,7 +15,7 @@ ruff check --fix && ruff format .       # Lint and format
 
 ## Project Map
 
-- `api/models.py`: Database models (with Vector/Search fields).
+- `api/models/`: Database models (with Vector/Search fields).
 - `api/routers/`: API endpoints and business logic (organized by resource).
 - `api/schemas/`: Pydantic/Ninja schemas for request/response validation.
 - `api/tasks.py`: Celery background tasks (embeddings, third-party sync).
