@@ -15,7 +15,8 @@ class ExifTool:
     # single instance
     _instance = None
     # thread safety
-    _lock = threading.Lock()
+    # nested lock (in clean method), use RLock
+    _lock = threading.RLock()
 
     def __new__(cls, *args, **kwargs):
         with cls._lock:
@@ -92,7 +93,7 @@ class ExifTool:
                 self.terminate()  # Reset process on error
                 raise e
 
-    def clean(self, data: IO, filename: str = None) -> BytesIO:
+    def clean(self, data: IO[bytes], filename: str = None) -> BytesIO:
         """clean image EXIF data"""
 
         with self._lock:
@@ -109,65 +110,26 @@ class ExifTool:
                 dir=tmp_base, prefix="blog-exiftool-", delete=True
             ) as tmp_dir:
                 ext = os.path.splitext(filename)[-1] if filename else ""
-                tmp_in_path = os.path.join(tmp_dir, f"input{ext}")
-                tmp_out_path = os.path.join(tmp_dir, f"output{ext}")
+                tmp_in = os.path.join(tmp_dir, f"input{ext}")
+                tmp_out = os.path.join(tmp_dir, f"output{ext}")
 
-                # Ensure data pointer is at the beginning
                 if hasattr(data, "seekable") and data.seekable():
                     data.seek(0)
 
-                with open(tmp_in_path, "wb") as f:
+                with open(tmp_in, "wb") as f:
                     # noinspection PyTypeChecker
                     shutil.copyfileobj(data, f)
 
-                try:
-                    # file unique identifier
-                    self._counter += 1
-                    exec_id = self._counter
-                    sentinel = f"{{ready{exec_id}}}".encode("utf-8")
+                # execute clean
+                response = self.execute("-all=", tmp_in, "-o", tmp_out)
 
-                    # disable formater here, multiple lines is easy to read
-                    # fmt: off
-                    args = (
-                        "-all=\n"
-                        f"{tmp_in_path}\n"
-                        "-o\n"
-                        f"{tmp_out_path}\n"
-                        f"-execute{exec_id}\n"
-                    ).encode("utf-8")
-                    # fmt: on
+                if not os.path.exists(tmp_out):
+                    raise RuntimeError(
+                        f"ExifTool failed: {response or 'No output file created'}"
+                    )
 
-                    # send args
-                    self.process.stdin.write(args)
-                    self.process.stdin.flush()
-
-                    # Read from stdout until we see the sentinel
-                    response = bytearray()
-                    while True:
-                        chunk = self.process.stdout.read(4096)  # 4KiB
-                        if not chunk:
-                            break
-                        response.extend(chunk)
-                        if sentinel in response:
-                            break
-
-                    # Check if output file exists
-                    if not os.path.exists(tmp_out_path):
-                        # response might contain the error message
-                        error_msg = (
-                            response.decode("utf-8", errors="ignore")
-                            .replace(f"{{ready{exec_id}}}", "")
-                            .strip()
-                        )
-                        raise RuntimeError(
-                            f"ExifTool failed: {error_msg or 'No output file created'}"
-                        )
-
-                    with open(tmp_out_path, "rb") as f:
-                        return BytesIO(f.read())
-                except Exception as e:
-                    self.terminate()  # Reset process on error
-                    raise e
+                with open(tmp_out, "rb") as f:
+                    return BytesIO(f.read())
 
     def terminate(self):
         if self.process:

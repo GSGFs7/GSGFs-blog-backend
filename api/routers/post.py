@@ -63,12 +63,12 @@ class PostSimilarityPagination(Pagination):
 
     async def apaginate_queryset(
         self,
-        queryset_with_similarities: Tuple[List[Post], List[float]],
+        posts_with_similarities: Tuple[List[Post], List[float]],
         pagination: Pagination.Input,
         request: HttpRequest,
         **params: Any,
     ) -> dict:
-        posts, similarities = queryset_with_similarities
+        posts, similarities = posts_with_similarities
         offset = (pagination.page - 1) * pagination.size
         total = len(posts)
 
@@ -131,7 +131,7 @@ async def get_post_cards_from_query(request, q: str):
             ordered_posts.append(posts_dict[pid])
             ordered_similarities.append(similarities_map[pid])
 
-    # return to paginate decorative
+    # return to paginate decorator
     return ordered_posts, ordered_similarities
 
 

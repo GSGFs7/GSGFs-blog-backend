@@ -535,7 +535,7 @@ class Image(BaseModel):
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
     @staticmethod
     def create_from_file(
-        content: IO, filename: str
+        content: IO[bytes], filename: str
     ) -> tuple["Image", ImageResource, bool]:
 
         # NOTE: There are some problem here
