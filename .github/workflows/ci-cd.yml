@@ -56,6 +56,18 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Wait for database
+        run: uv run scripts/wait_for_db.py
+        env:
+          DEBUG: True
+          DJANGO_SECRET_KEY: github-action-test-django-secret-key
+          DATABASE_ENGINE: postgresql
+          DATABASE_NAME: github_action_test
+          DATABASE_USER: github_action_test_user
+          DATABASE_PASSWORD: github_action_test_password
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+
       - name: Download model
         run: uv run scripts/download-model.py
         env:
