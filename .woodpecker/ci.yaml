@@ -7,3 +7,4 @@ steps:
     image: docker.io/library/archlinux:latest
     commands:
       - echo "Test"
+      - sleep 5
