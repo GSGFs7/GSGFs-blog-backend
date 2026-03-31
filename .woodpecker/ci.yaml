@@ -33,13 +33,13 @@ steps:
         from_secret: HUGGINGFACE_HUB_TOKEN
       API_KEY: woodpecker_test_api_key
     commands:
-      - pacman -Sy
-      - pacman -S uv
+      - pacman -Sy --noconfirm
+      - pacman -S uv --noconfirm
       - uv sync
       - uv run manage.py test
 
   - name: build
-    image: quay.io/buildah/stable:latest
+    image: docker.io/library/archlinux:latest
     depends_on: [ test ]
     when:
       event: [ push, manual ]
@@ -57,6 +57,8 @@ steps:
       CI_COMMIT_SHA: ${CI_COMMIT_SHA}
       STORAGE_DRIVER: vfs
     commands:
+      - pacman -Sy --noconfirm
+      - pacman -S buildah
       # bypass CF CDN
       - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
       - ./scripts/build-and-push.sh
