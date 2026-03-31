@@ -1,12 +1,61 @@
 when:
-  - event: push
+  - event: [ push, pull_request, manual ]
     branch:
       - main
       - woodpecker-test
 
+services:
+  db:
+    image: docker.io/pgvector/pgvector:pg18-trixie
+    environment:
+      POSTGRES_DB: woodpecker_test
+      POSTGRES_USER: woodpecker_test_user
+      POSTGRES_PASSWORD: woodpecker_test_passwd
+  redis:
+    image: docker.io/library/redis:8-alpine
+
 steps:
-  - name: test
+  test:
     image: docker.io/library/archlinux:latest
+    environment:
+      DEBUG: "True"
+      DJANGO_SECRET_KEY: woodpecker_test_django_secret_key
+      DATABASE_ENGINE: postgresql
+      DATABASE_NAME: woodpecker_test
+      DATABASE_USER: woodpecker_test_user
+      DATABASE_PASSWORD: woodpecker_test_passwd
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
+      API_KEY: woodpecker_test_api_key
     commands:
-      - echo "Test"
-      - sleep 5
+      - pacman -Sy
+      - pacman -S uv
+      - uv sync
+  build:
+    image: quay.io/buildah/stable:latest
+    depends_on: [ test ]
+    when:
+      event: [ push, manual ]
+    environment:
+      REGISTRY_DOMAIN:
+        from_secret: REGISTRY_DOMAIN
+      REGISTRY_IP:
+        from_secret: REGISTRY_IP
+      REGISTRY_USERNAME:
+        from_secret: REGISTRY_USERNAME
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
+      CI_COMMIT_SHA: ${CI_COMMIT_SHA}
+      STORAGE_DRIVER: vfs
+    commands:
+      # bypass CF CDN
+      - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
+      - ./scripts/build-and-push.sh
+
