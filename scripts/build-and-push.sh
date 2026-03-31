@@ -103,6 +103,7 @@ function push_images() {
 }
 
 function main() {
+    buildah info
     buildah_login
     build_images
     push_images
