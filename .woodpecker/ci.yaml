@@ -1,6 +1,8 @@
 when:
   - event: push
-    branch: main, woodpecker-test
+    branch:
+      - main
+      - woodpecker-test
 
 steps:
   - name: test
