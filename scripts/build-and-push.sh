@@ -39,13 +39,14 @@ function _build_with_buildah() {
     echo "Attempting to pull cache from $cache_ref..."
     # Suppress error output for pull as it might fail if cache doesn't exist or is incompatible
     local has_cache=false
-    if buildah pull "$cache_ref" 2>/dev/null; then
+    if buildah pull "$cache_ref" 2> /dev/null; then
         has_cache=true
     fi
 
     # build image
     local build_args=(
         "bud"
+        "--isolation" "chroot"
         "--layers"
         "--build-arg" "hf_token=$HUGGINGFACE_HUB_TOKEN"
         "-f" "$dockerfile"
