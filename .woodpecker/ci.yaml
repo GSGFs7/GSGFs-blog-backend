@@ -46,6 +46,12 @@ steps:
     #    depends_on: [ test ]
     when:
       event: [ push, manual ]
+    backend_options:
+      kubernetes:
+        securityContext:
+          privileged: false
+          capabilities:
+            add: [ "SYS_ADMIN" ]
     environment:
       REGISTRY_DOMAIN:
         from_secret: REGISTRY_DOMAIN
