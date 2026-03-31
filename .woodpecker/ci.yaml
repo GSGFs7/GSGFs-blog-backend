@@ -58,7 +58,7 @@ steps:
       STORAGE_DRIVER: vfs
     commands:
       - pacman -Sy --noconfirm
-      - pacman -S buildah
+      - pacman -S buildah git
       # bypass CF CDN
       - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
       - ./scripts/build-and-push.sh
