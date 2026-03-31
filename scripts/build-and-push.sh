@@ -38,17 +38,28 @@ function _build_with_buildah() {
 
     echo "Attempting to pull cache from $cache_ref..."
     # Suppress error output for pull as it might fail if cache doesn't exist or is incompatible
-    buildah pull "$cache_ref" 2>/dev/null || true
+    local has_cache=false
+    if buildah pull "$cache_ref" 2>/dev/null; then
+        has_cache=true
+    fi
 
     # build image
     local build_args=(
         "bud"
         "--layers"
-        "--cache-from" "$cache_ref"
         "--build-arg" "hf_token=$HUGGINGFACE_HUB_TOKEN"
         "-f" "$dockerfile"
         "-t" "localhost/blog-$name:latest"
     )
+
+    if [ "$has_cache" = true ]; then
+        # Use the local image ID to avoid "repository must contain neither a tag nor digest" errors
+        local cache_id=$(buildah images -q "$cache_ref" | head -n 1)
+        if [ -n "$cache_id" ]; then
+            echo "Using local cache ID: $cache_id"
+            build_args+=("--cache-from" "$cache_id")
+        fi
+    fi
 
     if [ -n "$target" ]; then
         build_args+=("--target" "$target")
