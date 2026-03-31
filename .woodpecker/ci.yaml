@@ -71,5 +71,5 @@ steps:
       - pacman -S buildah git --noconfirm
       # bypass CF CDN
       - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
-      - ./scripts/test.sh
+      - cp ./scripts/storage.conf /root/.config/containers/storage.conf
       - ./scripts/build-and-push.sh
