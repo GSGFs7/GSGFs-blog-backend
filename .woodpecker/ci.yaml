@@ -48,10 +48,9 @@ steps:
       event: [ push, manual ]
     backend_options:
       kubernetes:
-        securityContext:
-          privileged: false
-          capabilities:
-            add: [ "SYS_ADMIN" ]
+        annotations:
+          container.apparmor.security.beta.kubernetes.io/step-build: unconfined
+          container.seccomp.security.alpha.kubernetes.io/step-build: unconfined
     environment:
       REGISTRY_DOMAIN:
         from_secret: REGISTRY_DOMAIN
