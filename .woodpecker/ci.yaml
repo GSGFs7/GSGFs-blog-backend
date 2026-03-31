@@ -65,10 +65,11 @@ steps:
         from_secret: REGISTRY_PASSWORD
       CI_COMMIT_SHA: ${CI_COMMIT_SHA}
       STORAGE_DRIVER: vfs # no OverlayFS
-      BUILDAH_ISOLATION: chroot # do no create a new user namespace
+      BUILDAH_ISOLATION: chroot # do not create a new user namespace
     commands:
       - pacman -Sy --noconfirm
       - pacman -S buildah git --noconfirm
       # bypass CF CDN
       - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
+      - ./scripts/test.sh
       - ./scripts/build-and-push.sh
