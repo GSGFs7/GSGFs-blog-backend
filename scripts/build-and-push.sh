@@ -21,7 +21,6 @@ CACHE_IMAGE_PREFIX="$REGISTRY_DOMAIN/blog-buildcache"
 function buildah_login() {
     echo "Logging into $REGISTRY_DOMAIN..."
     buildah login -u "$REGISTRY_USERNAME" -p "$REGISTRY_PASSWORD" "$REGISTRY_DOMAIN"
-    echo "Login success!"
 }
 
 function _build_with_buildah() {
@@ -38,19 +37,26 @@ function _build_with_buildah() {
     fi
 
     echo "Attempting to pull cache from $cache_ref..."
-    buildah pull "$cache_ref" || true
+    # Suppress error output for pull as it might fail if cache doesn't exist or is incompatible
+    buildah pull "$cache_ref" 2>/dev/null || true
 
     # build image
-    local target_arg=""
-    if [ -n "$target" ]; then target_arg="--target $target"; fi
+    local build_args=(
+        "bud"
+        "--layers"
+        "--cache-from" "$cache_ref"
+        "--build-arg" "hf_token=$HUGGINGFACE_HUB_TOKEN"
+        "-f" "$dockerfile"
+        "-t" "localhost/blog-$name:latest"
+    )
+
+    if [ -n "$target" ]; then
+        build_args+=("--target" "$target")
+    fi
 
     echo "Building $name using buildah bud..."
     # 'bud' is 'build-using-dockerfile'
-    buildah bud "$target_arg" \
-        --cache-from "$cache_ref" \
-        --build-arg "hf_token=$HUGGINGFACE_HUB_TOKEN" \
-        -f "$dockerfile" \
-        -t "localhost/blog-$name:latest" .
+    buildah "${build_args[@]}" .
 }
 
 function build_images() {
