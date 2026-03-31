@@ -3,25 +3,25 @@ kind: Kustomization
 namespace: blog
 
 resources:
-  - ../../base
-  - ingress.yaml
-  - cluster-issuer.yaml
-  - middleware-whitelist.yaml
+- ../../base
+- ingress.yaml
+- cluster-issuer.yaml
+- middleware-whitelist.yaml
 
 # In prod, images are managed by GitHub action & Argo CD
 images:
 - name: blog-backup
   newName: registry.gsgfs.sh/blog-backup
-  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+  newTag: 3eafdab8c1932401752e2c5f843d78f896aec4a3
 - name: blog-celery-beat
   newName: registry.gsgfs.sh/blog-celery-beat
-  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+  newTag: 3eafdab8c1932401752e2c5f843d78f896aec4a3
 - name: blog-celery-worker
   newName: registry.gsgfs.sh/blog-celery-worker
-  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+  newTag: 3eafdab8c1932401752e2c5f843d78f896aec4a3
 - name: blog-django
   newName: registry.gsgfs.sh/blog-django
-  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+  newTag: 3eafdab8c1932401752e2c5f843d78f896aec4a3
 - name: blog-model-downloader
   newName: registry.gsgfs.sh/blog-model-downloader
-  newTag: 8950c8d68731a8240e16baf6f71e5798c5d48a2b
+  newTag: 3eafdab8c1932401752e2c5f843d78f896aec4a3
