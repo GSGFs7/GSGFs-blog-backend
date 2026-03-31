@@ -34,7 +34,7 @@ steps:
       API_KEY: woodpecker_test_api_key
     commands:
       - pacman -Sy --noconfirm
-      - pacman -S uv --noconfirm
+      - pacman -S uv git --noconfirm
       - uv sync
       - uv run manage.py test
 
