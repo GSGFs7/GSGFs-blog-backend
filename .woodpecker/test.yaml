@@ -1,0 +1,43 @@
+when:
+  - event: [ push, pull_request, manual ]
+    branch:
+      - main
+      - woodpecker-test
+
+services:
+  db:
+    image: docker.io/pgvector/pgvector:pg18-trixie
+    environment:
+      POSTGRES_DB: woodpecker_test
+      POSTGRES_USER: woodpecker_test_user
+      POSTGRES_PASSWORD: woodpecker_test_passwd
+  redis:
+    image: docker.io/library/redis:8-alpine
+
+steps:
+  - name: test
+    image: docker.io/library/archlinux:latest
+    environment:
+      DEBUG: "True"
+      DJANGO_SECRET_KEY: woodpecker_test_django_secret_key
+      DATABASE_ENGINE: postgresql
+      DATABASE_NAME: woodpecker_test
+      DATABASE_USER: woodpecker_test_user
+      DATABASE_PASSWORD: woodpecker_test_passwd
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SENTENCE_TRANSFORMERS_HOME: sentence_transformers_models
+      MODEL_NAME: google/embeddinggemma-300m
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
+      API_KEY: woodpecker_test_api_key
+    commands:
+      - pacman -Sy --noconfirm
+      - pacman -S uv git python perl-image-exiftool --noconfirm
+      # fix exiftool path
+      - ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
+      - uv sync
+      - uv run scripts/download-model.py
+      - uv run manage.py test -v 2
