@@ -2,8 +2,8 @@ depends_on:
   - build
 
 when:
-  - event: [ push ]
-    branch: main
+  - event: [ push, manual ]
+    branch: [ main, woodpecker-test ]
 
 steps:
   - name: update-kustomize
