@@ -4,7 +4,6 @@ when:
       - main
       - woodpecker-test
 
-
 services:
   db:
     image: docker.io/pgvector/pgvector:pg18-trixie
@@ -36,8 +35,8 @@ steps:
     commands:
       - pacman -Sy --noconfirm
       - pacman -S uv git python perl-image-exiftool --noconfirm
+      # fix exiftool path
       - ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
-      # Disable Redis persistence to avoid MISCONF errors
       - uv sync
       - uv run manage.py test -v 2 || sleep 3600
 
