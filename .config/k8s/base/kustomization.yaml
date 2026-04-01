@@ -15,3 +15,5 @@ resources:
   - job-migrate.yaml
   - job-backup.yaml
   - configmap.yaml
+  - litellm.yaml
+  - llama-cpp.yaml

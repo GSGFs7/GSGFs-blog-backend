@@ -34,6 +34,7 @@ if __name__ == "__main__":
     HUGGINGFACE_HUB_TOKEN = os.environ.get("HUGGINGFACE_HUB_TOKEN")
     if HUGGINGFACE_HUB_TOKEN is None:
         raise ValueError("HUGGINGFACE_HUB_TOKEN environment variable is not set.")
+    HUGGINGFACE_HUB_TOKEN = HUGGINGFACE_HUB_TOKEN.strip()
 
     # Create model cache directory if it doesn't exist
     os.makedirs(SENTENCE_TRANSFORMERS_HOME, exist_ok=True)

@@ -1,0 +1,79 @@
+# k8s/base/litellm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+data:
+  config.yaml: |
+    model_list:
+      - model_name: embeddinggemma-300m
+        litellm_params:
+          model: openai/embeddinggemma-300m-qat-Q8_0.gguf
+          api_base: http://blog-llama-cpp:8080/v1
+          api_key: "sk-1234"
+          encoding_format: float
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-litellm
+  labels:
+    app: blog-litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blog-litellm
+  template:
+    metadata:
+      labels:
+        app: blog-litellm
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: litellm-config
+      containers:
+        - name: blog-litellm
+          image: docker.litellm.ai/berriai/litellm:main-latest
+          args:
+            - "--config"
+            - "/app/config.yaml"
+            - "--port"
+            - "4000"
+          ports:
+            - name: http
+              containerPort: 4000
+          env:
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: blog-secrets
+                  key: LITELLM_API_KEY
+          volumeMounts:
+            - name: config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "100m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-litellm
+spec:
+  selector:
+    app: blog-litellm
+  ports:
+    - port: 4000
+      targetPort: 4000
+  type: ClusterIP
