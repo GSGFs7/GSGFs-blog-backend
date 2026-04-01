@@ -66,9 +66,10 @@ function push_images() {
         podman tag "localhost/blog-$name:latest" "$remote_tag_latest"
         podman tag "localhost/blog-$name:latest" "$remote_tag_sha"
 
-        echo "Pushing $name..."
-        podman push "$remote_tag_latest"
-        podman push "$remote_tag_sha"
+        # just test
+        #echo "Pushing $name..."
+        #podman push "$remote_tag_latest"
+        #podman push "$remote_tag_sha"
     done
 }
 
