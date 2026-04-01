@@ -1,0 +1,40 @@
+depends_on:
+  - test
+
+labels:
+  type: builder  # env: WOODPECKER_AGENT_LABELS=builder
+
+when:
+  - event: [ push, pull_request, manual ]
+    branch:
+      - main
+      - woodpecker-test
+
+steps:
+  - name: build
+    image: docker.io/library/archlinux:latest
+    when:
+      event: [ push, manual ]
+    privileged: true
+    environment:
+      REGISTRY_DOMAIN:
+        from_secret: REGISTRY_DOMAIN
+      REGISTRY_IP:
+        from_secret: REGISTRY_IP
+      REGISTRY_USERNAME:
+        from_secret: REGISTRY_USERNAME
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
+      CI_COMMIT_SHA: ${CI_COMMIT_SHA}
+    #      STORAGE_DRIVER: vfs # no OverlayFS
+    #      BUILDAH_ISOLATION: chroot # do not create a new user namespace
+    commands:
+      - pacman -Sy --noconfirm
+      - pacman -S buildah git --noconfirm
+      # bypass CF CDN
+      - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
+      - mkdir -p /root/.config/containers
+      - cp ./scripts/storage.conf /root/.config/containers/storage.conf
+      - ./scripts/build-and-push.sh

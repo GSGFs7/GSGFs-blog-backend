@@ -46,9 +46,7 @@ function _build_with_buildah() {
     # build image
     local build_args=(
         "bud"
-        "--isolation" "chroot"
         "--layers"
-        "--build-arg" "hf_token=$HUGGINGFACE_HUB_TOKEN"
         "-f" "$dockerfile"
         "-t" "localhost/blog-$name:latest"
     )
