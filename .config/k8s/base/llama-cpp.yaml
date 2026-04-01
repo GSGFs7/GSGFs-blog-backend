@@ -1,0 +1,59 @@
+# k8s/base/llama-cpp.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blog-llama-cpp
+  labels:
+    app: blog-llama-cpp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blog-llama-cpp
+  template:
+    metadata:
+      labels:
+        app: blog-llama-cpp
+    spec:
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: blog-model-pvc
+      containers:
+        - name: blog-llama-cpp
+          image: ghcr.io/ggml-org/llama.cpp:server
+          args:
+            - "-m"
+            - "/models/embeddinggemma-300m-qat-Q8_0.gguf"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8080"
+            - "--embedding"
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: model-storage
+              mountPath: /models
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "300m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: blog-llama-cpp
+spec:
+  selector:
+    app: blog-llama-cpp
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

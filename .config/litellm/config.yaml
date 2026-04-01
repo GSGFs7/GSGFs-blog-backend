@@ -1,0 +1,7 @@
+model_list:
+  - model_name: embeddinggemma-300m
+    litellm_params:
+      model: openai/embeddinggemma-300m-qat-Q8_0.gguf
+      api_base: http://blog-llama-cpp:8080/v1
+      api_key: "sk-1234" # llama.cpp not need api key
+      encoding_format: float

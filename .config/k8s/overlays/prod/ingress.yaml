@@ -23,6 +23,13 @@ spec:
     - host: $BACKEND_DOMAIN
       http:
         paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-litellm
+                port:
+                  number: 4000
           - path: /
             pathType: Prefix
             backend:

@@ -9,6 +9,13 @@ spec:
     - host: blog.local # It may need to be added to the hosts file.
       http:
         paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-litellm
+                port:
+                  number: 4000
           - path: /
             pathType: Prefix
             backend:
