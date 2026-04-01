@@ -3,6 +3,7 @@ when:
     branch:
       - main
       - woodpecker-test
+      - dev
 
 services:
   db:
