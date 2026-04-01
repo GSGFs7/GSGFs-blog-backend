@@ -152,6 +152,8 @@ ASGI_APPLICATION = "blog.asgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# A problem that has been solved
+# Cascade failure causes database connection to be closed
 _database_engine = os.getenv("DATABASE_ENGINE", "postgresql")
 if not _database_engine:
     # Build-time or local development fallback
@@ -174,7 +176,7 @@ else:
                 else os.getenv("DATABASE_HOST", "127.0.0.1")
             ),
             "PORT": os.getenv("DATABASE_PORT", 5432),
-            "CONN_MAX_AGE": 60,
+            "CONN_MAX_AGE": 100,
         }
     }
 
@@ -318,6 +320,13 @@ IMAGE_UPLOAD_MAX_SIZE = 20971520  # 20MiB
 # vector search
 MODEL_NAME = os.environ.get("MODEL_NAME")
 SENTENCE_TRANSFORMERS_HOME = os.environ.get("SENTENCE_TRANSFORMERS_HOME")
+
+# LiteLLM
+LITELLM_API_BASE = os.environ.get("LITELLM_API_BASE", "http://blog-litellm:4000/v1")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-1234")
+LITELLM_MODEL_NAME = os.environ.get("LITELLM_MODEL_NAME", "embeddinggemma-300m")
+USE_LITELLM = os.environ.get("USE_LITELLM", "False").lower() in ("1", "true", "yes")
+
 # supervisord may use root permissions
 # PermissionError: [Errno 13] Permission denied: '/root/.cache/huggingface/token'
 if SENTENCE_TRANSFORMERS_HOME:
