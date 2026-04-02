@@ -32,6 +32,7 @@ steps:
       REGISTRY_PASSWORD:
         from_secret: REGISTRY_PASSWORD
       STORAGE_DRIVERL: overlayfs
+      BUILDAH_ISOLATION: chroot
     commands:
       - pacman -Sy --noconfirm
       - pacman -S podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
