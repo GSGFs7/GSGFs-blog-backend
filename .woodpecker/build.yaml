@@ -33,9 +33,10 @@ steps:
         from_secret: REGISTRY_PASSWORD
       STORAGE_DRIVERL: overlayfs
     commands:
-      #- pacman -Sy --noconfirm
-      #- pacman -S podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
+      - pacman -Sy --noconfirm
+      - pacman -S podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
       # bypass CF CDN
       #- echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
       #- ./scripts/build-and-push.sh
       - echo "ciallo!"
+      - podman info
