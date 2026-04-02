@@ -35,13 +35,13 @@ steps:
       BUILDAH_ISOLATION: chroot
     commands:
       - pacman -Sy --noconfirm
-      - pacman -S buildah podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
+      - pacman -S podman --noconfirm  # overlayfs storage driver in user space
       # bypass CF CDN
       #- echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
       #- ./scripts/build-and-push.sh
       - echo "ciallo!"
-      - buildah info
+      - podman info
       - |
         echo "from busybox
         run echo hello world" > Dockerfile
-      - buildah build .
+      - podman build .
