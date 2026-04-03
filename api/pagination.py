@@ -74,8 +74,8 @@ class Pagination(AsyncPaginationBase):
             },
         }
 
-    @staticmethod
-    def paginate_as(items_name: str, item_schema: Type[Any]) -> Type["Pagination"]:
+    @classmethod
+    def paginate_as(cls, items_name: str, item_schema: Type[Any]) -> Type["Pagination"]:
         """
         Factory method to create a pagination class with a custom items field name.
         Useful to avoid creating multiple boilerplate subclasses for each router.
@@ -97,7 +97,7 @@ class Pagination(AsyncPaginationBase):
             # class name
             f"Pagination_{items_name}",
             # father class
-            (Pagination,),
+            (cls,),
             # class attributes
             {"items_attribute": items_name, "Output": output_schema},
         )

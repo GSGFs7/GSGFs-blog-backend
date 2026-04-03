@@ -336,12 +336,12 @@ class AsyncExifTool:
             finally:
                 self.process = None
 
-    @staticmethod
-    async def is_available() -> bool:
+    @classmethod
+    async def is_available(cls) -> bool:
         # lru_cache not support async
         # use a class var store the result
-        if AsyncExifTool._is_available is not None:
-            return AsyncExifTool._is_available
+        if cls._is_available is not None:
+            return cls._is_available
 
         try:
             args = ["exiftool", "-ver"]
@@ -351,8 +351,8 @@ class AsyncExifTool:
                 stderr=asyncio.subprocess.PIPE,
             )
             await process.communicate()
-            AsyncExifTool._is_available = process.returncode == 0
+            cls._is_available = process.returncode == 0
         except Exception:
-            AsyncExifTool._is_available = False
+            cls._is_available = False
 
-        return AsyncExifTool._is_available
+        return cls._is_available

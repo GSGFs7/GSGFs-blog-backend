@@ -3,7 +3,7 @@ import base64
 import hashlib
 import logging
 import uuid
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -45,6 +45,7 @@ class TimeBaseAuth(HttpBearer, ABC):
         key = hashlib.sha256(settings.API_KEY.encode()).digest()
         return Fernet(base64.urlsafe_b64encode(key))
 
+    @abstractmethod
     def authenticate(self, request, token):
         raise NotImplementedError("use AsyncTimeBaseAuth or SyncTimeBaseAuth instead")
 
