@@ -12,16 +12,16 @@ resources:
 images:
 - name: blog-backup
   newName: registry.gsgfs.sh/blog-backup
-  newTag: 04b37e7b49313e34a91de0ce09c9419af54f9053
+  newTag: 2d306137dc2c3bce93711d520c90e163f1866aaa
 - name: blog-celery-beat
   newName: registry.gsgfs.sh/blog-celery-beat
-  newTag: 04b37e7b49313e34a91de0ce09c9419af54f9053
+  newTag: 2d306137dc2c3bce93711d520c90e163f1866aaa
 - name: blog-celery-worker
   newName: registry.gsgfs.sh/blog-celery-worker
-  newTag: 04b37e7b49313e34a91de0ce09c9419af54f9053
+  newTag: 2d306137dc2c3bce93711d520c90e163f1866aaa
 - name: blog-django
   newName: registry.gsgfs.sh/blog-django
-  newTag: 04b37e7b49313e34a91de0ce09c9419af54f9053
+  newTag: 2d306137dc2c3bce93711d520c90e163f1866aaa
 - name: blog-model-downloader
   newName: registry.gsgfs.sh/blog-model-downloader
-  newTag: 04b37e7b49313e34a91de0ce09c9419af54f9053
+  newTag: 2d306137dc2c3bce93711d520c90e163f1866aaa
