@@ -9,6 +9,10 @@ from api.utils import is_async
 __all__ = ["rate_limit"]
 
 
+def _generate_cache_key(key_prefix: str, client_ip: str) -> str:
+    return f"rate_limit:{key_prefix}:{client_ip}"
+
+
 def _get_client_ip(request: HttpRequest) -> str:
     client_ip = request.META.get("HTTP_X_FORWARDED_FOR")
     if client_ip:
@@ -23,23 +27,21 @@ def rate_limit(key_prefix: str, max_requests: int, window: int):
             # get ip
             client_ip = _get_client_ip(request)
 
-            cache_key = f"rate_limit:{key_prefix}:{client_ip}"
+            cache_key = _generate_cache_key(key_prefix, client_ip)
             await cache.aadd(cache_key, 0, timeout=window)
             current_requests = await cache.aincr(cache_key)
             if current_requests > max_requests:
                 return 429, {"message": "Too many request"}
 
             # run the raw func
-            if is_async(func):
-                return await func(request, *args, **kwargs)
-            return func(request, *args, **kwargs)
+            return await func(request, *args, **kwargs)
 
         @wraps(func)
         def sync_wrapper(request: HttpRequest, *args, **kwargs):
             # get ip
             client_ip = _get_client_ip(request)
 
-            cache_key = f"rate_limit:{key_prefix}:{client_ip}"
+            cache_key = _generate_cache_key(key_prefix, client_ip)
             cache.add(cache_key, 0, timeout=window)
             current_requests = cache.incr(cache_key)
             if current_requests > max_requests:
