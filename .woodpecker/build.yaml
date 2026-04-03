@@ -8,7 +8,7 @@ labels:
   #  WOODPECKER_AGENT_LABELS: type=builder
 
 when:
-  - event: [ push, pull_request, manual ]
+  - event: [ push, manual ]
     branch:
       - main
       - woodpecker-test
@@ -16,8 +16,6 @@ when:
 steps:
   - name: build
     image: docker.io/library/archlinux:latest
-    when:
-      event: [ push, manual ]
     # SECURITY WARNING: privileged is enable, makesure you trust all for the code
     privileged: true
     environment:
@@ -27,10 +25,10 @@ steps:
         from_secret: REGISTRY_IP
       REGISTRY_USERNAME:
         from_secret: REGISTRY_USERNAME
-      HUGGINGFACE_HUB_TOKEN:
-        from_secret: HUGGINGFACE_HUB_TOKEN
       REGISTRY_PASSWORD:
         from_secret: REGISTRY_PASSWORD
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
       STORAGE_DRIVERL: overlayfs
     commands:
       - pacman -Sy --noconfirm

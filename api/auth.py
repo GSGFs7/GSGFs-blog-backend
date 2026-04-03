@@ -3,7 +3,7 @@ import base64
 import hashlib
 import logging
 import uuid
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -20,13 +20,13 @@ class TimeBaseAuth(HttpBearer, ABC):
     token format: client_id:nonce
     """
 
-    @staticmethod
-    def create_token(client_id: str, nonce: str = None) -> str:
+    @classmethod
+    def create_token(cls, client_id: str, nonce: str = None) -> str:
         if nonce is None:
             nonce = uuid.uuid4().hex
 
-        f = TimeBaseAuth.get_fernet()
-        payload = TimeBaseAuth.generate_token_format(client_id, nonce).encode("utf-8")
+        f = cls.get_fernet()
+        payload = cls.generate_token_format(client_id, nonce).encode("utf-8")
         return f.encrypt(payload).decode("utf-8")
 
     @staticmethod
@@ -45,6 +45,7 @@ class TimeBaseAuth(HttpBearer, ABC):
         key = hashlib.sha256(settings.API_KEY.encode()).digest()
         return Fernet(base64.urlsafe_b64encode(key))
 
+    @abstractmethod
     def authenticate(self, request, token):
         raise NotImplementedError("use AsyncTimeBaseAuth or SyncTimeBaseAuth instead")
 

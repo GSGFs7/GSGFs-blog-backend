@@ -8,7 +8,7 @@ resources:
 - cluster-issuer.yaml
 - middleware-whitelist.yaml
 
-# In prod, images are managed by GitHub action & Argo CD
+# In prod, images are managed by Woodpecker CI & Argo CD
 images:
 - name: blog-backup
   newName: registry.gsgfs.sh/blog-backup

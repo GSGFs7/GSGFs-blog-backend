@@ -35,39 +35,6 @@ services:
     networks:
       - blog-network
 
-  blog-llama-cpp:
-    image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: blog-llama-cpp
-    volumes:
-      - ./sentence_transformers_models:/models
-    command:
-      [
-        "-m",
-        "/models/embeddinggemma-300m-qat-Q8_0.gguf",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8080",
-        "--embedding",
-      ]
-    networks:
-      - blog-network
-    restart: always
-
-  blog-litellm:
-    image: docker.litellm.ai/berriai/litellm:main-latest
-    container_name: blog-litellm
-    volumes:
-      - ./.config/litellm/config.yaml:/app/config.yaml
-    command: [ "--config", "/app/config.yaml", "--port", "4000", "--debug" ]
-    ports:
-      - "4000:4000"
-    depends_on:
-      - blog-llama-cpp
-    networks:
-      - blog-network
-    restart: always
-
   blog-postgres:
     image: pgvector/pgvector:pg18-trixie
     container_name: blog-postgres
@@ -91,7 +58,7 @@ services:
       start_interval: 10s
 
   blog-redis:
-    image: redis:8-apline
+    image: docker.io/library/redis:8-alpine
     container_name: blog-redis
     ports:
       - "6379:6379"
@@ -105,6 +72,39 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+
+  blog-llama-cpp:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: blog-llama-cpp
+    volumes:
+      - ./sentence_transformers_models:/models
+    command:
+      [
+        "-m",
+        "/models/ggml-org--embeddinggemma-300M-GGUF/embeddinggemma-300M-Q8_0.gguf",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8080",
+        "--embedding",
+      ]
+    networks:
+      - blog-network
+    restart: always
+
+  blog-litellm:
+    image: docker.litellm.ai/berriai/litellm:main-latest
+    container_name: blog-litellm
+    volumes:
+      - ./.config/litellm/config.yaml:/app/config.yaml
+    command: [ "--config", "/app/config.yaml", "--port", "4000", "--debug" ]
+    ports:
+      - "4000:4000"
+    depends_on:
+      - blog-llama-cpp
+    networks:
+      - blog-network
+    restart: always
 
   blog-prometheus:
     image: prom/prometheus:latest

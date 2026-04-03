@@ -19,12 +19,26 @@ spec:
         - name: model-storage
           persistentVolumeClaim:
             claimName: blog-model-pvc
+      initContainers:
+        - name: download-model
+          image: blog-model-downloader:latest
+          command:
+            - python
+            - /app/scripts/download-model.py
+          envFrom:
+            - configMapRef:
+                name: blog-config
+            - secretRef:
+                name: blog-secrets
+          volumeMounts:
+            - name: model-cache
+              mountPath: /models
       containers:
         - name: blog-llama-cpp
           image: ghcr.io/ggml-org/llama.cpp:server
           args:
             - "-m"
-            - "/models/embeddinggemma-300m-qat-Q8_0.gguf"
+            - "/models/ggml-org--embeddinggemma-300M-GGUF/embeddinggemma-300M-Q8_0.gguf"
             - "--host"
             - "0.0.0.0"
             - "--port"

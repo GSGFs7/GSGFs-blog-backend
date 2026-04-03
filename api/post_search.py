@@ -135,6 +135,7 @@ def _apply_relative_cutoff(
     """
     remove trailing part
     """
+
     if not candidates:
         return []
 
