@@ -19,7 +19,7 @@ steps:
     when:
       event: [ push, manual ]
     # SECURITY WARNING: privileged is enable, makesure you trust all for the code
-    privileged: true
+    # privileged: true
     volumes:
       - /dev/fuse:/dev/fuse
     environment:
