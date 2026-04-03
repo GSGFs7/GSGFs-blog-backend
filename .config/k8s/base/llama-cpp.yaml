@@ -31,7 +31,7 @@ spec:
             - secretRef:
                 name: blog-secrets
           volumeMounts:
-            - name: model-cache
+            - name: model-storage
               mountPath: /models
       containers:
         - name: blog-llama-cpp
