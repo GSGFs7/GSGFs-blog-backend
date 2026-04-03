@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class SyncExifTool:
     # class attribute
     _instance = None  # single instance
-    _lock = threading.RLock()  # thread safety, nested lock (in clean method), use RLock
+    _lock = threading.Lock()  # thread safety
 
     # instance attribute
     process: subprocess.Popen | None
@@ -58,43 +58,50 @@ class SyncExifTool:
         if self.process is None:
             raise RuntimeError("ExifTool process is not running.")
 
+    def _execute(self, *args: str):
+        """
+        execute a command without lock
+        """
+
+        self._ensure_process_running()
+
+        try:
+            self._counter += 1
+            exec_id = self._counter
+            sentinel = f"{{ready{exec_id}}}".encode("utf-8")
+
+            # Prepare arguments, each on a new line as per -@ - format
+            cmd_args = "\n".join(args) + f"\n-execute{exec_id}\n"
+            self.process.stdin.write(cmd_args.encode("utf-8"))
+            self.process.stdin.flush()
+
+            # Read from stdout until we see the sentinel
+            response = bytearray()
+            while True:
+                chunk = self.process.stdout.read(4096)
+                if not chunk:
+                    break
+                response.extend(chunk)
+                if sentinel in response:
+                    break
+
+            # Decode and strip the sentinel
+            return (
+                response.decode("utf-8", errors="ignore")
+                .replace(f"{{ready{exec_id}}}", "")
+                .strip()
+            )
+        except Exception as e:
+            self.terminate()  # Reset process on error
+            raise e
+
     def execute(self, *args: str) -> str:
         """
         Execute a custom ExifTool command.
         """
 
         with self._lock:
-            self._ensure_process_running()
-
-            try:
-                self._counter += 1
-                exec_id = self._counter
-                sentinel = f"{{ready{exec_id}}}".encode("utf-8")
-
-                # Prepare arguments, each on a new line as per -@ - format
-                cmd_args = "\n".join(args) + f"\n-execute{exec_id}\n"
-                self.process.stdin.write(cmd_args.encode("utf-8"))
-                self.process.stdin.flush()
-
-                # Read from stdout until we see the sentinel
-                response = bytearray()
-                while True:
-                    chunk = self.process.stdout.read(4096)
-                    if not chunk:
-                        break
-                    response.extend(chunk)
-                    if sentinel in response:
-                        break
-
-                # Decode and strip the sentinel
-                return (
-                    response.decode("utf-8", errors="ignore")
-                    .replace(f"{{ready{exec_id}}}", "")
-                    .strip()
-                )
-            except Exception as e:
-                self.terminate()  # Reset process on error
-                raise e
+            return self._execute(*args)
 
     def clean(self, data: IO[bytes], filename: str = None) -> BytesIO:
         """clean image EXIF data"""
@@ -124,7 +131,7 @@ class SyncExifTool:
                     shutil.copyfileobj(data, f)
 
                 # execute clean
-                response = self.execute("-all=", tmp_in, "-o", tmp_out)
+                response = self._execute("-all=", tmp_in, "-o", tmp_out)
 
                 if not os.path.exists(tmp_out):
                     raise RuntimeError(
@@ -175,6 +182,8 @@ class AsyncExifTool:
     _loop: asyncio.AbstractEventLoop | None
 
     def __new__(cls, *args, **kwargs):
+        # in classic ASGI python env
+        # this sync function will run in main thread (native atomicity)
         if cls._instance is None:
             cls._instance = super(AsyncExifTool, cls).__new__(cls)
             cls._instance.process = None

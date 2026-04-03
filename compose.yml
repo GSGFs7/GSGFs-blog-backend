@@ -91,7 +91,7 @@ services:
       start_interval: 10s
 
   blog-redis:
-    image: redis:8-apline
+    image: docker.io/library/redis:8-alpine
     container_name: blog-redis
     ports:
       - "6379:6379"
