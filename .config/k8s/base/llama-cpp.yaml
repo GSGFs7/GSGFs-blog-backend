@@ -24,7 +24,7 @@ spec:
           image: ghcr.io/ggml-org/llama.cpp:server
           args:
             - "-m"
-            - "/models/embeddinggemma-300m-qat-Q8_0.gguf"
+            - "/models/ggml-org--embeddinggemma-300M-GGUF/embeddinggemma-300M-Q8_0.gguf"
             - "--host"
             - "0.0.0.0"
             - "--port"
