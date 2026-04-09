@@ -2,6 +2,7 @@
 #  read: https://docs.python.org/3.14/library/typing.html#deprecated-aliases
 #  Zen of Python, line 13:
 #  > There should be one-- and preferably only one --obvious way to do it.
+
 from typing import Any, List, Type
 
 from django.db.models import QuerySet

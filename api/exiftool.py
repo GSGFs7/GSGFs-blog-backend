@@ -59,9 +59,7 @@ class SyncExifTool:
             raise RuntimeError("ExifTool process is not running.")
 
     def _execute(self, *args: str):
-        """
-        execute a command without lock
-        """
+        """execute a command without lock"""
 
         self._ensure_process_running()
 

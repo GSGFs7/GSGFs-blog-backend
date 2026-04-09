@@ -1,3 +1,5 @@
+# TODO: remove this to a new django app
+
 import asyncio
 import logging
 import os
@@ -147,9 +149,9 @@ class Image(BaseModel):
 
     # DRY principle
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
-    @staticmethod
+    @classmethod
     def create_from_file(
-        content: IO[bytes], filename: str
+        cls, content: IO[bytes], filename: str
     ) -> tuple["Image", ImageResource, bool]:
 
         # NOTE: There are some problem here
@@ -161,52 +163,52 @@ class Image(BaseModel):
 
         # 0. extract basic info and verify file integrity
         try:
-            width, height, mime_type = Image._process_image_verify(content)
+            width, height, mime_type = cls._process_image_verify(content)
         except Exception:
             raise ValidationError("Unrecognizable image file or file is corrupted")
 
         # TODO: some photography may needs keep some EXIF
         # 1. clean metadata
         try:
-            cleaned_io, size = Image._process_clean_metadata(content, filename)
+            cleaned_io, size = cls._process_clean_metadata(content, filename)
             del content
         except Exception as e:
             logger.warning(f"Could not process image: {e}")
             raise ValidationError("Could not clean image metadata")
 
         # 2. checksum
-        checksum = Image._calculate_file_checksum(cleaned_io)
+        checksum = cls._calculate_file_checksum(cleaned_io)
 
         # 3. write to db
         res_meta = ImageResource.ImageResourceMeta(width, height, size, mime_type)
-        return Image._create_from_file__write_db(
+        return cls._create_from_file__write_db(
             cleaned_io=cleaned_io,
             checksum=checksum,
             filename=filename,
             res_meta=res_meta,
         )
 
-    @staticmethod
+    @classmethod
     async def acreate_from_file(
-        content: IO[bytes], filename: str
+        cls, content: IO[bytes], filename: str
     ) -> tuple["Image", ImageResource, bool]:
         # 0. verify
-        width, height, mime_type = await Image._aprocess_image_verify(content)
+        width, height, mime_type = await cls._aprocess_image_verify(content)
 
         # 1. clean EXIF data
         try:
-            cleaned_io, size = await Image._aprocess_clean_metadata(content, filename)
+            cleaned_io, size = await cls._aprocess_clean_metadata(content, filename)
             del content
         except Exception as e:
             logger.warning(f"Could not process image (async): {e}")
             raise ValidationError("Could not clean image metadata")
 
         # 2. checksum
-        checksum = await Image._acalculate_file_checksum(cleaned_io)
+        checksum = await cls._acalculate_file_checksum(cleaned_io)
 
         # 3. write to db
         res_meta = ImageResource.ImageResourceMeta(width, height, size, mime_type)
-        return await Image._acreate_from_file__write_db(
+        return await cls._acreate_from_file__write_db(
             cleaned_io=cleaned_io,
             checksum=checksum,
             filename=filename,
@@ -226,9 +228,9 @@ class Image(BaseModel):
             img.verify()
             return width, height, mime_type
 
-    @staticmethod
-    async def _aprocess_image_verify(content: IO[bytes]) -> tuple[int, int, str]:
-        return await asyncio.to_thread(Image._process_image_verify, content)
+    @classmethod
+    async def _aprocess_image_verify(cls, content: IO[bytes]) -> tuple[int, int, str]:
+        return await asyncio.to_thread(cls._process_image_verify, content)
 
     # --- clean metadata ---
 
@@ -240,8 +242,10 @@ class Image(BaseModel):
         size = cleaned_io.getbuffer().nbytes
         return cleaned_io, size
 
-    @staticmethod
-    def _process_clean_metadata(content: IO[bytes], filename) -> tuple[BytesIO, int]:
+    @classmethod
+    def _process_clean_metadata(
+        cls, content: IO[bytes], filename
+    ) -> tuple[BytesIO, int]:
         content.seek(0)
         if SyncExifTool.is_available():
             # SyncExifTool, no PIL re-encoding, more efficient
@@ -249,18 +253,18 @@ class Image(BaseModel):
             size = cleaned_io.getbuffer().nbytes
             return cleaned_io, size
         # fallback
-        return Image._process_clean_metadata_fallback(content)
+        return cls._process_clean_metadata_fallback(content)
 
-    @staticmethod
+    @classmethod
     async def _aprocess_clean_metadata(
-        content: IO[bytes], filename: str
+        cls, content: IO[bytes], filename: str
     ) -> tuple[BytesIO, int]:
         content.seek(0)
         if await AsyncExifTool().is_available():
             cleaned_io = await AsyncExifTool().clean(content, filename)
             size = cleaned_io.getbuffer().nbytes
             return cleaned_io, size
-        return await asyncio.to_thread(Image._process_clean_metadata_fallback, content)
+        return await asyncio.to_thread(cls._process_clean_metadata_fallback, content)
 
     # --- checksum ---
 
@@ -274,9 +278,10 @@ class Image(BaseModel):
 
     # --- db ---
 
-    @staticmethod
+    @classmethod
     @transaction.atomic
     def _create_from_file__write_db(
+        cls,
         *,
         cleaned_io: BytesIO,
         checksum: str,
@@ -294,7 +299,7 @@ class Image(BaseModel):
                 "mime_type": res_meta.mime_type,
             },
         )
-        img = Image.objects.create(
+        img = cls.objects.create(
             resource=img_res,
             original_name=filename,
             # TODO: add user context here
@@ -304,15 +309,16 @@ class Image(BaseModel):
         )
         return img, img_res, created
 
-    @staticmethod
+    @classmethod
     async def _acreate_from_file__write_db(
+        cls,
         *,
         cleaned_io: BytesIO,
         checksum: str,
         filename: str,
         res_meta: ImageResource.ImageResourceMeta,
     ) -> tuple["Image", ImageResource, bool]:
-        return await sync_to_async(Image._create_from_file__write_db)(
+        return await sync_to_async(cls._create_from_file__write_db)(
             cleaned_io=cleaned_io,
             checksum=checksum,
             filename=filename,

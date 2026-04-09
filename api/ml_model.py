@@ -3,6 +3,8 @@ from functools import lru_cache
 from django.conf import settings
 from sentence_transformers import SentenceTransformer
 
+# TODO: LiteLLM
+
 
 # Repeated loading of the model is too time-consuming
 # We keep it always in memory
