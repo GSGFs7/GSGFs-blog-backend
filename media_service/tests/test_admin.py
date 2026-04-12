@@ -38,6 +38,7 @@ class ImageAdminTest(TestCase):
 
     def test_admin_upload_binds_current_user_as_uploader(self):
         response = self.client.post(
+            # the Django admin panel endpoint
             reverse("admin:media_service_image_add"),
             {
                 "file": self.generate_test_image(),

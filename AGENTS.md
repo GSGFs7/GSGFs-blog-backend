@@ -1,4 +1,4 @@
-# AGENTS.md - GSGFs-blog-backend
+# AGENTS.md
 
 ## Core Tech Stack
 

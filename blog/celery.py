@@ -12,7 +12,7 @@ def is_k8s_env() -> bool:
     return os.environ.get("K8S_ENV", "False").lower() in ("1", "true", "yes")
 
 
-# `celery -A blog worker -l info` needs this
+# needs this to run `celery -A blog worker -l info` command
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 
 app = Celery("blog")

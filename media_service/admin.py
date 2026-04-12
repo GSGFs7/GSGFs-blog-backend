@@ -3,6 +3,7 @@ from io import BytesIO
 from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from media_service.constants import IMAGE_ALLOWED_FORMAT
@@ -21,8 +22,10 @@ class ImageAdminForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # set the admin user as uploader
         self.uploader = kwargs.pop("uploader", None)
         super().__init__(*args, **kwargs)
+
         if self.instance.pk is None:
             self.fields["file"] = forms.ImageField(required=True, label="image")
         else:
@@ -76,6 +79,7 @@ class ImageAdmin(admin.ModelAdmin):
     form = ImageAdminForm
     readonly_fields = [
         "preview_large",
+        "copyable_url",
         "uploader_display",
         "resource_info",
         "mime_type",
@@ -109,9 +113,7 @@ class ImageAdmin(admin.ModelAdmin):
                 ),
                 (
                     "upload info",
-                    {
-                        "fields": ["uploader_display", "created_at", "updated_at"]
-                    },
+                    {"fields": ["uploader_display", "created_at", "updated_at"]},
                 ),
             ]
         else:
@@ -134,6 +136,7 @@ class ImageAdmin(admin.ModelAdmin):
                     {
                         "fields": [
                             "resource_info",
+                            "copyable_url",
                             "mime_type",
                             "size_formatted",
                             "width_px",
@@ -144,9 +147,7 @@ class ImageAdmin(admin.ModelAdmin):
                 ),
                 (
                     "upload info",
-                    {
-                        "fields": ["uploader_display", "created_at", "updated_at"]
-                    },
+                    {"fields": ["uploader_display", "created_at", "updated_at"]},
                 ),
             ]
 
@@ -166,6 +167,7 @@ class ImageAdmin(admin.ModelAdmin):
 
         class RequestBoundImageAdminForm(form_class):
             def __init__(self, *args, **inner_kwargs):
+                # put the admin into the form args
                 inner_kwargs["uploader"] = request.user
                 super().__init__(*args, **inner_kwargs)
 
@@ -173,6 +175,7 @@ class ImageAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if getattr(obj, "uploader", None) is None:
+            # if admin miss, set it again
             obj.uploader = request.user
         super().save_model(request, obj, form, change)
 
@@ -220,6 +223,23 @@ class ImageAdmin(admin.ModelAdmin):
         if obj.resource:
             return f"ID: {obj.resource.id}"
         return "no resource"
+
+    @admin.display(description="image url")
+    def copyable_url(self, obj: Image):
+        if not obj.pk or not obj.resource or not obj.resource.file:
+            return "-"
+        return format_html(
+            '<div class="copy-image-url-widget">'
+            "<code>{}</code> "
+            '<button type="button" class="button" data-copy-image-url="{}" '
+            'onclick="navigator.clipboard.writeText(this.dataset.copyImageUrl)"'
+            ">"
+            "Copy URL"
+            "</button>"
+            "</div>",
+            obj.url,
+            obj.url,
+        )
 
     @admin.display(description="uploader")
     def uploader_display(self, obj: Image):
