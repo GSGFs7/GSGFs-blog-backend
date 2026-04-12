@@ -247,14 +247,48 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 MEDIA_URL = "media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# img bed
+USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "yes", "1", "on")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
+S3_PUBLIC_DOMAIN = os.getenv("S3_PUBLIC_DOMAIN")
+
+
+def _storage_backend():
+    if not USE_S3:
+        return {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        }
+
+    if not all(
+        [S3_BUCKET_NAME, S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY]
+    ):
+        raise RuntimeError("S3 storage is not fully configured")
+
+    options = {
+        "bucket_name": S3_BUCKET_NAME,
+        "endpoint_url": S3_ENDPOINT_URL,
+        "access_key": S3_ACCESS_KEY_ID,
+        "secret_key": S3_SECRET_ACCESS_KEY,
+        "querystring_auth": False,  # public bucket
+    }
+    if S3_PUBLIC_DOMAIN:
+        options["custom_domain"] = S3_PUBLIC_DOMAIN
+
+    return {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": options,
+    }
+
+
 STORAGES = {
     # whitenoise的压缩和缓存支持
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
+    "default": _storage_backend(),
 }
 
 
@@ -310,11 +344,6 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Django-ninja
 NINJA_PAGINATION_CLASS = "api.pagination.Pagination"
-
-# img bed
-S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
-S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
-S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
 
 IMAGE_UPLOAD_MAX_SIZE = 20971520  # 20MiB
 
