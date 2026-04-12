@@ -37,9 +37,11 @@ kubectl create secret generic blog-secrets \
     --from-literal=FRONTEND_URL="${FRONTEND_URL}" \
     --from-literal=HUGGINGFACE_HUB_TOKEN="${HUGGINGFACE_HUB_TOKEN}" \
     --from-literal=RESEND_API_KEY="${RESEND_API_KEY}" \
-    --from-literal=S3_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID}" \
     --from-literal=S3_ENDPOINT_URL="${S3_ENDPOINT_URL}" \
+    --from-literal=S3_ACCESS_KEY_ID="${S3_ACCESS_KEY_ID}" \
     --from-literal=S3_SECRET_ACCESS_KEY="${S3_SECRET_ACCESS_KEY}" \
+    --from-literal=S3_BUCKET_NAME="${S3_BUCKET_NAME}" \
+    --from-literal=S3_PUBLIC_DOMAIN="${S3_PUBLIC_DOMAIN}" \
     --from-literal=SERVER_NAME="${SERVER_NAME}" \
     --from-literal=LITELLM_API_KEY="${LITELLM_API_KEY}" \
     --dry-run=client -o yaml | kubectl apply -f -

@@ -17,3 +17,5 @@ resources:
   - configmap.yaml
   - litellm.yaml
   - llama-cpp.yaml
+  # use `scripts/k3s-sync-secrets.sh` to generate k8s secret
+  # - secrets.yaml
