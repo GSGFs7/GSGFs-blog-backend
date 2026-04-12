@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     "django_celery_beat",  # Celery 定时任务
     "django_prometheus",  # 监控
     "api.apps.ApiConfig",
+    "media_service.apps.MediaServiceConfig",
 ]
 
 MIDDLEWARE = [

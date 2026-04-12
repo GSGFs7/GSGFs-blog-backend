@@ -1,5 +1,3 @@
-# TODO: remove this to a new django app
-
 import asyncio
 import logging
 import os
@@ -8,18 +6,28 @@ from io import BytesIO
 from typing import IO
 
 from asgiref.sync import sync_to_async
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import models, transaction
 from PIL import Image as PILImage
 
-from api.constants import IMAGE_ALLOWED_FORMAT
-from api.exiftool import AsyncExifTool, SyncExifTool
-from api.utils import calculate_blake3_hash
+from core.hash import calculate_blake3_hash
+from media_service.constants import IMAGE_ALLOWED_FORMAT
+from media_service.exiftool import AsyncExifTool, SyncExifTool
 
-from .base import BaseModel
+# Create your models here.
 
 logger = logging.getLogger(__name__)
+
+
+class BaseModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
 
 
 # image resource upload path. do not make any changes.
@@ -68,9 +76,7 @@ def image_webp_upload_path(instance: "ImageResource", filename: str) -> str:
 
 
 class ImageResource(BaseModel):
-    """
-    single physical file
-    """
+    """single physical file"""
 
     # checksum
     checksum = models.CharField(max_length=64, unique=True)
@@ -110,25 +116,26 @@ class ImageResource(BaseModel):
 
 # Create your models here.
 class Image(BaseModel):
-    """
-    logical image file
-    """
+    """logical image file"""
 
     resource = models.ForeignKey(
         ImageResource, on_delete=models.CASCADE, related_name="references"
     )
 
     # image file info
-    original_name = models.CharField(max_length=255, blank=True, null=False)
+    original_name = models.CharField(max_length=255, blank=True)
 
-    # who
-    uploaded_by = models.ForeignKey(
-        "api.Guest",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="images",
+    # uploader (use django contenttype framework)
+    # doc: https://docs.djangoproject.com/en/6.0/ref/contrib/contenttypes/
+    # why polymorphic?
+    #  an image may uploaded by guest who upload an image on the post comment
+    #  or, an admin who want to add an image on django admin panel
+    uploader_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
     )
+    uploader_id = models.PositiveIntegerField()
+    uploader = GenericForeignKey("uploader_type", "uploader_id")
 
     # Markdown meta info
     alt_text = models.CharField(max_length=255, blank=True)
@@ -151,7 +158,13 @@ class Image(BaseModel):
     # read: https://docs.djangoproject.com/en/6.0/misc/design-philosophies/#don-t-repeat-yourself-dry
     @classmethod
     def create_from_file(
-        cls, content: IO[bytes], filename: str
+        cls,
+        content: IO[bytes],
+        filename: str,
+        alt_text: str = "",
+        description: str = "",
+        uploader: models.Model = None,
+        metadata: dict | None = None,
     ) -> tuple["Image", ImageResource, bool]:
 
         # NOTE: There are some problem here
@@ -186,11 +199,21 @@ class Image(BaseModel):
             checksum=checksum,
             filename=filename,
             res_meta=res_meta,
+            alt_text=alt_text,
+            description=description,
+            uploader=uploader,
+            metadata=metadata,
         )
 
     @classmethod
     async def acreate_from_file(
-        cls, content: IO[bytes], filename: str
+        cls,
+        content: IO[bytes],
+        filename: str,
+        alt_text: str = "",
+        description: str = "",
+        uploader: models.Model = None,
+        metadata: dict | None = None,
     ) -> tuple["Image", ImageResource, bool]:
         # 0. verify
         width, height, mime_type = await cls._aprocess_image_verify(content)
@@ -213,6 +236,10 @@ class Image(BaseModel):
             checksum=checksum,
             filename=filename,
             res_meta=res_meta,
+            alt_text=alt_text,
+            description=description,
+            uploader=uploader,
+            metadata=metadata,
         )
 
     # --- verify ---
@@ -287,7 +314,16 @@ class Image(BaseModel):
         checksum: str,
         filename: str,
         res_meta: ImageResource.ImageResourceMeta,
+        alt_text: str,
+        description: str,
+        uploader: models.Model | None,
+        metadata: dict | None,
     ) -> tuple["Image", ImageResource, bool]:
+        if uploader is not None:
+            content_type = ContentType.objects.get_for_model(uploader)
+        else:
+            content_type = None
+
         cleaned_io.seek(0)
         img_res, created = ImageResource.objects.get_or_create(
             checksum=checksum,
@@ -302,10 +338,11 @@ class Image(BaseModel):
         img = cls.objects.create(
             resource=img_res,
             original_name=filename,
-            # TODO: add user context here
-            uploaded_by=None,
-            alt_text="",
-            description="",
+            uploader_type=content_type,
+            uploader_id=uploader.pk if uploader else None,
+            alt_text=alt_text,
+            description=description,
+            metadata=metadata or {},
         )
         return img, img_res, created
 
@@ -317,10 +354,18 @@ class Image(BaseModel):
         checksum: str,
         filename: str,
         res_meta: ImageResource.ImageResourceMeta,
+        alt_text: str,
+        description: str,
+        uploader: models.Model | None,
+        metadata: dict | None,
     ) -> tuple["Image", ImageResource, bool]:
         return await sync_to_async(cls._create_from_file__write_db)(
             cleaned_io=cleaned_io,
             checksum=checksum,
             filename=filename,
             res_meta=res_meta,
+            alt_text=alt_text,
+            description=description,
+            uploader=uploader,
+            metadata=metadata,
         )

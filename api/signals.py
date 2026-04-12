@@ -7,35 +7,11 @@ from django.utils import timezone
 
 from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
-from .models import Anime, Gal, ImageResource, Post
-from .tasks import generate_post_chunks_embedding_task, process_image
+from .models import Anime, Gal, Post
+from .tasks import generate_post_chunks_embedding_task
 from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
-
-
-@receiver(post_save, sender=ImageResource)
-def trigger_image_processing(sender, instance: ImageResource, created, **kwargs):
-    """
-    Trigger image processing (compression, format conversion) after upload.
-    """
-    if (
-        created
-        or not instance.webp_file
-        or not instance.avif_file
-        or not instance.thumbnail
-    ):
-        try:
-
-            def task():
-                process_image.delay(instance.pk)
-                logger.info(f"Triggered image processing for Image ID {instance.pk}")
-
-            transaction.on_commit(task)
-        except Exception as e:
-            logger.error(
-                f"Failed to trigger image processing for Image ID {instance.pk}: {e}"
-            )
 
 
 @receiver(pre_save, sender=Gal)

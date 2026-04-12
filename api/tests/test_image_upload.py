@@ -9,7 +9,9 @@ from django.test import Client, TestCase, override_settings
 from PIL import Image as PILImage
 
 from api.auth import TimeBaseAuth
-from api.models import Image
+from api.models import Guest
+from media_service.exiftool import SyncExifTool
+from media_service.models import Image
 
 # TODO: more test cases
 
@@ -18,6 +20,15 @@ from api.models import Image
 class ImageUploadTest(TestCase):
     def setUp(self):
         self.client = Client()
+        self.guest = Guest.objects.create(
+            name="tester",
+            unique_id="myself-1",
+            email="tester@gsgfs.moe",
+            password="secret",
+            provider=Guest.Providers.myself,
+            provider_id=1,
+            avatar="https://img.gsgfs.moe/img/f56806663519c6680691407d0d8fa7ed.png",
+        )
 
     @staticmethod
     def generate_test_image(name="test.png", size=(100, 100), color="red"):
@@ -29,14 +40,23 @@ class ImageUploadTest(TestCase):
 
     def test_upload(self):
         file = self.generate_test_image()
-        token = TimeBaseAuth.create_token(f"test_{time.time()}")
+        client_id = f"test_{time.time()}"
+        token = TimeBaseAuth.create_token(client_id)
         response = self.client.post(
             "/api/image/upload",
-            {"file": file},
+            {
+                "file": file,
+                "uploader_type": "api.Guest",
+                "uploader_id": self.guest.id,
+            },
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(Image.objects.filter(original_name="test.png").exists())
+        image = Image.objects.get(original_name="test.png")
+        self.assertEqual(image.uploader, self.guest)
+        self.assertEqual(image.metadata["uploaded_via"], client_id)
+        self.assertEqual(image.metadata["uploader_type"], "api.Guest")
+        self.assertEqual(image.metadata["uploader_id"], self.guest.id)
 
         hasher = blake3.blake3()
         for chunk in file.chunks():
@@ -49,6 +69,15 @@ class ImageUploadTest(TestCase):
 class ImageDeduplicationTest(TestCase):
     def setUp(self):
         self.client = Client()
+        self.guest = Guest.objects.create(
+            name="tester",
+            unique_id="myself-2",
+            email="tester2@example.com",
+            password="secret",
+            provider=Guest.Providers.myself,
+            provider_id=2,
+            avatar="https://example.com/avatar-2.png",
+        )
 
     @staticmethod
     def generate_test_image(name="test.png", size=(100, 100), color="red"):
@@ -66,7 +95,11 @@ class ImageDeduplicationTest(TestCase):
         # First upload
         response1 = self.client.post(
             "/api/image/upload",
-            {"file": file1},
+            {
+                "file": file1,
+                "uploader_type": "api.Guest",
+                "uploader_id": self.guest.id,
+            },
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
         self.assertEqual(response1.status_code, 201)
@@ -81,7 +114,11 @@ class ImageDeduplicationTest(TestCase):
 
         response2 = self.client.post(
             "/api/image/upload",
-            {"file": file2},
+            {
+                "file": file2,
+                "uploader_type": "api.Guest",
+                "uploader_id": self.guest.id,
+            },
             HTTP_AUTHORIZATION=f"Bearer {token2}",
         )
         self.assertEqual(response2.status_code, 201)
@@ -101,6 +138,15 @@ class ImageDeduplicationTest(TestCase):
 class WebImageUploadTest(TestCase):
     def setUp(self):
         self.client = Client()
+        self.guest = Guest.objects.create(
+            name="tester",
+            unique_id="myself-3",
+            email="tester3@example.com",
+            password="secret",
+            provider=Guest.Providers.myself,
+            provider_id=3,
+            avatar="https://example.com/avatar-3.png",
+        )
         self.image_src = (
             "https://img.gsgfs.moe/img/1b987606005d9dc83312b987bad854a6.jpg"
         )
@@ -113,14 +159,16 @@ class WebImageUploadTest(TestCase):
             self.skipTest(f"Failed to fetch image: {e}")
 
     def test_image_upload(self):
-        from api.exiftool import SyncExifTool
-
         # PNG???
         file = SimpleUploadedFile("test_image.png", self.image_content, "image/png")
         token = TimeBaseAuth.create_token(f"test_{time.time()}")
         response = self.client.post(
             "/api/image/upload",
-            {"file": file},
+            {
+                "file": file,
+                "uploader_type": "api.Guest",
+                "uploader_id": self.guest.id,
+            },
             HTTP_AUTHORIZATION=f"Bearer {token}",
         )
 

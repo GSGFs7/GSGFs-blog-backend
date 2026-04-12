@@ -15,26 +15,14 @@ ruff check --fix && ruff format .       # Lint and format
 
 ## Project Map
 
-- `api/models/`: Database models (with Vector/Search fields).
-- `api/routers/`: API endpoints and business logic (organized by resource).
-- `api/schemas/`: Pydantic/Ninja schemas for request/response validation.
-- `api/tasks.py`: Celery background tasks (embeddings, third-party sync).
-- `api/auth.py`: Custom authentication logic (`TimeBaseAuth`).
-- `api/tests/`: Comprehensive test suite and custom runner.
-- `blog/settings.py`: Global Django configuration and environment detection.
-- `scripts/`: Utility scripts for DB backup, model downloading, and deployment.
-
-## Project-Specific Conventions
-
-### API Development (api/routers/ & api/schemas/)
-
-- **Auth**: Authenticated endpoints use `auth=AsyncTimeBaseAuth()` (async endpoint).
-- **Responses**: Return as `(status_code, response_dict)`. Use Pydantic schemas for serialization.
-
-### Testing (api/tests/)
-
-- **Runner**: Uses custom `QuietTestRunner` (at `api/tests/runner.py`) to suppress noisy logs.
-- **Config**: Ensure `@override_settings(SECURE_SSL_REDIRECT=False)` is set for any API tests.
+- `api/`: Main application for business entities and HTTP API.
+- `api/models/`: Core models such as posts, pages, comments, categories, anime, galgame, guest.
+- `api/routers/`: Django-Ninja routers mounted under `/api/`.
+- `api/schemas/`: Request/response schemas for Ninja endpoints.
+- `api/tests/`: API and app-level tests, including upload/auth/rate-limit coverage.
+- `media_service/`: Dedicated media app for image resources, processing, admin, signals, and tests.
+- `blog/settings.py`: Global settings, environment detection, Redis/Celery/database configuration.
+- `scripts/`: Deployment, backup/restore, model download, embedding regeneration, and env/build helpers.
 
 ## Documentation & Comments
 

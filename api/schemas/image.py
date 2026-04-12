@@ -4,8 +4,10 @@ from ninja import Schema
 
 
 class ImageUploadRequestSchema(Schema):
-    # TODO
-    pass
+    uploader_type: str
+    uploader_id: int
+    alt_text: Optional[str] = None
+    description: Optional[str] = None
 
 
 class ImageUploadResponseSchema(Schema):
