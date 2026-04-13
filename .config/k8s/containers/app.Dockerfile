@@ -13,9 +13,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:/usr/bin/vendor_perl:$PATH"
 
 # Install system dependencies and create user
-RUN pacman-key --init && \
-    pacman-key --populate archlinux && \
-    pacman -Syu --noconfirm uv perl-image-exiftool git && \
+RUN pacman -Syu --noconfirm uv perl-image-exiftool git && \
+    rm -rf /etc/pacman.d/gnupg/ /var/cache/pacman/pkg/ && \
     useradd -m -u 1000 user && \
     chown user /app
 
