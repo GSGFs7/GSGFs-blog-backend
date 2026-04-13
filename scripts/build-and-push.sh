@@ -23,6 +23,7 @@ function setup_podman_cert() {
     echo "$REGISTRY_CA_CERT" > "$BASE_DIR/ca.crt"
     echo "$REGISTRY_CLIENT_CERT" > "$BASE_DIR/client.cert"
     echo "$REGISTRY_CLIENT_KEY" > "$BASE_DIR/client.key"
+    chmod 600 "$BASE_DIR/client.key"
 }
 
 function podman_login() {
