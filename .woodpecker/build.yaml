@@ -23,16 +23,21 @@ steps:
         from_secret: REGISTRY_DOMAIN
       REGISTRY_IP:
         from_secret: REGISTRY_IP
-      REGISTRY_USERNAME:
-        from_secret: REGISTRY_USERNAME
-      REGISTRY_PASSWORD:
-        from_secret: REGISTRY_PASSWORD
+      REGISTRY_CA_CERT:
+        from_secret: REGISTRY_CA_CERT
+      REGISTRY_CLIENT_CERT:
+        from_secret: REGISTRY_CLIENT_CERT
+      REGISTRY_CLIENT_KEY:
+        from_secret: REGISTRY_CLIENT_KEY
+      #REGISTRY_USERNAME:
+      #  from_secret: REGISTRY_USERNAME
+      #REGISTRY_PASSWORD:
+      #  from_secret: REGISTRY_PASSWORD
       HUGGINGFACE_HUB_TOKEN:
         from_secret: HUGGINGFACE_HUB_TOKEN
       STORAGE_DRIVERL: overlayfs
     commands:
-      - pacman -Sy --noconfirm
-      - pacman -S podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
+      - pacman -Sy podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
       # bypass CF CDN
       - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
       - ./scripts/build-and-push.sh

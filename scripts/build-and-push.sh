@@ -17,6 +17,14 @@ declare -a IMAGES=(
     ".config/k8s/containers/backup.Dockerfile::backup"
 )
 
+function setup_podman_cert() {
+    BASE_DIR="$HOME/.config/containers/certs.d/$REGISTRY_DOMAIN/"
+    mkdir -p "$BASE_DIR"
+    echo "$REGISTRY_CA_CERT" > "$BASE_DIR/ca.crt"
+    echo "$REGISTRY_CLIENT_CERT" > "$BASE_DIR/client.cert"
+    echo "$REGISTRY_CLIENT_KEY" > "$BASE_DIR/client.key"
+}
+
 function podman_login() {
     echo "Logging into $REGISTRY_DOMAIN..."
     podman login -u "$REGISTRY_USERNAME" -p "$REGISTRY_PASSWORD" "$REGISTRY_DOMAIN"
@@ -75,7 +83,8 @@ function push_images() {
 
 function main() {
     print_builder_info
-    podman_login
+    setup_podman_cert
+    #podman_login
     build_images
     push_images
 }
