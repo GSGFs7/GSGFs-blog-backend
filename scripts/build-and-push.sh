@@ -21,8 +21,8 @@ function setup_podman_cert() {
     BASE_DIR="$HOME/.config/containers/certs.d/$REGISTRY_DOMAIN/"
     mkdir -p "$BASE_DIR"
     echo "$REGISTRY_CA_CERT" > "$BASE_DIR/ca.crt"
-    echo "$REGISTRY_CLIENT_CERT" > "$REGISTRY_CLIENT_CERT/client.cert"
-    echo "$REGISTRY_CLIENT_KEY" > "$REGISTRY_CLIENT_KEY/client.key"
+    echo "$REGISTRY_CLIENT_CERT" > "$BASE_DIR/client.cert"
+    echo "$REGISTRY_CLIENT_KEY" > "$BASE_DIR/client.key"
 }
 
 function _test_podman_pulling() {
