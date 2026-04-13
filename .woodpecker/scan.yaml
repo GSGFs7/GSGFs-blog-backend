@@ -1,0 +1,16 @@
+when:
+  - event: [push, pull_request, manual]
+    branch: [main, dev]
+
+steps:
+  - name: scan
+    image: sonarsource/sonar-scanner-cli:latest
+    environment:
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+      SONAR_HOST_URL: https://sonarqube.gsgfs.sh
+    commands:
+      - sonar-scanner
+      - -Dsonar.projectKey=blog-back
+      - -Dsonar.sources=.
+      - -Dsonar.python.version=3.14
