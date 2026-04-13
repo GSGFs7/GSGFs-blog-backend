@@ -33,6 +33,7 @@ django.tar.zst
 # 开发环境
 .env
 .env.example
+.codex
 
 # ci/cd
 .github

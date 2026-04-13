@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 import time
@@ -7,6 +9,7 @@ from django.db import connection
 from django.db.utils import OperationalError
 
 # Set up Django environment
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "blog.settings")
 django.setup()
 
@@ -20,16 +23,18 @@ def check_db():
             with connection.cursor() as cursor:
                 # Execute basic query
                 cursor.execute("SELECT 1;")
-                # Check if pgvector extension is available and working
-                # This is important as the project heavily relies on it
+                # Check if pgvector extension is available
                 try:
                     cursor.execute("SELECT '[1,2,3]'::vector;")
-                except Exception as ve:
-                    print(f"Database connection OK, but pgvector check failed: {ve}")
-                    print(
-                        "Hint: Ensure 'CREATE EXTENSION IF NOT EXISTS vector;'"
-                        " has been run or the image includes it."
-                    )
+                except Exception:
+                    print("pgvector extension not found, attempting to create it...")
+                    try:
+                        cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+                        cursor.execute("SELECT '[1,2,3]'::vector;")
+                        print("Successfully created and verified pgvector extension.")
+                    except Exception as ve:
+                        print(f"Failed to create pgvector extension: {ve}")
+                        return False
 
             print("Successfully connected to the database and verified pgvector.")
             return True

@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     "django_celery_beat",  # Celery 定时任务
     "django_prometheus",  # 监控
     "api.apps.ApiConfig",
+    "media_service.apps.MediaServiceConfig",
 ]
 
 MIDDLEWARE = [
@@ -152,6 +153,8 @@ ASGI_APPLICATION = "blog.asgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# A problem that has been solved
+# Cascade failure causes database connection to be closed
 _database_engine = os.getenv("DATABASE_ENGINE", "postgresql")
 if not _database_engine:
     # Build-time or local development fallback
@@ -174,7 +177,7 @@ else:
                 else os.getenv("DATABASE_HOST", "127.0.0.1")
             ),
             "PORT": os.getenv("DATABASE_PORT", 5432),
-            "CONN_MAX_AGE": 60,
+            "CONN_MAX_AGE": 100,
         }
     }
 
@@ -244,14 +247,48 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 MEDIA_URL = "media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# img bed
+USE_S3 = os.getenv("USE_S3", "False").lower() in ("true", "yes", "1", "on")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
+S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
+S3_PUBLIC_DOMAIN = os.getenv("S3_PUBLIC_DOMAIN")
+
+
+def _storage_backend():
+    if not USE_S3:
+        return {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        }
+
+    if not all(
+        [S3_BUCKET_NAME, S3_ENDPOINT_URL, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY]
+    ):
+        raise RuntimeError("S3 storage is not fully configured")
+
+    options = {
+        "bucket_name": S3_BUCKET_NAME,
+        "endpoint_url": S3_ENDPOINT_URL,
+        "access_key": S3_ACCESS_KEY_ID,
+        "secret_key": S3_SECRET_ACCESS_KEY,
+        "querystring_auth": False,  # public bucket
+    }
+    if S3_PUBLIC_DOMAIN:
+        options["custom_domain"] = S3_PUBLIC_DOMAIN
+
+    return {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": options,
+    }
+
+
 STORAGES = {
     # whitenoise的压缩和缓存支持
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
+    "default": _storage_backend(),
 }
 
 
@@ -308,16 +345,18 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # Django-ninja
 NINJA_PAGINATION_CLASS = "api.pagination.Pagination"
 
-# img bed
-S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL")
-S3_ACCESS_KEY_ID = os.getenv("S3_ACCESS_KEY_ID")
-S3_SECRET_ACCESS_KEY = os.getenv("S3_SECRET_ACCESS_KEY")
-
 IMAGE_UPLOAD_MAX_SIZE = 20971520  # 20MiB
 
 # vector search
 MODEL_NAME = os.environ.get("MODEL_NAME")
 SENTENCE_TRANSFORMERS_HOME = os.environ.get("SENTENCE_TRANSFORMERS_HOME")
+
+# LiteLLM
+LITELLM_API_BASE = os.environ.get("LITELLM_API_BASE", "http://blog-litellm:4000/v1")
+LITELLM_API_KEY = os.environ.get("LITELLM_API_KEY", "sk-1234")
+LITELLM_MODEL_NAME = os.environ.get("LITELLM_MODEL_NAME", "embeddinggemma-300m")
+USE_LITELLM = os.environ.get("USE_LITELLM", "False").lower() in ("1", "true", "yes")
+
 # supervisord may use root permissions
 # PermissionError: [Errno 13] Permission denied: '/root/.cache/huggingface/token'
 if SENTENCE_TRANSFORMERS_HOME:

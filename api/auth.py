@@ -3,7 +3,7 @@ import base64
 import hashlib
 import logging
 import uuid
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from cryptography.fernet import Fernet
 from django.conf import settings
@@ -20,13 +20,13 @@ class TimeBaseAuth(HttpBearer, ABC):
     token format: client_id:nonce
     """
 
-    @staticmethod
-    def create_token(client_id: str, nonce: str = None) -> str:
+    @classmethod
+    def create_token(cls, client_id: str, nonce: str = None) -> str:
         if nonce is None:
             nonce = uuid.uuid4().hex
 
-        f = TimeBaseAuth.get_fernet()
-        payload = TimeBaseAuth.generate_token_format(client_id, nonce).encode("utf-8")
+        f = cls.get_fernet()
+        payload = cls.generate_token_format(client_id, nonce).encode("utf-8")
         return f.encrypt(payload).decode("utf-8")
 
     @staticmethod
@@ -45,6 +45,7 @@ class TimeBaseAuth(HttpBearer, ABC):
         key = hashlib.sha256(settings.API_KEY.encode()).digest()
         return Fernet(base64.urlsafe_b64encode(key))
 
+    @abstractmethod
     def authenticate(self, request, token):
         raise NotImplementedError("use AsyncTimeBaseAuth or SyncTimeBaseAuth instead")
 
@@ -57,10 +58,11 @@ class AsyncTimeBaseAuth(TimeBaseAuth):
     Asynchronous S2S authentication based on Fernet. TTL: 30s
     """
 
-    async def authenticate(self, request, token):
+    @classmethod
+    async def authenticate(cls, request, token):
         try:
             # fernet decrypt
-            f = self.get_fernet()
+            f = cls.get_fernet()
             decrypt_token_bytes: bytes = await asyncio.to_thread(
                 f.decrypt, token.encode(), ttl=30
             )
@@ -71,7 +73,7 @@ class AsyncTimeBaseAuth(TimeBaseAuth):
             if not client_id or not nonce:
                 return None
 
-            cache_key = self.generate_auth_token_cache_key(client_id, nonce)
+            cache_key = cls.generate_auth_token_cache_key(client_id, nonce)
             # TODO: Auth, cache storage DOS protection
             is_new_request = await cache.aadd(cache_key, 1, timeout=30)  # atomicity
             if not is_new_request:
@@ -90,16 +92,17 @@ class SyncTimeBaseAuth(TimeBaseAuth):
     Synchronous S2S authentication based on Fernet. TTL: 30s
     """
 
-    def authenticate(self, request, token):
+    @classmethod
+    def authenticate(cls, request, token):
         try:
-            f = self.get_fernet()
+            f = cls.get_fernet()
             decrypt_token = f.decrypt(token.encode(), ttl=30).decode("utf-8")
 
             client_id, nonce = decrypt_token.split(":", 1)
             if not client_id or not nonce:
                 return None
 
-            cache_key = self.generate_auth_token_cache_key(client_id, nonce)
+            cache_key = cls.generate_auth_token_cache_key(client_id, nonce)
             is_new_request = cache.add(cache_key, 1, timeout=30)
             if not is_new_request:
                 return None

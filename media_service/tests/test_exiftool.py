@@ -7,7 +7,7 @@ import requests
 from django.test import TestCase
 from PIL import Image as PILImage
 
-from api.exiftool import AsyncExifTool, SyncExifTool
+from media_service.exiftool import AsyncExifTool, SyncExifTool
 
 # About:
 #   Everson Museum of Art, Syracuse, New York, 1969. Photo by Carol M. Highsmith.

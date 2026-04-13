@@ -1,8 +1,11 @@
+# TODO: labels
+
 when:
   - event: [ push, pull_request, manual ]
     branch:
       - main
       - woodpecker-test
+      - dev
 
 services:
   db:
@@ -34,11 +37,10 @@ steps:
         from_secret: HUGGINGFACE_HUB_TOKEN
       API_KEY: woodpecker_test_api_key
     commands:
-      #- pacman -Sy --noconfirm
-      #- pacman -S uv git python perl-image-exiftool --noconfirm
+      - pacman -Sy --noconfirm
+      - pacman -S uv git python perl-image-exiftool --noconfirm
       # fix exiftool path
-      #- ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
-      #- uv sync
-      #- uv run scripts/download-model.py
-      #- uv run manage.py test -v 2
-      - echo "hello world!!!"
+      - ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
+      - uv sync
+      - uv run scripts/download-model.py
+      - uv run manage.py test -v 2

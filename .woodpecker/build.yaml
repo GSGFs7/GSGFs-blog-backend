@@ -8,7 +8,7 @@ labels:
   #  WOODPECKER_AGENT_LABELS: type=builder
 
 when:
-  - event: [ push, pull_request, manual ]
+  - event: [ push, manual ]
     branch:
       - main
       - woodpecker-test
@@ -16,12 +16,8 @@ when:
 steps:
   - name: build
     image: docker.io/library/archlinux:latest
-    when:
-      event: [ push, manual ]
     # SECURITY WARNING: privileged is enable, makesure you trust all for the code
-    # privileged: true
-    volumes:
-      - /dev/fuse:/dev/fuse
+    privileged: true
     environment:
       REGISTRY_DOMAIN:
         from_secret: REGISTRY_DOMAIN
@@ -29,21 +25,14 @@ steps:
         from_secret: REGISTRY_IP
       REGISTRY_USERNAME:
         from_secret: REGISTRY_USERNAME
-      HUGGINGFACE_HUB_TOKEN:
-        from_secret: HUGGINGFACE_HUB_TOKEN
       REGISTRY_PASSWORD:
         from_secret: REGISTRY_PASSWORD
+      HUGGINGFACE_HUB_TOKEN:
+        from_secret: HUGGINGFACE_HUB_TOKEN
       STORAGE_DRIVERL: overlayfs
-      BUILDAH_ISOLATION: chroot
     commands:
       - pacman -Sy --noconfirm
       - pacman -S podman fuse-overlayfs --noconfirm  # overlayfs storage driver in user space
       # bypass CF CDN
-      #- echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
-      #- ./scripts/build-and-push.sh
-      - echo "ciallo!"
-      - podman info
-      - |
-        echo "from busybox
-        run echo hello world" > Dockerfile
-      - podman build .
+      - echo "$REGISTRY_IP $REGISTRY_DOMAIN" >> /etc/hosts
+      - ./scripts/build-and-push.sh

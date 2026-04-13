@@ -27,7 +27,7 @@ RUN uv sync --frozen --no-install-project --no-cache
 
 # Copy project files and collect static
 COPY --chown=user:user . .
-#RUN uv run manage.py collectstatic --noinput
+RUN uv run manage.py collectstatic --noinput
 
 # --- Target: Django ---
 FROM base AS django

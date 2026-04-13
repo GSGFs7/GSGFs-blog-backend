@@ -10,6 +10,7 @@ __pycache__
 .ssh/
 hf_token.txt
 .config/k8s/secret.yaml
+keys/
 
 backups/
 *.dump
@@ -23,3 +24,4 @@ staticfiles/
 media/
 testapp/
 *.http
+.codex
