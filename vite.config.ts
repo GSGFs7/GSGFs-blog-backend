@@ -8,10 +8,10 @@ export default defineConfig({
     outDir: "web/static/dist",
     assetsDir: "",
     manifest: "manifest.json",
-    rollupOptions: {
+    rolldownOptions: {
       input: {
         main: "web/typescript/index.tsx",
-        styles: "web/typescript/input.css",
+        styles: "web/typescript/globals.css",
       },
     },
   },
