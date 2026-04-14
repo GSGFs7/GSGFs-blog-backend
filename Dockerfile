@@ -21,13 +21,14 @@ ENV SENTENCE_TRANSFORMERS_HOME=${SENTENCE_TRANSFORMERS_HOME}
 # Install system dependencies
 RUN pacman-key --init && \
     pacman-key --populate archlinux && \
-    pacman -Syu --noconfirm uv perl-image-exiftool git supervisor && \
+    pacman -Syu --noconfirm uv perl-image-exiftool git supervisor nodejs pnpm && \
     useradd -m -u 1000 user && \
     chown user /app
 
-# Pre-install Python dependencies
-COPY --chown=user:user pyproject.toml uv.lock /app/
-RUN uv sync --frozen --no-install-project --no-cache
+# Pre-install Python and frontend dependencies
+COPY --chown=user:user pyproject.toml uv.lock package.json pnpm-lock.yaml /app/
+RUN uv sync --frozen --no-install-project --no-cache && \
+    pnpm install --frozen-lockfile
 
 # Copy download script first to enable early model download (better caching)
 COPY --chown=user:user scripts/download-model.py /app/scripts/
@@ -49,7 +50,8 @@ COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf
 RUN mkdir -p /var/log/supervisor && \
     chown -R user /var/log/supervisor
 
-# collect static
+# build frontend and collect static
+RUN pnpm run build
 RUN uv run manage.py collectstatic --noinput
 
 EXPOSE 8000

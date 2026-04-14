@@ -1,0 +1,19 @@
+# lib
+node_modules/
+.venv/
+
+# git
+.git/
+
+# config
+.config/
+.github/
+.woodpecker/
+
+# django html template
+*.html
+
+# generated file
+staticfiles/
+web/static
+pnpm-lock.yaml

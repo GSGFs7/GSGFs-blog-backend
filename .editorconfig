@@ -12,11 +12,11 @@ tab_width = 4
 [*.html]
 indent_size = 2
 
-[*.yml]
-indent_size = 2
-
-[*.yaml]
+[{*.yml,*.yaml}]
 indent_size = 2
 
 [*.json]
+indent_size = 2
+
+[{*.tsx,*.ts}]
 indent_size = 2

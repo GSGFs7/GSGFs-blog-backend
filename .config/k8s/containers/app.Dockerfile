@@ -13,20 +13,22 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:/usr/bin/vendor_perl:$PATH"
 
 # Install system dependencies and create user
-RUN pacman -Syu --noconfirm uv perl-image-exiftool git && \
+RUN pacman -Syu --noconfirm uv perl-image-exiftool git nodejs pnpm && \
     rm -rf /etc/pacman.d/gnupg/ /var/cache/pacman/pkg/ && \
     useradd -m -u 1000 user && \
     chown user /app
 
 USER user
 
-# Pre-install Python dependencies
-COPY --chown=user:user pyproject.toml uv.lock /app/
-RUN uv sync --frozen --no-install-project --no-cache
+# Pre-install Python and frontend dependencies
+COPY --chown=user:user pyproject.toml uv.lock package.json pnpm-lock.yaml /app/
+RUN uv sync --frozen --no-install-project --no-cache && \
+    pnpm install --frozen-lockfile
 
-# Copy project files and collect static
+# Copy project files, build frontend, and collect static
 COPY --chown=user:user . .
-RUN uv run manage.py collectstatic --noinput
+RUN pnpm run build && \
+    uv run manage.py collectstatic --noinput
 
 # --- Target: Django ---
 FROM base AS django

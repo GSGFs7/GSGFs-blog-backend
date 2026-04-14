@@ -28,6 +28,7 @@ from api.urls import api
 urlpatterns = [
     path("not-admin/", admin.site.urls),
     path("api/", api.urls),
+    path("", include("web.urls")),
     path("prometheus/", include(prometheus_url)),
     path("", include(tf_urls)),
 ] + debug_toolbar_urls()

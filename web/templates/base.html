@@ -1,0 +1,22 @@
+{% load static %}
+{% load django_htmx %}
+{% load vite %}
+<!DOCTYPE html>
+<html lang="zh-Hans" class="dark scroll-p-24">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="{% vite_asset 'web/typescript/input.css' %}">
+  <title>{% block title %}{% endblock %} - GSGFs's blog</title>
+  {% htmx_script %}
+  {% vite_hmr %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="" hx-boost="true">
+{% block content %}{% endblock %}
+
+<div id="solid-root"></div>
+<script type="module" src="{% vite_asset 'web/typescript/index.tsx' %}"></script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

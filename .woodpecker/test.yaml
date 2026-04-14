@@ -38,9 +38,11 @@ steps:
       API_KEY: woodpecker_test_api_key
     commands:
       - pacman -Sy --noconfirm
-      - pacman -S uv git python perl-image-exiftool --noconfirm
+      - pacman -S uv git python perl-image-exiftool nodejs pnpm --noconfirm
       # fix exiftool path
       - ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
       - uv sync
+      - pnpm install --frozen-lockfile
+      - pnpm run build
       - uv run scripts/download-model.py
       - uv run manage.py test -v 2

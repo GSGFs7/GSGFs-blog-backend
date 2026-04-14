@@ -13,6 +13,7 @@ dependencies = [
     "django>=5.2.9",
     "django-celery-beat>=2.8.1",
     "django-debug-toolbar>=6.1.0",
+    "django-htmx>=1.27.0",
     "django-ninja>=1.4.5",
     "django-prometheus>=2.4.0",
     "django-redis>=6.0.0",
@@ -21,8 +22,8 @@ dependencies = [
     "filelock>=3.25.2",
     "flower>=2.0.1",
     "gunicorn>=23.0.0",
-    # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
     "httpx>=0.28.1",
+    # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
     "jieba @ git+https://github.com/GSGFs7/jieba.git@master",
     "pgvector>=0.4.1",
     "phonenumbers>=9.0.12",

@@ -108,13 +108,16 @@ INSTALLED_APPS = [
     "debug_toolbar",  # debug包
     "django_celery_beat",  # Celery 定时任务
     "django_prometheus",  # 监控
+    "django_htmx",
     "api.apps.ApiConfig",
     "media_service.apps.MediaServiceConfig",
+    "web.apps.WebConfig",
 ]
 
 MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # 提供静态文件
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -122,8 +125,8 @@ MIDDLEWARE = [
     "django_otp.middleware.OTPMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # 提供静态文件
     "debug_toolbar.middleware.DebugToolbarMiddleware",  # 一个debug包的中间件
+    "django_htmx.middleware.HtmxMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
@@ -147,7 +150,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "blog.wsgi.application"
 ASGI_APPLICATION = "blog.asgi.application"
-
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -223,7 +225,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -235,11 +236,10 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # python manage.py collectstatic --noinput 收集静态文件
 
@@ -283,6 +283,8 @@ def _storage_backend():
     }
 
 
+IMAGE_UPLOAD_MAX_SIZE = 20971520  # 20MiB
+
 STORAGES = {
     # whitenoise的压缩和缓存支持
     "staticfiles": {
@@ -290,7 +292,6 @@ STORAGES = {
     },
     "default": _storage_backend(),
 }
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -344,8 +345,6 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Django-ninja
 NINJA_PAGINATION_CLASS = "api.pagination.Pagination"
-
-IMAGE_UPLOAD_MAX_SIZE = 20971520  # 20MiB
 
 # vector search
 MODEL_NAME = os.environ.get("MODEL_NAME")
