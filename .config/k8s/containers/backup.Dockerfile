@@ -4,7 +4,9 @@
 FROM archlinux:latest
 
 # Install PostgreSQL client
-RUN pacman -Syu --noconfirm \
+RUN pacman-key --init \
+    && pacman-key --populate archlinux \
+    && pacman -Syu --noconfirm \
     postgresql \
     python-pip \
     && pacman -Scc --noconfirm
