@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: "web/typescript/index.tsx",
         styles: "web/typescript/globals.css",
+        loadTheme: "web/typescript/load-theme.ts",
       },
     },
   },
