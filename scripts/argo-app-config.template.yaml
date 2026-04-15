@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/GSGFs7/GSGFs-blog-backend.git
+    repoURL: https://github.com/GSGFs7/blog.git
     targetRevision: HEAD
     path: .config/k8s/overlays/prod
     kustomize:

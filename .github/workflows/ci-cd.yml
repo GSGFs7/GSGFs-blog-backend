@@ -207,7 +207,7 @@ jobs:
       - name: Mirror to Codeberg
         uses: pixta-dev/repository-mirroring-action@v1
         with:
-          target_repo_url: git@codeberg.org:GSGFs7/GSGFs-blog-backend.git
+          target_repo_url: git@codeberg.org:GSGFs7/blog.git
           ssh_private_key: ${{ secrets.CODEBERG_SSH_PRIVATE_KEY }}
 
   deploy:

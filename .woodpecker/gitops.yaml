@@ -24,7 +24,7 @@ steps:
       # set git config
       - git config --global user.email "woodpecker-bot@local"
       - git config --global user.name "Woodpecker CI"
-      - git remote set-url origin git@codeberg.org:GSGFs7/GSGFs-blog-backend.git
+      - git remote set-url origin git@codeberg.org:GSGFs7/blog.git
       # update kustomize
       - cd .config/k8s/overlays/prod
       - kustomize edit set image blog-django=$REGISTRY_DOMAIN/blog-django:${CI_COMMIT_SHA}
