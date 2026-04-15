@@ -2,7 +2,7 @@
 
 ## Core Tech Stack
 
-Asynchronous Django + Django-Ninja + pgvector + Celery + uv/ruff.
+Asynchronous Django + Django-Ninja + pgvector + Celery + HTMX + solid.js + uv/ruff.
 
 ## CLI Workflow
 
@@ -22,6 +22,7 @@ ruff check --fix && ruff format .       # Lint and format
 - `api/tests/`: API and app-level tests, including upload/auth/rate-limit coverage.
 - `media_service/`: Dedicated media app for image resources, processing, admin, signals, and tests.
 - `blog/settings.py`: Global settings, environment detection, Redis/Celery/database configuration.
+- `web/`: Frontend, powered by django template & HTMX & solid.js
 - `scripts/`: Deployment, backup/restore, model download, embedding regeneration, and env/build helpers.
 
 ## Documentation & Comments
