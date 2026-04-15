@@ -1,1 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource/maple-mono/600.css";
+@import "lxgw-wenkai-screen-web/lxgwwenkaiscreen/result.min.css";
+
+@theme {
+    --font-sans: "LXGW WenKai Screen", sans-serif;
+    --font-mono: "Maple Mono", monospace;
+}
