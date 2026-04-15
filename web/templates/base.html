@@ -1,20 +1,30 @@
 {% load static %}
 {% load django_htmx %}
 {% load vite %}
+
 <!DOCTYPE html>
 <html lang="zh-Hans" class="dark scroll-p-24">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="{% vite_asset 'web/typescript/input.css' %}">
-  <title>{% block title %}{% endblock %} - GSGFs's blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script type="module" src="{% vite_asset 'web/typescript/load-theme.ts' %}"></script>
+  <link rel="stylesheet" href="{% vite_asset 'web/typescript/globals.css' %}">
+  <title>{% block title %}{% endblock %} - {{ SITE_TITLE }}</title>
   {% htmx_script %}
   {% vite_hmr %}
   {% block extra_head %}{% endblock %}
 </head>
-<body class="" hx-boost="true">
-{% block content %}{% endblock %}
+<body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300" hx-boost="true">
+<header class="fixed top-0 w-full z-50 flex justify-center">
+  {% include "navbar.html" %}
+</header>
 
-<div id="solid-root"></div>
+<div class="relative flex min-h-screen w-full flex-col items-center">
+  <main class="container mx-auto max-w-7xl grow pt-24">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
 <script type="module" src="{% vite_asset 'web/typescript/index.tsx' %}"></script>
 
 {% block extra_js %}{% endblock %}
