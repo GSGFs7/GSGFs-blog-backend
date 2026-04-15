@@ -1,20 +1,12 @@
+labels:
+  scan: *
+
 when:
   - event: [ push, pull_request, manual ]
     branch: [ main ]
 
 steps:
-  - name: set-limit
-    image: docker.io/library/archlinux:latest
-    privileged: true
-    commands:
-      - sysctl -w vm.max_map_count=524288
-      - sysctl -w fs.file-max=131072
-      - ulimit -n 131072
-      - ulimit -u 8192
-
   - name: scan
-    depends_on:
-      - set-limit
     image: sonarsource/sonar-scanner-cli:latest
     environment:
       SONAR_TOKEN:
