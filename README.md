@@ -1,6 +1,6 @@
 # GSGFs-blog
 
-[![status-badge](https://woodpecker.gsgfs.sh/api/badges/1/status.svg)](https://woodpecker.gsgfs.sh/repos/1)
+[![status-badge](https://woodpecker.gsgfs.sh/api/badges/1/status.svg)](https://woodpecker.gsgfs.sh/repos/1) [![Quality Gate Status](https://sonarqube.gsgfs.sh/api/project_badges/measure?project=blog&metric=alert_status&token=sqb_0d1b1441c744c4776436ce237e351a089110a9fa)](https://sonarqube.gsgfs.sh/dashboard?id=blog) [![Maintainability Rating](https://sonarqube.gsgfs.sh/api/project_badges/measure?project=blog&metric=software_quality_maintainability_rating&token=sqb_0d1b1441c744c4776436ce237e351a089110a9fa)](https://sonarqube.gsgfs.sh/dashboard?id=blog) [![Technical Debt](https://sonarqube.gsgfs.sh/api/project_badges/measure?project=blog&metric=software_quality_maintainability_remediation_effort&token=sqb_0d1b1441c744c4776436ce237e351a089110a9fa)](https://sonarqube.gsgfs.sh/dashboard?id=blog)
 
 使用 `Django` 构建的个人网站. (新前端正在重构中)
 
