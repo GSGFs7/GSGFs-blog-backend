@@ -196,7 +196,7 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     needs: [ update-manifests ]
-    if: always() && (needs.update-manifests.result == 'success' || needs.update-manifests.result == 'skipped') # && (needs.test.result == 'success')
+    if: false # always() && (needs.update-manifests.result == 'success' || needs.update-manifests.result == 'skipped') # && (needs.test.result == 'success')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
