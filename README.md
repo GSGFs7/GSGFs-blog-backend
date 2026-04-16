@@ -58,8 +58,9 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 8. 运行开发服务器
 
    ```bash
+   ./manage.py vite # 或者 pnpm run dev
+   # 新开一个终端, 运行:
    ./manage.py runserver
-   pnpm run dev
    ```
 
 ## 可选依赖
