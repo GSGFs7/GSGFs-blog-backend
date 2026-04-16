@@ -2,6 +2,7 @@ def site_meta(request):
     """put site meta info here"""
     return {
         "SITE_TITLE": "GSGFs's blog",
+        "SITE_AUTHOR": "GSGFs",
         "SITE_NAV_ITEM": [
             {
                 "label": "Home",

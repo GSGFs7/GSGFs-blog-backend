@@ -1,13 +1,15 @@
-<nav class="sticky top-0 z-50 w-full">
+<nav class="sticky top-0 z-50 w-full" hx-boost="true">
   <div
     class="mx-auto h-14 max-w-6xl border-b dark:border-gray-400/50 dark:bg-[#1c1b22a2] backdrop-blur-sm sm:rounded-b-3xl sm:border-x"
   >
     <div class="flex h-full items-center justify-between px-4">
       {# Logo #}
       <a class="flex items-center gap-3 cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             class="lucide lucide-lollipop-icon lucide-lollipop relative -translate-y-[0.15rem] text-2xl">
+        <svg
+          xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="lucide lucide-lollipop-icon lucide-lollipop relative -translate-y-[0.15rem] text-2xl"
+        >
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.3-4.3"></path>
           <path d="M11 11a2 2 0 0 0 4 0 4 4 0 0 0-8 0 6 6 0 0 0 12 0"></path>
@@ -16,8 +18,8 @@
       </a>
 
       {# Item #}
-      <div class="absolute left-1/2 -translate-x-1/2 hidden w-full sm:block font-bold">
-        <ul class="relative ml-2 hidden justify-center gap-4 opacity-90 sm:flex sm:items-center">
+      <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 hidden w-full md:block font-bold">
+        <ul class="pointer-events-auto relative ml-2 hidden justify-center gap-4 opacity-90 sm:flex sm:items-center">
           {% for item in SITE_NAV_ITEM %}
             <li class="relative z-10 rounded-lg px-2 py-1 transition-all">
               <a href="{{ item.href }}"
@@ -31,10 +33,16 @@
       </div>
 
       {# Avatar #}
-      <div class="hidden items-center justify-end text-xl sm:flex">
-        <a class="cursor-pointer">
+      <div class="relative z-20 hidden items-center justify-end text-xl sm:flex">
+        <a class="block cursor-pointer" href="/user">
           {# TODO #}
-          <img alt="xxx's avatar" size="40" src="xxx">
+          <img
+            alt="user's avatar"
+            width="40"
+            height="40"
+            class="rounded-full"
+            src="https://img.gsgfs.moe/img/f56806663519c6680691407d0d8fa7ed.png"
+          >
         </a>
       </div>
 
