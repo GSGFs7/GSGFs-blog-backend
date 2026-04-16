@@ -13,7 +13,6 @@ dependencies = [
     "django>=5.2.9",
     "django-celery-beat>=2.8.1",
     "django-debug-toolbar>=6.1.0",
-    "django-htmx>=1.27.0",
     "django-ninja>=1.4.5",
     "django-prometheus>=2.4.0",
     "django-redis>=6.0.0",

@@ -14,6 +14,7 @@ export default defineConfig(({ command }) => ({
         main: "web/typescript/index.tsx",
         styles: "web/typescript/globals.css",
         loadTheme: "web/typescript/load-theme.ts",
+        htmx: "web/typescript/htmx.ts",
       },
     },
   },

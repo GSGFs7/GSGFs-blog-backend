@@ -108,7 +108,6 @@ INSTALLED_APPS = [
     "debug_toolbar",  # debug包
     "django_celery_beat",  # Celery 定时任务
     "django_prometheus",  # 监控
-    "django_htmx",
     "api.apps.ApiConfig",
     "media_service.apps.MediaServiceConfig",
     "web.apps.WebConfig",
@@ -126,7 +125,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",  # 一个debug包的中间件
-    "django_htmx.middleware.HtmxMiddleware",
+    "web.middleware.HtmxMiddleware",
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 

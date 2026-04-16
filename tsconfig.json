@@ -3,7 +3,7 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "Bundler",
-    "outDir": "web/static/js",
+    "outDir": "web/static/dist",
     "rootDir": "web/typescript",
     "strict": true,
     "sourceMap": true,
