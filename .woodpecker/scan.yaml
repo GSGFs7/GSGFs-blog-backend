@@ -1,5 +1,5 @@
 labels:
-  scaner: *
+  scaner: "*"
 
 when:
   - event: [ push, pull_request, manual ]

@@ -48,7 +48,6 @@ class Command(BaseCommand):
                 pass
 
     def handle(self, *args, **options):
-        # 使用 .get() 避免在 call_command 或测试中出现 KeyError
         vite_args = options.get("vite_args") or ["dev"]
         try:
             command = [*_try_npm_tools(), *vite_args]
