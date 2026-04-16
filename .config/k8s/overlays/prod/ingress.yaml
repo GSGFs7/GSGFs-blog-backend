@@ -8,6 +8,8 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     # enable TLS encryption
     traefik.ingress.kubernetes.io/router.tls: "true"
+    # keep the catch-all route below the protected /prometheus router
+    traefik.ingress.kubernetes.io/router.priority: "1"
     # rate limiting
     traefik.ingress.kubernetes.io/ratelimit.average: "1000"
     # certificate management
@@ -47,6 +49,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "100"
     traefik.ingress.kubernetes.io/router.middlewares: blog-prometheus-whitelist@kubernetescrd
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
