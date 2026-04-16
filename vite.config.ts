@@ -2,7 +2,8 @@ import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/static/dist/" : "/",
   plugins: [tailwindcss(), solidPlugin()],
   build: {
     outDir: "web/static/dist",
@@ -26,4 +27,4 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./web/typescript/test/setup.ts"],
   },
-});
+}));

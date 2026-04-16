@@ -9,18 +9,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script type="module" src="{% vite_asset 'web/typescript/load-theme.ts' %}"></script>
   <link rel="stylesheet" href="{% vite_asset 'web/typescript/globals.css' %}">
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   <title>{% block title %}{% endblock %} - {{ SITE_TITLE }}</title>
   {% htmx_script %}
   {% vite_hmr %}
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300" hx-boost="true">
+<body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300">
 <header class="fixed top-0 w-full z-50 flex justify-center">
   {% include "navbar.html" %}
 </header>
 
 <div class="relative flex min-h-screen w-full flex-col items-center">
-  <main class="container mx-auto max-w-7xl grow pt-24">
+  <main class="container mx-auto max-w-7xl grow pt-24" hx-boost="true">
     {% block content %}{% endblock %}
   </main>
 </div>
