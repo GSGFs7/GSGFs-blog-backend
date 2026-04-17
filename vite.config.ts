@@ -48,6 +48,10 @@ export default defineConfig(({ command, isSsrBuild }) => {
         input: rolldownInputs,
       },
     },
+    ssr: {
+      // put the dependencies to the bundle
+      noExternal: true,
+    },
     server: {
       port: 5173,
       strictPort: true,
