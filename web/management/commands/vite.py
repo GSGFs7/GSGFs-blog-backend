@@ -55,7 +55,9 @@ class Command(BaseCommand):
             raise CommandError(str(exc))
 
         if options.get("verbosity", 1) >= 1:
-            self.stdout.write(self.style.NOTICE(f"Starting Vite with: {' '.join(command)}"))
+            self.stdout.write(
+                self.style.NOTICE(f"Starting Vite with: {' '.join(command)}")
+            )
 
         try:
             subprocess.run(command, cwd=settings.BASE_DIR, check=True)

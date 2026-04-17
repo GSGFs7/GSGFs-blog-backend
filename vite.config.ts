@@ -1,10 +1,25 @@
 import tailwindcss from "@tailwindcss/vite";
 import solidPlugin from "vite-plugin-solid";
 import { defineConfig } from "vitest/config";
+import { HmrContext } from "vite";
+
+function djangoTemplateReload() {
+  return {
+    name: "django-template-reload",
+    handleHotUpdate: (ctx: HmrContext) => {
+      // merge this?
+      const templateDirs = ["web/templates/", "templates/"];
+      if (ctx.file.endsWith(".html") && templateDirs.some((dir) => ctx.file.includes(dir))) {
+        ctx.server.ws.send({ type: "full-reload" });
+        return [];
+      }
+    },
+  };
+}
 
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/static/dist/" : "/",
-  plugins: [tailwindcss(), solidPlugin()],
+  plugins: [tailwindcss(), solidPlugin(), djangoTemplateReload()],
   build: {
     outDir: "web/static/dist",
     assetsDir: "",
