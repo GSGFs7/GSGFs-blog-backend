@@ -1,15 +1,11 @@
 // similar to Astro.js, a jsx component is an JS island
 
-import type { Component as SolidComponent } from "solid-js";
-import { render } from "solid-js/web";
+import { hydrate, render } from "solid-js/web";
+import type { ComponentProps, ComponentRegistry } from "../types";
 
-// use dynamic import. avoid js size too large
-const COMPONENTS: Record<string, () => Promise<SolidComponent<ComponentProps>>> = {
-  Counter: async () => (await import("../islands/Counter")).default,
-} as const;
+let registry: ComponentRegistry = {};
 
-type ComponentName = keyof typeof COMPONENTS;
-type ComponentProps = Record<string, unknown>;
+type ComponentName = string;
 type IslandElement = HTMLElement & {
   __solidDispose__?: () => void;
   __solidMounting__?: boolean; // avoid concurrency issues
@@ -36,7 +32,7 @@ async function mountIsland(element: IslandElement): Promise<void> {
   try {
     // get the component
     const componentName = element.getAttribute("data-solid-island") as ComponentName;
-    const loadComponent = COMPONENTS[componentName];
+    const loadComponent = registry[componentName];
     if (!loadComponent) {
       console.warn(`Solid component '${componentName}' not found in registry.`);
       return;
@@ -45,8 +41,13 @@ async function mountIsland(element: IslandElement): Promise<void> {
 
     // get component props
     const props = parseProps(componentName, element.getAttribute("data-props"));
-    // render
-    element.__solidDispose__ = render(() => <Component {...props} />, element);
+
+    // render or hydrate
+    if (element.hasAttribute("data-solid-ssr")) {
+      element.__solidDispose__ = hydrate(() => <Component {...props} />, element);
+    } else {
+      element.__solidDispose__ = render(() => <Component {...props} />, element);
+    }
   } finally {
     delete element.__solidMounting__;
   }
@@ -81,13 +82,17 @@ function handleAfterSwap(event: Event) {
   }
 }
 
-// init
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => bootstrap());
-} else {
-  bootstrap();
-}
+export function setupIslands(components: ComponentRegistry) {
+  registry = components;
 
-// re-render when htmx update
-document.body.addEventListener("htmx:beforeSwap", handleBeforeSwap);
-document.body.addEventListener("htmx:afterSwap", handleAfterSwap);
+  // init
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => bootstrap());
+  } else {
+    bootstrap();
+  }
+
+  // re-render when htmx update
+  document.body.addEventListener("htmx:beforeSwap", handleBeforeSwap);
+  document.body.addEventListener("htmx:afterSwap", handleAfterSwap);
+}

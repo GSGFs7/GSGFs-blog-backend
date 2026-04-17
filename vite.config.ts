@@ -8,7 +8,6 @@ const djangoTemplateReload = (): Plugin => ({
   name: "django-template-reload",
   configureServer: (server) => {
     const templateDirs = ["web/templates/", "templates/"];
-    console.log(templateDirs);
     server.watcher.add(templateDirs);
 
     const reload = (path: string): void => {
@@ -24,7 +23,7 @@ const djangoTemplateReload = (): Plugin => ({
 
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/static/dist/" : "/",
-  plugins: [tailwindcss(), solidPlugin(), djangoTemplateReload()],
+  plugins: [tailwindcss(), solidPlugin({ ssr: true }), djangoTemplateReload()],
   build: {
     outDir: "web/static/dist",
     assetsDir: "",
@@ -33,8 +32,9 @@ export default defineConfig(({ command }) => ({
       input: {
         main: "web/typescript/index.tsx",
         styles: "web/typescript/styles/globals.css",
-        loadTheme: "web/typescript/load-theme.ts",
-        htmx: "web/typescript/htmx.ts",
+        loadTheme: "web/typescript/core/theme.ts",
+        htmx: "web/typescript/core/htmx.ts",
+        ssr: "web/typescript/ssr.tsx",
       },
     },
   },
