@@ -23,7 +23,7 @@ const djangoTemplateReload = (): Plugin => ({
 
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/static/dist/" : "/",
-  plugins: [tailwindcss(), solidPlugin({ ssr: true }), djangoTemplateReload()],
+  plugins: [tailwindcss(), solidPlugin(), djangoTemplateReload()],
   build: {
     outDir: "web/static/dist",
     assetsDir: "",
