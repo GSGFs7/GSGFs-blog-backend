@@ -3,6 +3,7 @@ __pycache__
 *.pyc
 node_modules
 web/static/dist/
+web/static/ssr/
 .gemini
 
 .vscode/

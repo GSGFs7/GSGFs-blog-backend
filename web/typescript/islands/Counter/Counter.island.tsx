@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 
-export function Counter() {
-  const [count, setCount] = createSignal(0);
+export function Counter({ initial }: Readonly<{ initial?: number }>) {
+  const [count, setCount] = createSignal(initial ?? 0);
 
   return (
     <div>

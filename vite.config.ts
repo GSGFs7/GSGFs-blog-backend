@@ -21,31 +21,42 @@ const djangoTemplateReload = (): Plugin => ({
   },
 });
 
-export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/static/dist/" : "/",
-  plugins: [tailwindcss(), solidPlugin(), djangoTemplateReload()],
-  build: {
-    outDir: "web/static/dist",
-    assetsDir: "",
-    manifest: "manifest.json",
-    rolldownOptions: {
-      input: {
-        main: "web/typescript/index.tsx",
-        styles: "web/typescript/styles/globals.css",
-        loadTheme: "web/typescript/core/theme.ts",
-        htmx: "web/typescript/core/htmx.ts",
-        ssr: "web/typescript/ssr.tsx",
+export default defineConfig(({ command, isSsrBuild }) => {
+  let rolldownInputs: Record<string, string>;
+  if (isSsrBuild) {
+    rolldownInputs = {
+      ssr: "web/typescript/ssr.tsx",
+    };
+  } else {
+    rolldownInputs = {
+      index: "web/typescript/index.tsx",
+      styles: "web/typescript/styles/globals.css",
+      loadTheme: "web/typescript/core/theme.ts",
+    };
+  }
+
+  return {
+    base: command === "build" ? "/static/dist/" : "/",
+    plugins: [!isSsrBuild && tailwindcss(), solidPlugin({ ssr: isSsrBuild }), djangoTemplateReload()],
+    build: {
+      outDir: isSsrBuild ? "web/static/ssr" : "web/static/dist",
+      assetsDir: "",
+      manifest: !isSsrBuild && "manifest.json",
+      ssr: isSsrBuild,
+      ssrEmitAssets: false,
+      rolldownOptions: {
+        input: rolldownInputs,
       },
     },
-  },
-  server: {
-    port: 5173,
-    strictPort: true,
-    origin: "http://localhost:5173",
-  },
-  test: {
-    environment: "jsdom",
-    globals: true,
-    setupFiles: ["./web/typescript/test/setup.ts"],
-  },
-}));
+    server: {
+      port: 5173,
+      strictPort: true,
+      origin: "http://localhost:5173",
+    },
+    test: {
+      environment: "jsdom",
+      globals: true,
+      setupFiles: ["./web/typescript/test/setup.ts"],
+    },
+  };
+});
