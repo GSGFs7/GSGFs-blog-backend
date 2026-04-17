@@ -7,12 +7,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <script type="module" src="{% vite_asset 'web/typescript/load-theme.ts' %}"></script>
-  <link rel="stylesheet" href="{% vite_asset 'web/typescript/globals.css' %}">
+  <script type="module" src="{% vite_asset 'web/typescript/core/theme.ts' %}"></script>
+  <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/globals.css' %}">
   <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   <title>{% block title %}{% endblock %} - {{ SITE_TITLE }}</title>
   {% vite_hmr %}
-  <script type="module" src="{% vite_asset 'web/typescript/htmx.ts' %}"></script>
   {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300">
@@ -28,7 +27,6 @@
 
 {% include "footer.html" %}
 
-<script type="module" src="{% vite_asset 'web/typescript/htmx.ts' %}"></script>
 <script type="module" src="{% vite_asset 'web/typescript/index.tsx' %}"></script>
 
 {% block extra_js %}{% endblock %}

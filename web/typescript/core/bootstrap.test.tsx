@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@solidjs/testing-library";
 import { afterEach, beforeEach, expect, test } from "vitest";
-import { bootstrap, cleanup } from "./index";
+import { bootstrap, cleanup } from "./bootstrap";
 
 beforeEach(() => {
   document.body.innerHTML = "";
@@ -11,28 +11,27 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-test("bootstrap does not remount an already mounted island", () => {
-  document.body.innerHTML = '<div data-solid-component="Counter"></div>';
+test("bootstrap does not remount an already mounted island", async () => {
+  document.body.innerHTML = '<div data-solid-island="Counter"></div>';
 
   bootstrap();
-  return waitFor(() => {
+  await waitFor(() => {
     expect(screen.getByRole("button")).toBeInTheDocument();
-  }).then(() => {
-    fireEvent.click(screen.getByRole("button"));
-    expect(screen.getByText("Count: 1")).toBeInTheDocument();
-
-    bootstrap();
-    expect(screen.getByText("Count: 1")).toBeInTheDocument();
   });
+  fireEvent.click(screen.getByRole("button"));
+  expect(screen.getByText("Count: 1")).toBeInTheDocument();
+
+  bootstrap();
+  expect(screen.getByText("Count: 1")).toBeInTheDocument();
 });
 
 test("cleanup and bootstrap only affect the swapped htmx target", async () => {
   document.body.innerHTML = `
     <section id="outside">
-      <div data-solid-component="Counter"></div>
+      <div data-solid-island="Counter"></div>
     </section>
     <section id="swap-target">
-      <div data-solid-component="Counter"></div>
+      <div data-solid-island="Counter"></div>
     </section>
   `;
 
@@ -50,7 +49,7 @@ test("cleanup and bootstrap only affect the swapped htmx target", async () => {
   }
 
   cleanup(target);
-  target.innerHTML = '<div data-solid-component="Counter"></div>';
+  target.innerHTML = '<div data-solid-island="Counter"></div>';
   bootstrap(target);
   await waitFor(() => {
     expect(screen.getAllByRole("button")).toHaveLength(2);
