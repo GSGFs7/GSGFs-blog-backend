@@ -5,13 +5,12 @@ import type { ComponentProps, ComponentRegistry } from "../types";
 
 let registry: ComponentRegistry = {};
 
-type ComponentName = string;
 type IslandElement = HTMLElement & {
   __solidDispose__?: () => void;
   __solidMounting__?: boolean; // avoid concurrency issues
 };
 
-function parseProps(componentName: ComponentName, propsJSON: string | null): ComponentProps {
+function parseProps(componentName: string, propsJSON: string | null): ComponentProps {
   try {
     return JSON.parse(propsJSON ?? "{}") as ComponentProps;
   } catch (error) {
@@ -31,7 +30,7 @@ async function mountIsland(element: IslandElement): Promise<void> {
 
   try {
     // get the component
-    const componentName = element.getAttribute("data-solid-island") as ComponentName;
+    const componentName = element.dataset.solidIsland as string;
     const loadComponent = registry[componentName];
     if (!loadComponent) {
       console.warn(`Solid component '${componentName}' not found in registry.`);
@@ -40,10 +39,10 @@ async function mountIsland(element: IslandElement): Promise<void> {
     const Component = await loadComponent();
 
     // get component props
-    const props = parseProps(componentName, element.getAttribute("data-props"));
+    const props = parseProps(componentName, element.dataset.props ?? "{}");
 
     // render or hydrate
-    if (element.hasAttribute("data-solid-ssr")) {
+    if (Object.hasOwn(element.dataset, "solidSsr")) {
       element.__solidDispose__ = hydrate(() => <Component {...props} />, element);
     } else {
       element.__solidDispose__ = render(() => <Component {...props} />, element);
