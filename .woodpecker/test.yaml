@@ -37,6 +37,8 @@ steps:
       HUGGINGFACE_HUB_TOKEN:
         from_secret: HUGGINGFACE_HUB_TOKEN
       API_KEY: woodpecker_test_api_key
+      UV_VENV_COPY: "1"
+      UV_LINK_MODE: "copy"
     commands:
       - pacman -Sy --noconfirm
       - pacman -S uv git python perl-image-exiftool nodejs pnpm --noconfirm
