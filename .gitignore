@@ -4,7 +4,10 @@ __pycache__
 node_modules
 web/static/dist/
 web/static/ssr/
-.gemini
+coverage/
+.coverage
+coverage.xml
+.gemini/
 
 .vscode/
 .idea/

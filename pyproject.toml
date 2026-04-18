@@ -9,6 +9,7 @@ dependencies = [
     "boto3>=1.40.63",
     "boto3-stubs[s3]>=1.40.63",
     "celery-types>=0.23.0",
+    "coverage>=7.13.5",
     "cryptography>=46.0.5",
     "django>=5.2.9",
     "django-celery-beat>=2.8.1",
@@ -62,3 +63,24 @@ exclude = ["api/migrations/*.py"]
 
 [tool.ruff.format]
 exclude = ["api/migrations/*.py"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "manage.py",
+    "blog/asgi.py",
+    "blog/wsgi.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

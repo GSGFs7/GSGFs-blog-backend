@@ -1,4 +1,5 @@
-# TODO: labels
+labels:
+  scaner: "true"
 
 when:
   - event: [ push, pull_request, manual ]
@@ -44,6 +45,17 @@ steps:
       - uv sync
       - pnpm install --frozen-lockfile
       - pnpm run build
-      - pnpm run test
+      - pnpm run test --coverage
       - uv run scripts/download-model.py
-      - uv run manage.py test -v 2
+      - uv run coverage run manage.py test -v 2
+      - uv run coverage xml -i
+
+  - name: scan
+    image: sonarsource/sonar-scanner-cli:latest
+    environment:
+      SONAR_TOKEN:
+        from_secret: SONAR_TOKEN
+      SONAR_HOST_URL: https://sonarqube.gsgfs.sh
+    when:
+      - branch: [main]
+        event: [push, pull_request, manual]

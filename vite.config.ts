@@ -61,6 +61,9 @@ export default defineConfig(({ command, isSsrBuild }) => {
       environment: "jsdom",
       globals: true,
       setupFiles: ["./web/typescript/test/setup.ts"],
+      coverage: {
+        reporter: ["text", "json", "lcov"],
+      },
     },
   };
 });
