@@ -4,7 +4,10 @@
   >
     <div class="flex h-full items-center justify-between px-4">
       {# Logo #}
-      <a class="flex items-center gap-3 cursor-pointer">
+      <a
+        class="flex items-center gap-3 cursor-pointer z-10"
+        href="/"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -18,7 +21,7 @@
       </a>
 
       {# Item #}
-      <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 hidden w-full md:block font-bold">
+      <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 hidden w-full md:block font-bold -z-10">
         <ul class="pointer-events-auto relative ml-2 hidden justify-center gap-4 opacity-90 sm:flex sm:items-center">
           {% for item in SITE_NAV_ITEM %}
             <li class="relative z-10 rounded-lg px-2 py-1 transition-all">

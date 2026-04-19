@@ -1,6 +1,6 @@
 // similar to Astro.js, a jsx component is an JS island
 
-import { hydrate, render } from "solid-js/web";
+import { render } from "solid-js/web";
 import type { ComponentProps, ComponentRegistry } from "../types";
 
 let registry: ComponentRegistry = {};
@@ -41,12 +41,9 @@ async function mountIsland(element: IslandElement): Promise<void> {
     // get component props
     const props = parseProps(componentName, element.dataset.props ?? "{}");
 
-    // render or hydrate
-    if (Object.hasOwn(element.dataset, "solidSsr")) {
-      element.__solidDispose__ = hydrate(() => <Component {...props} />, element);
-    } else {
-      element.__solidDispose__ = render(() => <Component {...props} />, element);
-    }
+    // DO NOT HYDRATE! delete & render a new element
+    element.replaceChildren();
+    element.__solidDispose__ = render(() => <Component {...props} />, element);
   } finally {
     delete element.__solidMounting__;
   }

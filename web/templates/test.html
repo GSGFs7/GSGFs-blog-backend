@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% load solid_islands %}
+
+{% block title %}Test page{% endblock %}
+
+{% block content %}
+  {% solid_island "Counter" initial=1024 invalid_props="Ciallo ～(∠・ω< )⌒★!" %}
+{% endblock %}
