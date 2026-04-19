@@ -22,12 +22,18 @@ def _manifest_path() -> Path:
 
 @register.simple_tag
 def solid_island(name: str, **props):
+    tmplt = '<div data-solid-island="{}" data-solid-ssr data-props="{}">{}</div>'
+
+    # in dev mode, we don't need placeholder
+    if settings.DEBUG:
+        return format_html(tmplt, name, json.dumps(props, separators=(",", ":")), "")
+
     item = _load_manifest(_manifest_path())["islands"][name]
     merged_props = {**item.get("props", {}), **props}
     html = item["html"]
 
     return format_html(
-        '<div data-solid-island="{}" data-solid-ssr data-props="{}">{}</div>',
+        tmplt,
         name,
         json.dumps(merged_props, separators=(",", ":")),
         mark_safe(html),

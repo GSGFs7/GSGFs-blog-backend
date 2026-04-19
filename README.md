@@ -58,8 +58,6 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 8. 运行开发服务器
 
    ```bash
-   # 预构建 HTML 占位符
-   pnpm run build:ssr
    # 运行 vite
    ./manage.py vite # 或者 pnpm run dev
    # 新开一个终端, 运行 Django 开发服务器
