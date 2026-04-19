@@ -17,7 +17,7 @@
 </head>
 <body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300">
 <header class="fixed top-0 w-full z-50 flex justify-center">
-  {% include "navbar.html" %}
+  {% include "web/partials/navbar.html" %}
 </header>
 
 <div class="relative flex min-h-screen w-full flex-col items-center">
@@ -26,7 +26,7 @@
   </main>
 </div>
 
-{% include "footer.html" %}
+{% include "web/partials/footer.html" %}
 
 <script type="module" src="{% vite_asset 'web/typescript/index.tsx' %}"></script>
 

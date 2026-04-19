@@ -24,9 +24,11 @@ def _manifest_path() -> Path:
 def solid_island(name: str, **props):
     item = _load_manifest(_manifest_path())["islands"][name]
     merged_props = {**item.get("props", {}), **props}
+    html = item["html"]
+
     return format_html(
         '<div data-solid-island="{}" data-solid-ssr data-props="{}">{}</div>',
         name,
         json.dumps(merged_props, separators=(",", ":")),
-        mark_safe(item["html"]),
+        mark_safe(html),
     )

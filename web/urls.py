@@ -3,11 +3,13 @@ from django.urls import path
 
 from . import views
 
-# TODO: frontend not available now!
+# frontend not available now!
 urlpatterns = (
     [
         path("", views.index, name="index"),
         path("test", views.test, name="test"),
+        path("blog", views.blog, name="about"),
+        path("about", views.about, name="about"),
     ]
     if settings.DEBUG
     else []
