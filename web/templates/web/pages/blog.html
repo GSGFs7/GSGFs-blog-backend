@@ -2,5 +2,117 @@
 
 {% block title %}Posts{% endblock %}
 
+{% block extra_head %}
+  <meta name="114514" content="1919810">
+{% endblock %}
+
 {% block content %}
+  <div class="flex flex-col items-center justify-center gap-4 py-4">
+    <div class="inline-block w-full max-w-5xl justify-center text-left">
+      <div class="flex flex-col items-center justify-center">
+        {# top card #}
+        <div class="flex w-full flex-col gap-6 sm:mb-4 sm:flex-row">
+          <div
+            id="blog-header-card"
+            class="relative flex h-52 w-full flex-col items-center justify-center overflow-hidden rounded-lg border dark:border-white/30 sm:flex-9 md:h-80"
+          >
+            <div
+              class="absolute z-20 flex -translate-y-4 flex-col flex-wrap items-center justify-center gap-4 dark:text-white"
+            >
+              <h2 class="text-4xl">Blog</h2>
+              <p class="hidden max-w-lg text-center text-xl sm:block">
+                <span>光标位置:</span>
+                <span id="blog-mouse-position-x">0.00</span>
+                <span id="blog-mouse-position-y">0.00</span>
+              </p>
+            </div>
+            {# bg img #}
+            <picture class="absolute inset-0">
+              <source
+                srcset="https://img.gsgfs.moe/images/avif/54/0f/540f78d0502e4afa4468660e0464d4e79dfdf685f9897eca6109214484a1ef12.avif"
+                type="image/avif"
+              >
+              <source
+                srcset="https://img.gsgfs.moe/images/webp/54/0f/540f78d0502e4afa4468660e0464d4e79dfdf685f9897eca6109214484a1ef12.webp"
+                type="image/webp"
+              >
+              <img
+                alt="blog post page top card"
+                class="h-full w-full object-cover dark:brightness-80"
+                style="transform: scale(1.1) translateX(0px);"
+                src="https://img.gsgfs.moe/images/raw/54/0f/540f78d0502e4afa4468660e0464d4e79dfdf685f9897eca6109214484a1ef12.jpg"
+              >
+            </picture>
+          </div>
+
+          {# right #}
+          <div
+            class="relative flex h-16 w-full flex-col items-center overflow-hidden rounded-lg border border-white/30 sm:h-52 sm:flex-4 md:h-80"
+          >
+            <button
+              class="relative flex h-full w-full cursor-pointer items-center justify-center"
+              type="button"
+              onclick=""
+            >
+              <span class="absolute top-2 rounded-md px-2 py-1 text-3xl dark:text-gray-300 transition-all">
+                随机一篇
+              </span>
+              <picture
+                class="absolute bottom-0 hidden translate-y-8 transition-all hover:translate-y-0 sm:block"
+              >
+                <source
+                  srcset="https://img.gsgfs.moe/images/avif/e7/6d/e76ddbc44702d3a34233660c77ce375122778121efcee9fd4cc7f7c669580949.avif"
+                  type="image/avif"
+                >
+                <source
+                  srcset="https://img.gsgfs.moe/images/webp/e7/6d/e76ddbc44702d3a34233660c77ce375122778121efcee9fd4cc7f7c669580949.webp"
+                  type="image/webp"
+                >
+                <img
+                  alt="blog top card"
+                  class="dark:brightness-90"
+                  src="https://img.gsgfs.moe/images/raw/e7/6d/e76ddbc44702d3a34233660c77ce375122778121efcee9fd4cc7f7c669580949.png"
+                >
+              </picture>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const card = document.getElementById("blog-header-card");
+      if (card) {
+        card.addEventListener("mousemove", _handleMouseMove);
+      }
+    });
+
+    function _handleMouseMove(e) {
+      const card = e.currentTarget;
+      const rect = card.getBoundingClientRect();
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const x = (e.clientX - (rect.left + centerX)) / centerX;
+      const y = (e.clientY - (rect.top + centerY)) / centerY;
+
+      const img = card.querySelector("img");
+      if (img) {
+        img.style.transform = `scale(1.1) translateX(${x * 25}px)`;
+      }
+
+      const xDisplay = document.getElementById("blog-mouse-position-x");
+      const yDisplay = document.getElementById("blog-mouse-position-y");
+      if (xDisplay) {
+        xDisplay.textContent = x.toFixed(2);
+      }
+      if (yDisplay) {
+        yDisplay.textContent = y.toFixed(2);
+      }
+    }
+  </script>
 {% endblock %}

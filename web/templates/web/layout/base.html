@@ -3,7 +3,7 @@
 {% load solid_islands %}
 
 <!DOCTYPE html>
-<html lang="zh-Hans" class="dark scroll-p-24">
+<html lang="zh-Hans" class="no-js dark scroll-p-24">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,13 +20,13 @@
   {% vite_hmr %}
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300">
+<body class="min-h-screen scroll-smooth dark:bg-[#1c1b22] dark:text-gray-300" hx-boost="true" hx-ext="head-support">
 <header class="fixed top-0 w-full z-50 flex justify-center">
   {% include "web/partials/navbar.html" %}
 </header>
 
 <div class="relative flex min-h-screen w-full flex-col items-center">
-  <main class="container mx-auto max-w-7xl grow pt-24" hx-boost="true">
+  <main class="container mx-auto max-w-7xl grow pt-24">
     {% block content %}{% endblock %}
   </main>
 

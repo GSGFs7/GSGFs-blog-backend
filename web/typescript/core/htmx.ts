@@ -1,4 +1,5 @@
 import htmx from "htmx.org";
+import "htmx-ext-head-support";
 
 declare global {
   interface Window {

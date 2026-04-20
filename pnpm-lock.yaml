@@ -11,6 +11,9 @@ importers:
       '@fontsource/maple-mono':
         specifier: ^5.2.6
         version: 5.2.6
+      htmx-ext-head-support:
+        specifier: ^2.0.5
+        version: 2.0.5
       htmx.org:
         specifier: ^2.0.8
         version: 2.0.8
@@ -709,6 +712,9 @@ packages:
 
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
+
+  htmx-ext-head-support@2.0.5:
+    resolution: {integrity: sha512-fTzqnCw7OnMijiS48CCBFBHTuOMvycbX0nEFRL0lkRxyu5DFWX90IV1SwXpQ92fJf02IzkXcRNyjXn3j0QtYxA==}
 
   htmx.org@2.0.8:
     resolution: {integrity: sha512-fm297iru0iWsNJlBrjvtN7V9zjaxd+69Oqjh4F/Vq9Wwi2kFisLcrLCiv5oBX0KLfOX/zG8AUo9ROMU5XUB44Q==}
@@ -1850,6 +1856,10 @@ snapshots:
   html-entities@2.3.3: {}
 
   html-escaper@2.0.2: {}
+
+  htmx-ext-head-support@2.0.5:
+    dependencies:
+      htmx.org: 2.0.8
 
   htmx.org@2.0.8: {}
 
