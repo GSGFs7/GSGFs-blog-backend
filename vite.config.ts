@@ -35,6 +35,7 @@ export default defineConfig(({ command, isSsrBuild }) => {
       baseLayoutCss: "web/typescript/styles/base.css",
       navbarCss: "web/typescript/styles/navbar.css",
       footerCss: "web/typescript/styles/footer.css",
+      fontCss: "web/typescript/styles/font.css"
     };
   }
 

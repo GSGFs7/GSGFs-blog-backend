@@ -11,11 +11,20 @@
   <meta name="csrf-token" content="{{ csrf_token }}">
   <script type="module" src="{% vite_asset 'web/typescript/core/theme.ts' %}"></script>
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  {# TailwindCSS has some problem in first screen (FOUC), use a single css file to provider the styles #}
   <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/navbar.css' %}">
   <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/footer.css' %}">
   <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/base.css' %}">
   <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/globals.css' %}">
+  {# as late as possible load fonts #}
+  <link
+    rel="stylesheet"
+    href="{% vite_asset 'web/typescript/styles/font.css' %}"
+    media="print"
+    onload="this.media='all'"
+  >
+  <noscript>
+    <link rel="stylesheet" href="{% vite_asset 'web/typescript/styles/font.css' %}">
+  </noscript>
   <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
   <title>{% block title %}{% endblock %} - {{ SITE_TITLE }}</title>
   {% vite_hmr %}
