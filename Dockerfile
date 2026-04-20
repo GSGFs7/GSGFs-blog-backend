@@ -46,13 +46,11 @@ COPY --chown=user:user . .
 # supervisor configuration
 COPY --chown=root:root supervisord.conf /etc/supervisor/supervisord.conf
 
-# supervisor log directory
+# prepare environment
 RUN mkdir -p /var/log/supervisor && \
-    chown -R user /var/log/supervisor
-
-# build frontend and collect static
-RUN pnpm run build
-RUN uv run manage.py collectstatic --noinput
+    chown -R user /var/log/supervisor && \
+    pnpm run build:all && \
+    uv run manage.py collectstatic --noinput
 
 EXPOSE 8000
 

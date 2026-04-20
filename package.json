@@ -3,6 +3,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:ssr": "vite build --ssr && node scripts/build_island_placeholders.mjs",
+    "build:all": "pnpm run build && pnpm run build:ssr",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

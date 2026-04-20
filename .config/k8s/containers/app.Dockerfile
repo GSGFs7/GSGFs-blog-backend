@@ -29,7 +29,7 @@ RUN uv sync --frozen --no-install-project --no-cache && \
 
 # Copy project files, build frontend, and collect static
 COPY --chown=user:user . .
-RUN pnpm run build && \
+RUN pnpm run build:all && \
     uv run manage.py collectstatic --noinput && \
     rm -rf /app/node_modules
 
