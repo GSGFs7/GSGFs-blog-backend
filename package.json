@@ -3,7 +3,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:ssr": "vite build --ssr && node scripts/build_island_placeholders.mjs",
-    "build:all": "pnpm run build && pnpm run build:ssr",
+    "build:all": "pnpm run build && pnpm run build:ssr && uv run manage.py collectstatic --noinput",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

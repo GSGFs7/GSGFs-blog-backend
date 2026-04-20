@@ -11,9 +11,7 @@ register = template.Library()
 
 @lru_cache(maxsize=1)
 def _load_manifest():
-    manifest_path = (
-        Path(settings.BASE_DIR) / "web" / "static" / "dist" / "manifest.json"
-    )
+    manifest_path = Path(settings.STATIC_ROOT) / "dist" / "manifest.json"
     with manifest_path.open("r") as f:
         return json.load(f)
 

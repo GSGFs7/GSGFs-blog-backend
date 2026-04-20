@@ -23,7 +23,7 @@ class ViteTemplateTagTests(SimpleTestCase):
     @override_settings(DEBUG=False, STATIC_URL="/static/")
     def test_vite_asset_uses_manifest_in_production(self):
         with TemporaryDirectory() as tmp_dir:
-            manifest_dir = Path(tmp_dir) / "web" / "static" / "dist"
+            manifest_dir = Path(tmp_dir) / "dist"
             manifest_dir.mkdir(parents=True)
             (manifest_dir / "manifest.json").write_text(
                 json.dumps(
@@ -32,7 +32,7 @@ class ViteTemplateTagTests(SimpleTestCase):
             )
             vite._load_manifest.cache_clear()
 
-            with override_settings(BASE_DIR=Path(tmp_dir)):
+            with override_settings(STATIC_ROOT=tmp_dir):
                 rendered = Template(
                     "{% load vite %}{% vite_asset 'web/typescript/index.tsx' %}"
                 ).render(Context())
@@ -44,7 +44,7 @@ class ViteTemplateTagTests(SimpleTestCase):
         with TemporaryDirectory() as tmp_dir:
             vite._load_manifest.cache_clear()
 
-            with override_settings(BASE_DIR=Path(tmp_dir)):
+            with override_settings(STATIC_ROOT=tmp_dir):
                 with self.assertRaisesMessage(
                     RuntimeError, "Vite manifest not found. Run `pnpm run build` first."
                 ):
