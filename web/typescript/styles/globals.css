@@ -3,6 +3,6 @@
 @import "lxgw-wenkai-screen-web/lxgwwenkaiscreen/result.min.css";
 
 @theme {
-    --font-sans: "LXGW WenKai Screen", sans-serif;
-    --font-mono: "Maple Mono", monospace;
+  --font-sans: "LXGW WenKai Screen", sans-serif;
+  --font-mono: "Maple Mono", monospace;
 }
