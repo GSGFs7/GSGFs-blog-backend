@@ -32,6 +32,8 @@ export default defineConfig(({ command, isSsrBuild }) => {
       index: "web/typescript/index.tsx",
       styles: "web/typescript/styles/globals.css",
       loadTheme: "web/typescript/core/theme.ts",
+      navbarCss: "web/typescript/styles/navbar.css",
+      footerCss: "web/typescript/styles/footer.css",
     };
   }
 
@@ -47,6 +49,8 @@ export default defineConfig(({ command, isSsrBuild }) => {
       rolldownOptions: {
         input: rolldownInputs,
       },
+      cssMinify: "lightningcss",
+      cssCodeSplit: true,
     },
     ssr: {
       // put the dependencies to the bundle

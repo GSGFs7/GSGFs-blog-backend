@@ -1,11 +1,9 @@
-<nav class="sticky top-0 z-50 w-full" hx-boost="true">
-  <div
-    class="mx-auto h-14 max-w-6xl border-b dark:border-gray-400/50 dark:bg-[#1c1b22a2] backdrop-blur-sm sm:rounded-b-3xl sm:border-x"
-  >
-    <div class="flex h-full items-center justify-between px-4">
+<nav class="site-navbar">
+  <div class="site-navbar__shell">
+    <div class="site-navbar__inner">
       {# Logo #}
       <a
-        class="flex items-center gap-3 cursor-pointer z-10"
+        class="site-navbar__brand"
         href="/"
       >
         <svg
@@ -17,17 +15,15 @@
           <path d="m21 21-4.3-4.3"></path>
           <path d="M11 11a2 2 0 0 0 4 0 4 4 0 0 0-8 0 6 6 0 0 0 12 0"></path>
         </svg>
-        <span class="inline-block text-lg font-bold whitespace-nowrap">{{ SITE_TITLE }}</span>
+        <span class="site-navbar__brand-text">{{ SITE_TITLE }}</span>
       </a>
 
       {# Item #}
-      <div class="pointer-events-none absolute left-1/2 -translate-x-1/2 hidden w-full md:block font-bold -z-10">
-        <ul class="pointer-events-auto relative ml-2 hidden justify-center gap-4 opacity-90 sm:flex sm:items-center">
+      <div class="site-navbar__links-wrap">
+        <ul class="site-navbar__links">
           {% for item in SITE_NAV_ITEM %}
-            <li class="relative z-10 rounded-lg px-2 py-1 transition-all">
-              <a href="{{ item.href }}"
-                 class="transition-colors duration-200"
-              >
+            <li class="site-navbar__item">
+              <a href="{{ item.href }}" class="site-navbar__link">
                 {{ item.label }}
               </a>
             </li>
@@ -36,14 +32,14 @@
       </div>
 
       {# Avatar #}
-      <div class="relative z-20 hidden items-center justify-end text-xl sm:flex">
-        <a class="block cursor-pointer" href="/user">
+      <div class="site-navbar__avatar-wrap">
+        <a class="site-navbar__avatar-link" href="/user">
           {# TODO #}
           <img
             alt="user's avatar"
             width="40"
             height="40"
-            class="rounded-full"
+            class="site-navbar__avatar"
             src="https://img.gsgfs.moe/img/f56806663519c6680691407d0d8fa7ed.png"
           >
         </a>
@@ -51,12 +47,12 @@
 
       <button
         type="button"
-        class="sm:hidden"
-        onclick="window.openMobileMenu(event)"
+        class="site-navbar__menu-button"
+        data-mobile-menu-open
       >
         <svg
           aria-hidden="true"
-          class="h-6 w-6"
+          class="site-navbar__menu-icon"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -74,20 +70,35 @@
 
   <div
     id="mobile-menu"
-    class="fixed inset-0 z-60 hidden bg-[#1c1b22]/95 backdrop-blur-md sm:hidden"
+    class="site-mobile-menu"
   >
-    <div class="flex h-full flex-col px-4 pt-4 pb-8">
+    <div class="site-mobile-menu__inner">
       {# top #}
-      <div class="flex items-center justify-between border-b pb-8">
-        <span class="text-xl font-bold">{{ SITE_TITLE }}</span>
-        {# TODO: double click problem, it seems to exist on the entire page #}
+      <div class="site-mobile-menu__header">
+        <a
+          class="site-navbar__brand"
+          href="/"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="lucide lucide-lollipop-icon lucide-lollipop relative -translate-y-[0.15rem] text-2xl"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+            <path d="M11 11a2 2 0 0 0 4 0 4 4 0 0 0-8 0 6 6 0 0 0 12 0"></path>
+          </svg>
+          <span class="site-navbar__brand-text">{{ SITE_TITLE }}</span>
+        </a>
+
         <button
           type="button"
-          onclick="window.closeMobileMenu(event)"
+          class="site-mobile-menu__close-button"
+          data-mobile-menu-close
         >
           <svg
             aria-hidden="true"
-            class="h-6 w-6"
+            class="site-mobile-menu__close-icon"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -103,11 +114,11 @@
       </div>
 
       {# item #}
-      <div class="flex flex-1 flex-col items-start justify-start gap-8 pt-12 text-2xl">
+      <div class="site-mobile-menu__links">
         {% for item in SITE_NAV_ITEM %}
           <a
+            class="site-mobile-menu__link"
             href="{{ item.href }}"
-            onclick="window.closeMobileMenu(event)"
           >
             {{ item.label }}
           </a>
@@ -119,32 +130,30 @@
   <script>
     (() => {
       const closeGuardMs = 250;
+      const menu = document.getElementById("mobile-menu");
 
-      window.openMobileMenu = (event) => {
+      const openMobileMenu = (event) => {
         event?.stopPropagation();
-        const menu = document.getElementById("mobile-menu");
-        if (!menu) {
-          return;
-        }
-
+        if (!menu) return;
         menu.dataset.openedAt = String(Date.now());
-        menu.classList.remove("hidden");
+        menu.classList.add("is-open");
       };
 
-      window.closeMobileMenu = (event) => {
+      const closeMobileMenu = (event) => {
         event?.stopPropagation();
-        const menu = document.getElementById("mobile-menu");
-        if (!menu) {
-          return;
-        }
-
+        if (!menu) return;
         const openedAt = Number(menu.dataset.openedAt || 0);
-        if (Date.now() - openedAt < closeGuardMs) {
-          return;
-        }
-
-        menu.classList.add("hidden");
+        if (Date.now() - openedAt < closeGuardMs) return;
+        menu.classList.remove("is-open");
       };
+
+      document.querySelector("[data-mobile-menu-open]")?.addEventListener("click", openMobileMenu);
+
+      document.querySelector("[data-mobile-menu-close]")?.addEventListener("click", closeMobileMenu);
+
+      document.querySelectorAll(".site-mobile-menu__link").forEach(link => {
+        link.addEventListener("click", closeMobileMenu);
+      });
     })();
   </script>
 </nav>
