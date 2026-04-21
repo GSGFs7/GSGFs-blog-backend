@@ -23,7 +23,7 @@
 </head>
 <body class="site-body" hx-boost="true" hx-ext="head-support">
 <header class="site-header">
-  {% include "web/partials/navbar.html" %}
+  {% include "web/partials/globals/navbar.html" %}
 </header>
 
 <div class="site-shell">
@@ -31,7 +31,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  {% include "web/partials/footer.html" %}
+  {% include "web/partials/globals/footer.html" %}
 </div>
 
 <script type="module" src="{% vite_asset 'web/typescript/index.tsx' %}"></script>

@@ -30,12 +30,12 @@ export default defineConfig(({ command, isSsrBuild }) => {
   } else {
     rolldownInputs = {
       index: "web/typescript/index.tsx",
-      styles: "web/typescript/styles/globals.css",
       loadTheme: "web/typescript/core/theme.ts",
+      styles: "web/typescript/styles/globals.css",
       baseLayoutCss: "web/typescript/styles/base.css",
       navbarCss: "web/typescript/styles/navbar.css",
       footerCss: "web/typescript/styles/footer.css",
-      fontCss: "web/typescript/styles/font.css"
+      fontCss: "web/typescript/styles/font.css",
     };
   }
 

@@ -1,5 +1,7 @@
 from django.http import HttpRequest
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
+
+from api.models import Post
 
 
 # Create your views here.
@@ -12,7 +14,15 @@ def test(request: HttpRequest):
 
 
 def blog(request: HttpRequest):
-    return render(request, "web/pages/blog.html")
+    posts = Post.objects.all()[:10]
+    context = {"posts": posts}
+    return render(request, "web/pages/blog.html", context)
+
+
+def blog_post(request: HttpRequest, post_id: int):
+    post = get_object_or_404(Post, id=post_id)
+    context = {"content_html": post.content_html}
+    return render(request, "web/pages/blog_post.html", context)
 
 
 def about(request: HttpRequest):
