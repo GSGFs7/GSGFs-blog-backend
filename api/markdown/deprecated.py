@@ -9,6 +9,7 @@ from typing import Dict, List
 import dotenv
 import requests
 from pydantic import BaseModel
+from typing_extensions import deprecated
 
 
 class FrontendMarkdownResponse(BaseModel):
@@ -16,6 +17,7 @@ class FrontendMarkdownResponse(BaseModel):
     html: str
 
 
+@deprecated("Next.js frontend is deprecated")
 def markdown_to_html_frontend(content: str) -> FrontendMarkdownResponse:
     """
     Converts markdown content to HTML using the frontend service.

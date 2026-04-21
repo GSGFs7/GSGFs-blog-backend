@@ -116,11 +116,10 @@
                     <p class="flex flex-nowrap items-center px-1 text-nowrap">
                       {% if p.tags.count %}
                         <span class="flex">
-                        {% for t in p.tags.all %}
-                          <span>{{ t.name }}</span>
-                          {% if not forloop.last %}|{% endif %}
-                        {% endfor %}
-                      </span>
+                          {% for t in p.tags.all %}
+                            <span>{{ t.name }}</span>{% if not forloop.last %}|{% endif %}
+                          {% endfor %}
+                        </span>
                       {% else %}
                         <span>无标签</span>
                       {% endif %}

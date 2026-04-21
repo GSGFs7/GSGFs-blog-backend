@@ -25,6 +25,7 @@ dependencies = [
     "httpx>=0.28.1",
     # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
     "jieba @ git+https://github.com/GSGFs7/jieba.git@master",
+    "markdown-it-rs-py @ git+https://github.com/GSGFs7/markdown-it-rs.git@master#subdirectory=bindings/python",
     "pgvector>=0.4.1",
     "phonenumbers>=9.0.12",
     "pillow>=11.3.0",
