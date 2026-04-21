@@ -1,4 +1,3 @@
-import jieba
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ValidationError
@@ -145,6 +144,8 @@ class Post(BaseModel):
             self.category = category
 
         # === tokenize (PG FTS) ===
+        import jieba
+
         self.tokenized_content = " ".join(jieba.lcut(self.content, cut_all=True))
 
         # === vector ===

@@ -7,8 +7,6 @@ from typing import Any, Callable, Dict, List, Optional, TypedDict
 
 import yaml
 from django.utils.text import Truncator
-from jieba import analyse as jieba_analyse
-from pypinyin import Style, lazy_pinyin
 
 
 class MetadataResult(TypedDict):
@@ -222,6 +220,7 @@ def extract_first_image(text: str) -> Optional[str]:
 
 
 def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
+    from jieba import analyse as jieba_analyse
     """
     Extracts metadata from a given text,
     including keywords, tags, category, title, slug, cover image, and header image.
@@ -350,6 +349,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
 
 
 def chinese_slugify(title: str, max_length: int = 50) -> str:
+    from pypinyin import Style, lazy_pinyin
     """
     Generates a URL-friendly slug from a given title,
     supporting Chinese and English text.

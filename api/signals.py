@@ -5,17 +5,16 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from .jikan import query_anime
 from .markdown import markdown_to_html_frontend
 from .models import Anime, Gal, Post
-from .tasks import generate_post_chunks_embedding_task
-from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(pre_save, sender=Gal)
 def sync_with_vndb(sender, instance, **kwargs):
+    from .vndb import query_vn
+
     def find_cn_title(titles):
         for title in titles:
             if title["lang"] == "zh-Hans":
@@ -49,6 +48,8 @@ def sync_with_vndb(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=Anime)
 def sync_with_jikan(sender, instance, **kwargs):
+    from .jikan import query_anime
+
     if not instance.mal_id:
         return
 
@@ -118,6 +119,8 @@ def update_content_update_at(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Post)
 def generate_post_embedding_async(sender, instance, created, **kwargs):
+    from .tasks import generate_post_chunks_embedding_task
+
     """
     Trigger Celery task to generate embedding for post asynchronously.
     This runs after the post is saved to the database.
