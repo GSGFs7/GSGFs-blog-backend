@@ -7,10 +7,17 @@ declare global {
   }
 }
 
-// get the csrf token has put in base.html
+// get the csrf token from cookies
+// double submit cookie
+// a cookie in HTTP header(X-CSRFToken), a cookie in normal cookie header
+// because cross site cookie isolation, it's safe if cookie match
 const getCsrfToken = (): string | null => {
-  const meta = document.querySelector("meta[name='csrf-token']");
-  return meta?.getAttribute("content") ?? null;
+  return (
+    document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrftoken="))
+      ?.split("=")[1] ?? null
+  );
 };
 
 document.body.addEventListener("htmx:configRequest", (event) => {
