@@ -46,7 +46,7 @@ steps:
       - ln -s /usr/bin/vendor_perl/exiftool /usr/bin/exiftool
       - uv sync
       - pnpm install --frozen-lockfile
-      - pnpm run build
+      - pnpm run build:all
       - pnpm run test --coverage
       - uv run scripts/download-model.py
       - uv run coverage run manage.py test -v 2
