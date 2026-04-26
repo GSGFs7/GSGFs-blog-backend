@@ -1,9 +1,8 @@
 import copy
 import hashlib
-import inspect
 import re
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import yaml
 from django.utils.text import Truncator
@@ -170,6 +169,7 @@ def extract_front_matter(text: str) -> Dict[str, Any]:
         Dict[str, Any]: The extracted front matter as a dictionary,
                         or empty dict if no valid front matter found.
     """
+
     front_matter_pattern = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
     matched = front_matter_pattern.match(text)
 

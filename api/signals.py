@@ -5,7 +5,6 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 
-from .markdown import markdown_to_html_frontend
 from .models import Anime, Gal, Post
 
 logger = logging.getLogger(__name__)
@@ -75,9 +74,11 @@ def sync_with_jikan(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Gal)
 def convert_gal_markdown_to_html(sender, instance, **kwargs):
+    from .markdown import Markdown
+
     try:
-        res = markdown_to_html_frontend(instance.review)
-        instance.review_html = res.html
+        html = Markdown().render(instance.review)
+        instance.review_html = html
         # Disconnect signal, avoid infinite loop
         post_save.disconnect(convert_gal_markdown_to_html, sender=Gal)
         instance.save(update_fields=["review_html"])
@@ -90,10 +91,12 @@ def convert_gal_markdown_to_html(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Post)
 def convert_post_markdown_to_html(sender, instance, **kwargs):
+    from .markdown import Markdown
+
     try:
-        res = markdown_to_html_frontend(instance.content)
+        html = Markdown().render(instance.content)
         post_save.disconnect(convert_post_markdown_to_html, sender=Post)
-        instance.content_html = res.html
+        instance.content_html = html
         instance.save(update_fields=["content_html"])
         post_save.connect(convert_post_markdown_to_html, sender=Post)
     except Exception as e:
