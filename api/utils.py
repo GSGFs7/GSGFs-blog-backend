@@ -95,7 +95,7 @@ def remove_markdown(text: str) -> str:
     # Handle nested emphasis by removing markers from outside in
     text = re.sub(r"(\*\*\*|___)(.*?)\1", r"\2", text, flags=re.DOTALL)  # bold+italic
     text = re.sub(r"(\*\*|__)(.*?)\1", r"\2", text, flags=re.DOTALL)  # bold
-    text = re.sub(r"(\*|_)(.*?)\1", r"\2", text, flags=re.DOTALL)  # italic
+    text = re.sub(r"([*_])(.*?)\1", r"\2", text, flags=re.DOTALL)  # italic
     text = re.sub(r"~~(.*?)~~", r"\1", text, flags=re.DOTALL)  # strikethrough
 
     # Remove inline code (keep content)
@@ -141,21 +141,6 @@ def remove_code_blocks(text: str) -> str:
     # Clean up extra whitespace
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
-
-
-# TODO: optimize chunking
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
-    text = remove_code_blocks(text)
-    text = remove_markdown(text)
-    text = remove_html_tags(text)
-
-    chunk = []
-    start = 0
-    while start < len(text):
-        end = start + chunk_size
-        chunk.append(text[start:end])
-        start += chunk_size - overlap
-    return chunk
 
 
 def extract_front_matter(text: str) -> Dict[str, Any]:
@@ -221,6 +206,7 @@ def extract_first_image(text: str) -> Optional[str]:
 
 def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
     from jieba import analyse as jieba_analyse
+
     """
     Extracts metadata from a given text,
     including keywords, tags, category, title, slug, cover image, and header image.
@@ -350,6 +336,7 @@ def extract_metadata(text: str, num_keywords=5) -> MetadataResult:
 
 def chinese_slugify(title: str, max_length: int = 50) -> str:
     from pypinyin import Style, lazy_pinyin
+
     """
     Generates a URL-friendly slug from a given title,
     supporting Chinese and English text.

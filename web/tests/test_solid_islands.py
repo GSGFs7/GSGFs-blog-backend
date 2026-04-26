@@ -1,10 +1,6 @@
-import json
-from pathlib import Path
 
-from django.conf import settings
 from django.template import Context, Template
 from django.test import TestCase
-
 
 # use vite build frontend under ssr mode first
 # otherwise, this will raise a error

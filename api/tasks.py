@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from .ml_model import get_sentence_transformer_model
 from .models import Gal, Post, PostChunk
-from .utils import chunk_text
+from .text_chunking import chunk_text
 from .vndb import query_vn
 
 logger = logging.getLogger(__name__)
