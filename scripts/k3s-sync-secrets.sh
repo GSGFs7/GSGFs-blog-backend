@@ -43,7 +43,8 @@ kubectl create secret generic blog-secrets \
     --from-literal=S3_BUCKET_NAME="${S3_BUCKET_NAME}" \
     --from-literal=S3_PUBLIC_DOMAIN="${S3_PUBLIC_DOMAIN}" \
     --from-literal=SERVER_NAME="${SERVER_NAME}" \
-    --from-literal=LITELLM_API_KEY="${LITELLM_API_KEY}" \
+    --from-literal=LITELLM_API_KEY="${REMOTE_EMBEDDING_API_KEY}" \
+    --from-literal=REMOTE_EMBEDDING_API_KEY="${REMOTE_EMBEDDING_API_KEY}" \
     --dry-run=client -o yaml | kubectl apply -f -
 
 echo ""

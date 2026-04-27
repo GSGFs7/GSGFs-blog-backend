@@ -60,10 +60,10 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["I", "E", "F"]
-exclude = ["api/migrations/*.py"]
+exclude = ["**/migrations/*.py"]
 
 [tool.ruff.format]
-exclude = ["api/migrations/*.py"]
+exclude = ["**/migrations/*.py"]
 
 [tool.coverage.run]
 source = ["."]

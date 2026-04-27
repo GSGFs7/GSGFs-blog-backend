@@ -29,6 +29,7 @@ api = NinjaAPI(
 def http_error_handler(request, exc):
     return api.create_response(request, {"message": str(exc)}, status=exc.status_code)
 
+
 # convert to openapi 3.0, PyCharm not support 3.1 yet
 # original_get_schema = api.get_openapi_schema
 # api.get_openapi_schema = convert_openapi(original_get_schema)  # wrap

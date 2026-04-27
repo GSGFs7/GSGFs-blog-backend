@@ -38,7 +38,5 @@ class ViteCommandTests(SimpleTestCase):
 
     @patch("web.management.commands.vite.shutil.which", return_value=None)
     def test_raises_when_no_package_manager_is_available(self, _which):
-        with self.assertRaisesMessage(
-            CommandError, "no available npm command"
-        ):
+        with self.assertRaisesMessage(CommandError, "no available npm command"):
             call_command("vite", stdout=StringIO())

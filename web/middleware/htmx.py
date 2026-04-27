@@ -57,9 +57,7 @@ class HtmxMiddleware:
         )
         return cast(HtmxHttpRequest, request)
 
-    def __call__(
-        self, request: HttpRequest
-    ) -> HttpResponse | Awaitable[HttpResponse]:
+    def __call__(self, request: HttpRequest) -> HttpResponse | Awaitable[HttpResponse]:
         if self.is_async:
             return self.__acall__(request)
 
@@ -69,5 +67,5 @@ class HtmxMiddleware:
 
     async def __acall__(self, request: HttpRequest) -> HttpResponse:
         htmx_request = self._attach_htmx_header(request)
-        async_get_response = cast(AsyncGetResponse,self.get_response)
+        async_get_response = cast(AsyncGetResponse, self.get_response)
         return await async_get_response(htmx_request)

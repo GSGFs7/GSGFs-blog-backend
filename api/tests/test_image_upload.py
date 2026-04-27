@@ -41,9 +41,7 @@ class BaseImageUploadTest(TestCase):
         self.override.enable()
         self.addCleanup(self.override.disable)
 
-        self.process_image_delay = patch(
-            "media_service.signals.process_image.delay"
-        )
+        self.process_image_delay = patch("media_service.signals.process_image.delay")
         self.mock_process_image_delay = self.process_image_delay.start()
         self.addCleanup(self.process_image_delay.stop)
 

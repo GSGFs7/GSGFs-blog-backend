@@ -8,7 +8,7 @@ from markdown_it_rs_py import FrontMatter, MarkdownIt
 
 class Markdown:
     # rust render engine instance cache (it useless i think)
-    _mds: dict[str, MarkdownIt] = {}
+    _mds: dict[tuple, MarkdownIt] = {}
 
     def __init__(
         self,
@@ -38,7 +38,6 @@ class Markdown:
             syntax_classed,
         )
 
-        # noinspection PyTypeChecker
         if md := self._mds.get(idx_key):
             self.md = md
         else:
@@ -54,7 +53,6 @@ class Markdown:
                 syntax_theme=syntax_theme,
                 syntax_classed=syntax_classed,
             )
-            # noinspection PyTypeChecker
             self._mds[idx_key] = self.md
 
     @staticmethod
