@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch: # manual triggering
 
 permissions:
@@ -195,7 +195,7 @@ jobs:
 
   mirror:
     runs-on: ubuntu-latest
-    needs: [ update-manifests ]
+    needs: [update-manifests]
     if: false # always() && (needs.update-manifests.result == 'success' || needs.update-manifests.result == 'skipped') # && (needs.test.result == 'success')
     steps:
       - name: Checkout repository

@@ -16,60 +16,60 @@ _Windows 用户在运行 `./xxx.py` 这类命令时可能需要在前面加上 `
 
 1. 安装所需依赖
 
-   ```bash
-   uv sync
-   pnpm i
-   ```
+    ```bash
+    uv sync
+    pnpm i
+    ```
 
 2. 激活 Python 虚拟环境 (以 `Linux` 为例)
 
-   ```bash
-   source .venv/bin/activate
-   ```
+    ```bash
+    source .venv/bin/activate
+    ```
 
 3. 将 `.env.example` 复制一份为 `.env` 并填写需要的环境变量
 
-   尖括号中的内容是必填项, 可以使用 `openssl rand -hex 40` 生成所需的随机字符
+    尖括号中的内容是必填项, 可以使用 `openssl rand -hex 40` 生成所需的随机字符
 
 4. 启动数据库和 Redis
 
-   ```bash
-   docker compose up -d "blog-postgres" "blog-redis"
-   ```
+    ```bash
+    docker compose up -d "blog-postgres" "blog-redis"
+    ```
 
 5. 由于搜索功能依赖向量化处理, 需要下载用于生成向量的嵌入模型
 
-   ```bash
-   ./scripts/download-model.py
-   ```
+    ```bash
+    ./scripts/download-model.py
+    ```
 
 6. 迁移数据库
 
-   ```bash
-   ./manage.py makemigrations && ./manage.py migrate
-   ```
+    ```bash
+    ./manage.py makemigrations && ./manage.py migrate
+    ```
 
 7. 创建一个管理员用户 (用于登陆后台)
 
-   ```bash
-   ./manage.py createsuperuser
-   ```
+    ```bash
+    ./manage.py createsuperuser
+    ```
 
 8. 运行开发服务器
 
-   ```bash
-   # 运行 vite
-   ./manage.py vite # 或者 pnpm run dev
-   # 新开一个终端, 运行 Django 开发服务器
-   ./manage.py runserver
-   ```
+    ```bash
+    # 运行 vite
+    ./manage.py vite # 或者 pnpm run dev
+    # 新开一个终端, 运行 Django 开发服务器
+    ./manage.py runserver
+    ```
 
 ## 可选依赖
 
 - **ExifTool**: 用于清理上传图片的 EXIF 元数据. 如果系统中安装了 `exiftool`, 后端会自动调用它来处理图片以保护隐私. 如果没有,
   则使用 PIL 对图片进行重编码来去除 EXIF 信息.
-  - Arch Linux: `sudo pacman -S perl-image-exiftool`
-  - Debian/Ubuntu: `sudo apt install libimage-exiftool-perl`
+    - Arch Linux: `sudo pacman -S perl-image-exiftool`
+    - Debian/Ubuntu: `sudo apt install libimage-exiftool-perl`
 
 ## 目录
 

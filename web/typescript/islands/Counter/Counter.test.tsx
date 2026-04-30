@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { expect } from "vitest";
+
 import { Counter } from "./Counter.island";
 
 test("increments count", async () => {

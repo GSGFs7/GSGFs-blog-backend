@@ -67,13 +67,7 @@ exclude = ["**/migrations/*.py"]
 
 [tool.coverage.run]
 source = ["."]
-omit = [
-    "*/migrations/*",
-    "*/tests/*",
-    "manage.py",
-    "blog/asgi.py",
-    "blog/wsgi.py",
-]
+omit = ["*/migrations/*", "*/tests/*", "manage.py", "blog/asgi.py", "blog/wsgi.py"]
 
 [tool.coverage.report]
 exclude_lines = [

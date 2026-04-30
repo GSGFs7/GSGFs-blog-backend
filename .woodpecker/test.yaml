@@ -2,7 +2,7 @@ labels:
   scaner: "true"
 
 when:
-  - event: [ push, pull_request, manual ]
+  - event: [push, pull_request, manual]
     branch:
       - main
       - woodpecker-test

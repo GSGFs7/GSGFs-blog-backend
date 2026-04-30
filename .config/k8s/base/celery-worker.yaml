@@ -107,7 +107,6 @@ spec:
             claimName: blog-model-pvc
 
 ---
-
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

@@ -1,9 +1,5 @@
 module.exports = {
-  content: [
-    "./templates/**/*.html",
-    "./**/templates/**/*.html",
-    "./web/typescript/**/*.tsx",
-  ],
+  content: ["./templates/**/*.html", "./**/templates/**/*.html", "./web/typescript/**/*.tsx"],
   theme: {
     extend: {},
   },

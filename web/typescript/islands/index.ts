@@ -1,4 +1,5 @@
 import type { Component as SolidComponent } from "solid-js";
+
 import type { ComponentProps } from "../types";
 
 // use dynamic import. avoid js size too large

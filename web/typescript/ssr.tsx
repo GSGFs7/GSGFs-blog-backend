@@ -1,6 +1,7 @@
 // compile this file with ssr mode.
 
 import { renderToString } from "solid-js/web";
+
 import { SSR_COMPONENTS } from "./islands/ssr_registry";
 
 type Props = Record<string, unknown>;

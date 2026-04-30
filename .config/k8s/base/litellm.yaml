@@ -14,7 +14,6 @@ data:
           encoding_format: float
 
 ---
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -65,7 +64,6 @@ spec:
               cpu: "200m"
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:

@@ -15,10 +15,10 @@ indent_size = 2
 [{*.yml,*.yaml}]
 indent_size = 2
 
-[*.json]
+[{*.json,*.jsonc}]
 indent_size = 2
 
-[{*.tsx,*.ts}]
+[{*.tsx,*.ts,*.js}]
 indent_size = 2
 
 [*.css]

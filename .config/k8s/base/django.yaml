@@ -75,7 +75,6 @@ spec:
             failureThreshold: 10
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -89,7 +88,6 @@ spec:
   type: ClusterIP
 
 ---
-
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

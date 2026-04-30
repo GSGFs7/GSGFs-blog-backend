@@ -1,6 +1,7 @@
 // similar to Astro.js, a jsx component is an JS island
 
 import { render } from "solid-js/web";
+
 import type { ComponentProps, ComponentRegistry } from "../types";
 
 let registry: ComponentRegistry = {};

@@ -1,6 +1,7 @@
 // NOTE: import this file only in ssr environment
 
 import type { Component } from "solid-js";
+
 import type { ComponentProps } from "../types";
 import Counter from "./Counter";
 
