@@ -3,25 +3,25 @@ kind: Kustomization
 namespace: blog
 
 resources:
-  - ../../base
-  - ingress.yaml
-  - cluster-issuer.yaml
-  - middleware-whitelist.yaml
+- ../../base
+- ingress.yaml
+- cluster-issuer.yaml
+- middleware-whitelist.yaml
 
 # In prod, images are managed by Woodpecker CI & Argo CD
 images:
-  - name: blog-backup
-    newName: registry.gsgfs.sh/blog-backup
-    newTag: 77789a516490ac2d3602a36c4889c85b53a550e8
-  - name: blog-celery-beat
-    newName: registry.gsgfs.sh/blog-celery-beat
-    newTag: 77789a516490ac2d3602a36c4889c85b53a550e8
-  - name: blog-celery-worker
-    newName: registry.gsgfs.sh/blog-celery-worker
-    newTag: 77789a516490ac2d3602a36c4889c85b53a550e8
-  - name: blog-django
-    newName: registry.gsgfs.sh/blog-django
-    newTag: 77789a516490ac2d3602a36c4889c85b53a550e8
-  - name: blog-model-downloader
-    newName: registry.gsgfs.sh/blog-model-downloader
-    newTag: 77789a516490ac2d3602a36c4889c85b53a550e8
+- name: blog-backup
+  newName: registry.gsgfs.sh/blog-backup
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
+- name: blog-celery-beat
+  newName: registry.gsgfs.sh/blog-celery-beat
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
+- name: blog-celery-worker
+  newName: registry.gsgfs.sh/blog-celery-worker
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
+- name: blog-django
+  newName: registry.gsgfs.sh/blog-django
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
+- name: blog-model-downloader
+  newName: registry.gsgfs.sh/blog-model-downloader
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
