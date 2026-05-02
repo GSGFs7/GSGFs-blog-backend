@@ -250,7 +250,7 @@ class TextChunker(Chunker):
 
 
 # helper method
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50):
+def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
     config = ChunkingConfig(size=chunk_size, overlap=overlap)
     chunker = TextChunker(config)
     return chunker.chunk(text)

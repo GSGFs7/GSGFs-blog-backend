@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # build and push images to registry
-# used by Woodpecker CI with podman
+# used by Woodpecker CI
 
 set -e
 
@@ -24,6 +24,38 @@ function setup_podman_cert() {
     echo "$REGISTRY_CLIENT_CERT" > "$BASE_DIR/client.cert"
     echo "$REGISTRY_CLIENT_KEY" > "$BASE_DIR/client.key"
     chmod 600 "$BASE_DIR/client.key"
+}
+
+function check_cdn_bypass() {
+    if [ -z "${REGISTRY_IP:-}" ] || [ -z "${REGISTRY_DOMAIN:-}" ]; then
+        echo "CDN bypass check failed: REGISTRY_IP or REGISTRY_DOMAIN is empty"
+        exit 1
+    fi
+
+    local probe_image="$REGISTRY_DOMAIN/blog-django:latest"
+    local output
+    local status
+
+    echo "Checking CDN bypass with podman: $probe_image"
+
+    set +e
+    output="$(skopeo manifest inspect "docker://$probe_image" 2>&1)"
+    status=$?
+    set -e
+
+    if [ "$status" -eq 0 ]; then
+        echo "CDN bypass check passed: podman can inspect $probe_image"
+        return
+    fi
+
+    if printf '%s\n' "$output" | grep -Eiq "manifest unknown|name unknown"; then
+        echo "CDN bypass check passed: podman reached $REGISTRY_DOMAIN, but $probe_image does not exist"
+        return
+    fi
+
+    echo "CDN bypass check failed: podman could not reach $REGISTRY_DOMAIN successfully"
+    printf '%s\n' "$output"
+    exit 1
 }
 
 function podman_login() {
@@ -85,6 +117,7 @@ function push_images() {
 function main() {
     print_builder_info
     setup_podman_cert
+    check_cdn_bypass
     #podman_login
     build_images
     push_images
