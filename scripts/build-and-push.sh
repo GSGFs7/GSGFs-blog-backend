@@ -32,6 +32,17 @@ function check_cdn_bypass() {
         exit 1
     fi
 
+    # Verify DNS resolution (should match /etc/hosts entry)
+    local resolved_ip
+    resolved_ip=$(getent hosts "$REGISTRY_DOMAIN" | awk '{print $1}' | head -n 1)
+    if [ "$resolved_ip" != "$REGISTRY_IP" ]; then
+        echo "CDN bypass check failed: DNS resolution mismatch."
+        echo "Expected: $REGISTRY_IP"
+        echo "Resolved: $resolved_ip"
+        exit 1
+    fi
+    echo "DNS resolution verified: $REGISTRY_DOMAIN -> $resolved_ip"
+
     local probe_image="$REGISTRY_DOMAIN/blog-django:latest"
     local output
     local status
