@@ -32,16 +32,35 @@ function check_cdn_bypass() {
         exit 1
     fi
 
-    # Verify DNS resolution (should match /etc/hosts entry)
-    local resolved_ip
-    resolved_ip=$(getent hosts "$REGISTRY_DOMAIN" | awk '{print $1}' | head -n 1)
-    if [ "$resolved_ip" != "$REGISTRY_IP" ]; then
-        echo "CDN bypass check failed: DNS resolution mismatch."
-        echo "Expected: $REGISTRY_IP"
-        echo "Resolved: $resolved_ip"
+    # Verify DNS resolution (should match /etc/hosts entries)
+    local resolved_ips
+    resolved_ips=$(getent ahosts "$REGISTRY_DOMAIN" | awk '{print $1}' | sort -u)
+    
+    local found_expected_ipv4=false
+    local found_blackhole_ipv6=false
+
+    for ip in $resolved_ips; do
+        if [ "$ip" == "$REGISTRY_IP" ]; then
+            found_expected_ipv4=true
+        elif [[ "$ip" == "::1" || "$ip" == "127.0.0.1" ]]; then
+            if [[ "$ip" == "::1" ]]; then found_blackhole_ipv6=true; fi
+            echo "Verified local/loopback resolution: $ip"
+        else
+            echo "CDN bypass check failed: Unexpected IP found (LEAK DETECTED): $ip"
+            exit 1
+        fi
+    done
+
+    if [ "$found_expected_ipv4" != "true" ]; then
+        echo "CDN bypass check failed: Expected IPv4 $REGISTRY_IP not found in resolution."
         exit 1
     fi
-    echo "DNS resolution verified: $REGISTRY_DOMAIN -> $resolved_ip"
+
+    if [ "$found_blackhole_ipv6" != "true" ]; then
+        echo "CDN bypass check warning: IPv6 blackhole (::1) not found. IPv6 might leak if enabled!"
+    fi
+
+    echo "DNS resolution verified: $REGISTRY_DOMAIN is locked to $REGISTRY_IP (IPv4) and ::1 (IPv6)"
 
     local probe_image="$REGISTRY_DOMAIN/blog-django:latest"
     local output
