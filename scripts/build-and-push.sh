@@ -39,7 +39,7 @@ function check_cdn_bypass() {
     echo "Checking CDN bypass with podman: $probe_image"
 
     set +e
-    output="$(skopeo manifest inspect "docker://$probe_image" 2>&1)"
+    output="$(skopeo inspect "docker://$probe_image" 2>&1)"
     status=$?
     set -e
 
