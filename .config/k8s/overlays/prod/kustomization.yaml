@@ -10,18 +10,9 @@ resources:
 
 # In prod, images are managed by Woodpecker CI & Argo CD
 images:
+- name: blog-app
+  newName: registry.gsgfs.sh/blog-app
+  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
 - name: blog-backup
   newName: registry.gsgfs.sh/blog-backup
-  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
-- name: blog-celery-beat
-  newName: registry.gsgfs.sh/blog-celery-beat
-  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
-- name: blog-celery-worker
-  newName: registry.gsgfs.sh/blog-celery-worker
-  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
-- name: blog-django
-  newName: registry.gsgfs.sh/blog-django
-  newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d
-- name: blog-model-downloader
-  newName: registry.gsgfs.sh/blog-model-downloader
   newTag: 5e3c41c9af2927a5d4ef3d654350b3de213f789d

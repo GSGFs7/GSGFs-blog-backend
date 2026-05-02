@@ -9,10 +9,7 @@ cd "$(dirname "$0")/.."
 
 # Image list: dockerfile_path:target:name
 declare -a IMAGES=(
-    ".config/k8s/containers/app.Dockerfile:django:django"
-    ".config/k8s/containers/app.Dockerfile:worker:celery-worker"
-    ".config/k8s/containers/app.Dockerfile:beat:celery-beat"
-    ".config/k8s/containers/app.Dockerfile:downloader:model-downloader"
+    ".config/k8s/containers/app.Dockerfile::app"
     ".config/k8s/containers/backup.Dockerfile::backup"
 )
 
@@ -33,9 +30,13 @@ build_with_podman() {
     local name=$1
     local dockerfile=$2
     local target=$3
-    local target_arg=""
-    if [ -n "$target" ]; then target_arg="--target $target"; fi
-    podman build "$target_arg" -f "$dockerfile" -t "localhost/blog-$name:latest" .
+    local build_args=(
+        "build"
+        "-f" "$dockerfile"
+        "-t" "localhost/blog-$name:latest"
+    )
+    if [ -n "$target" ]; then build_args+=("--target" "$target"); fi
+    podman "${build_args[@]}" .
 }
 
 # Build image using docker
@@ -43,9 +44,13 @@ build_with_docker() {
     local name=$1
     local dockerfile=$2
     local target=$3
-    local target_arg=""
-    if [ -n "$target" ]; then target_arg="--target $target"; fi
-    docker build "$target_arg" -f "$dockerfile" -t "localhost/blog-$name:latest" .
+    local build_args=(
+        "build"
+        "-f" "$dockerfile"
+        "-t" "localhost/blog-$name:latest"
+    )
+    if [ -n "$target" ]; then build_args+=("--target" "$target"); fi
+    docker "${build_args[@]}" .
 }
 
 # Build all images in the list

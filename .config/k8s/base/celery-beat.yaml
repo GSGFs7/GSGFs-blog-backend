@@ -21,7 +21,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: blog-celery-beat:latest
+          image: blog-app:latest
           command:
             - python
             - -c
@@ -36,7 +36,7 @@ spec:
                       print('waiting for db...')
                       time.sleep(2)
         - name: wait-for-redis
-          image: blog-celery-beat:latest
+          image: blog-app:latest
           command:
             - python
             - -c
@@ -52,7 +52,7 @@ spec:
                       time.sleep(2)
       containers:
         - name: blog-celery-beat
-          image: blog-celery-beat:latest
+          image: blog-app:latest
           command:
             - celery
             - -A
@@ -60,6 +60,8 @@ spec:
             - beat
             - --pidfile=/tmp/celerybeat.pid
             - --loglevel=info
+            - --scheduler
+            - django_celery_beat.schedulers:DatabaseScheduler
           envFrom:
             - configMapRef:
                 name: blog-config

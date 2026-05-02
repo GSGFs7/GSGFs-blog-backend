@@ -25,7 +25,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: blog-django:latest
+          image: blog-app:latest
           command:
             - python
             - -c
@@ -41,7 +41,7 @@ spec:
                       time.sleep(2)
       containers:
         - name: blog-django
-          image: blog-django:latest
+          image: blog-app:latest
           ports:
             - name: http
               containerPort: 8000
@@ -50,6 +50,11 @@ spec:
                 name: blog-config
             - secretRef:
                 name: blog-secrets
+          command:
+            - gunicorn
+            - -c
+            - gunicorn.conf.py
+            - blog.asgi:application
           resources:
             requests:
               memory: "1Gi"

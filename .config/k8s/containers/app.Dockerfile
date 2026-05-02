@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
-# Base stage: Install dependencies and sync code
-FROM archlinux:latest AS base
+FROM archlinux:latest
 
 WORKDIR /app
 
@@ -32,20 +31,3 @@ COPY --chown=user:user . .
 RUN pnpm run build:all && \
     uv run manage.py collectstatic --noinput && \
     rm -rf /app/node_modules
-
-# --- Target: Django ---
-FROM base AS django
-EXPOSE 8000
-CMD [ "gunicorn", "-c", "gunicorn.conf.py", "blog.asgi:application" ]
-
-# --- Target: Celery Worker ---
-FROM base AS worker
-CMD [ "celery", "-A", "blog", "worker", "--loglevel=info", "--concurrency=1" ]
-
-# --- Target: Celery Beat ---
-FROM base AS beat
-CMD [ "celery", "-A", "blog", "beat", "--loglevel=info", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler" ]
-
-# --- Target: Model Downloader ---
-FROM base AS downloader
-CMD ["python", "/app/scripts/download-model.py"]

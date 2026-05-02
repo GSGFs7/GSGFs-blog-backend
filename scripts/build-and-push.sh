@@ -10,10 +10,7 @@ cd "$(dirname "$0")/.."
 COMMIT_HASH="${CI_COMMIT_SHA:-latest}"
 
 declare -a IMAGES=(
-    ".config/k8s/containers/app.Dockerfile:django:django"
-    ".config/k8s/containers/app.Dockerfile:worker:celery-worker"
-    ".config/k8s/containers/app.Dockerfile:beat:celery-beat"
-    ".config/k8s/containers/app.Dockerfile:downloader:model-downloader"
+    ".config/k8s/containers/app.Dockerfile::app"
     ".config/k8s/containers/backup.Dockerfile::backup"
 )
 
@@ -62,7 +59,7 @@ function check_cdn_bypass() {
 
     echo "DNS resolution verified: $REGISTRY_DOMAIN is locked to $REGISTRY_IP (IPv4) and ::1 (IPv6)"
 
-    local probe_image="$REGISTRY_DOMAIN/blog-django:latest"
+    local probe_image="$REGISTRY_DOMAIN/blog-app:latest"
     local output
     local status
 

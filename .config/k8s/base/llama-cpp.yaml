@@ -21,7 +21,7 @@ spec:
             claimName: blog-model-pvc
       initContainers:
         - name: download-model
-          image: blog-model-downloader:latest
+          image: blog-app:latest
           command:
             - python
             - /app/scripts/download-model.py

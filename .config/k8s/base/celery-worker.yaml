@@ -20,7 +20,7 @@ spec:
         fsGroup: 1000
       initContainers:
         - name: wait-for-db
-          image: blog-celery-worker:latest
+          image: blog-app:latest
           command:
             - python
             - -c
@@ -35,7 +35,7 @@ spec:
                       print('waiting for db...')
                       time.sleep(2)
         - name: wait-for-redis
-          image: blog-celery-worker:latest
+          image: blog-app:latest
           command:
             - python
             - -c
@@ -50,7 +50,7 @@ spec:
                       print('waiting for redis...')
                       time.sleep(2)
         - name: download-model
-          image: blog-model-downloader:latest
+          image: blog-app:latest
           command:
             - python
             - /app/scripts/download-model.py
@@ -64,7 +64,14 @@ spec:
               mountPath: /models
       containers:
         - name: blog-celery-worker
-          image: blog-celery-worker:latest
+          image: blog-app:latest
+          command:
+            - celery
+            - -A
+            - blog
+            - worker
+            - --loglevel=info
+            - --concurrency=1
           envFrom:
             - configMapRef:
                 name: blog-config

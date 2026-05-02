@@ -19,22 +19,19 @@
 2. 构建镜像并导入到 k3s
 
     ```bash
-    ./script/k3s-build.sh
+    ./scripts/k3s-build.sh
     ```
 
-    这将得到这五个镜像:
-    - `localhost/blog-django:latest`
-    - `localhost/blog-celery-worker:latest`
-    - `localhost/blog-celery-beat:latest`
-    - `localhost/blog-model-downloader:latest`
+    这将得到这两个镜像:
+    - `localhost/blog-app:latest`
     - `localhost/blog-backup:latest`
 
 3. 部署到 k3s
 
     ```bash
-    ./script/k3s-deploy.sh
+    ./scripts/k3s-deploy.sh
     # 或者使用开发环境配置
-    ./script/k3s-deploy.sh dev
+    ./scripts/k3s-deploy.sh dev
     ```
 
 ---
