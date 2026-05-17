@@ -26,7 +26,7 @@ api = NinjaAPI(
 
 # Handler the error be raised
 @api.exception_handler(HttpError)
-def http_error_handler(request, exc):
+def http_error_handler(request, exc: HttpError):
     return api.create_response(request, {"message": str(exc)}, status=exc.status_code)
 
 

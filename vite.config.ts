@@ -53,6 +53,7 @@ export default defineConfig(({ command, isSsrBuild }) => {
       },
       cssMinify: "lightningcss",
       cssCodeSplit: true,
+      minify: "oxc"
     },
     ssr: {
       // put the dependencies to the bundle
