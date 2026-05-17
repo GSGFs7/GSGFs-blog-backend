@@ -48,4 +48,5 @@ spec:
             - secretRef:
                 name: blog-secrets
   backoffLimit: 4
+  activeDeadlineSeconds: 600
   ttlSecondsAfterFinished: 60 # 1min
