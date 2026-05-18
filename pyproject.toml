@@ -23,7 +23,6 @@ dependencies = [
     "filelock>=3.25.2",
     "flower>=2.0.1",
     "gunicorn>=23.0.0",
-    "httpx>=0.28.1",
     # Using fork because original fxsjy/jieba is no longer maintained; this fork includes Python 3.13+ compatibility fixes
     "jieba @ git+https://github.com/GSGFs7/jieba.git@master",
     "markdown-it-rs-py>=0.1.0",
