@@ -88,6 +88,9 @@ class ImageResource(BaseModel):
         upload_to=image_thumbnail_upload_path, null=True, blank=True
     )
 
+    # low quality image placeholder, base64 encoded text
+    placeholder = models.TextField(blank=True, default="")
+
     # attribute
     width = models.PositiveIntegerField()
     height = models.PositiveIntegerField()
