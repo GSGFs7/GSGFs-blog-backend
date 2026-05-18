@@ -8,6 +8,11 @@ set -e
 cd "$(dirname "$0")/.."
 
 COMMIT_HASH="${CI_COMMIT_SHA:-latest}"
+REGISTRY_RETAIN_COMMITS="${REGISTRY_RETAIN_COMMITS:-20}"
+REGISTRY_CLEANUP_ENABLED="${REGISTRY_CLEANUP_ENABLED:-true}"
+REGISTRY_CLEANUP_REQUIRED="${REGISTRY_CLEANUP_REQUIRED:-false}"
+REGISTRY_CERT_DIR=""
+MANIFEST_ACCEPT_HEADER="application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"
 
 declare -a IMAGES=(
     ".config/k8s/containers/app.Dockerfile::app"
@@ -16,6 +21,7 @@ declare -a IMAGES=(
 
 function setup_podman_cert() {
     BASE_DIR="$HOME/.config/containers/certs.d/$REGISTRY_DOMAIN/"
+    REGISTRY_CERT_DIR="$BASE_DIR"
     mkdir -p "$BASE_DIR"
     echo "$REGISTRY_CA_CERT" > "$BASE_DIR/ca.crt"
     echo "$REGISTRY_CLIENT_CERT" > "$BASE_DIR/client.cert"
@@ -141,6 +147,182 @@ function push_images() {
     done
 }
 
+function registry_curl() {
+    curl -fsS \
+        --retry 3 \
+        --retry-delay 2 \
+        --cacert "$REGISTRY_CERT_DIR/ca.crt" \
+        --cert "$REGISTRY_CERT_DIR/client.cert" \
+        --key "$REGISTRY_CERT_DIR/client.key" \
+        "$@"
+}
+
+# identification git's 40 hexadecimal characters
+function is_commit_tag() {
+    [[ "$1" =~ ^[0-9a-f]{40}$ ]]
+}
+
+# white list
+function collect_registry_keep_tags() {
+    local -n keep_tags_ref=$1
+
+    # keep 'latest'
+    keep_tags_ref["latest"]=1
+    if [ "$COMMIT_HASH" != "latest" ]; then
+        keep_tags_ref["$COMMIT_HASH"]=1
+    fi
+
+    # keep latest 20 git commit
+    if git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+        while IFS= read -r commit; do
+            keep_tags_ref["$commit"]=1
+        done < <(git rev-list --max-count="$REGISTRY_RETAIN_COMMITS" HEAD)
+    fi
+
+    # keep current running
+    if [ -f ".config/k8s/overlays/prod/kustomization.yaml" ]; then
+        while IFS= read -r deployed_tag; do
+            if [ -n "$deployed_tag" ]; then
+                keep_tags_ref["$deployed_tag"]=1
+            fi
+        done < <(awk '/newTag:/ {print $2}' .config/k8s/overlays/prod/kustomization.yaml)
+    fi
+}
+
+# get registry image tags
+function registry_tags_for_repo() {
+    local repo=$1
+    local tags_json
+
+    if ! tags_json=$(registry_curl "https://$REGISTRY_DOMAIN/v2/$repo/tags/list"); then
+        echo "Could not list tags for $repo" >&2
+        return 1
+    fi
+
+    printf '%s' "$tags_json" | jq -r '.tags[]?'
+}
+
+function registry_digest_for_tag() {
+    local repo=$1
+    local tag=$2
+    local headers
+    local digest
+
+    if ! headers=$(registry_curl \
+        -I \
+        -H "Accept: $MANIFEST_ACCEPT_HEADER" \
+        "https://$REGISTRY_DOMAIN/v2/$repo/manifests/$tag"); then
+        echo "Could not fetch manifest headers for $repo:$tag" >&2
+        return 1
+    fi
+
+    digest=$(printf '%s\n' "$headers" | awk 'tolower($1) == "docker-content-digest:" {gsub("\r", "", $2); print $2; exit}')
+
+    if [ -z "$digest" ]; then
+        echo "Could not resolve digest for $repo:$tag" >&2
+        return 1
+    fi
+
+    printf '%s\n' "$digest"
+}
+
+function delete_registry_digest() {
+    local repo=$1
+    local digest=$2
+
+    registry_curl \
+        -X DELETE \
+        "https://$REGISTRY_DOMAIN/v2/$repo/manifests/$digest" > /dev/null
+}
+
+function cleanup_registry_repo() {
+    local repo=$1
+    # shellcheck disable=SC2178
+    local -n keep_tags_ref=$2
+    local tags_output
+    local tag
+    local digest
+    local deleted_count=0
+    declare -A digest_tags=()
+    declare -A keep_digests=()
+
+    echo "Checking registry retention for $repo..."
+    if ! tags_output=$(registry_tags_for_repo "$repo"); then
+        return 1
+    fi
+
+    while IFS= read -r tag; do
+        [ -n "$tag" ] || continue
+
+        if ! digest=$(registry_digest_for_tag "$repo" "$tag"); then
+            return 1
+        fi
+
+        digest_tags["$digest"]+="${digest_tags[$digest]:+ }$tag"
+
+        if [ -n "${keep_tags_ref[$tag]:-}" ] || ! is_commit_tag "$tag"; then
+            keep_digests["$digest"]=1
+        fi
+    done <<< "$tags_output"
+
+    for digest in "${!digest_tags[@]}"; do
+        if [ -n "${keep_digests[$digest]:-}" ]; then
+            echo "Keeping $repo digest $digest (tags: ${digest_tags[$digest]})"
+            continue
+        fi
+
+        echo "Deleting stale $repo digest $digest (tags: ${digest_tags[$digest]})"
+        if [ "${REGISTRY_CLEANUP_DRY_RUN:-false}" = "true" ]; then
+            continue
+        fi
+
+        if ! delete_registry_digest "$repo" "$digest"; then
+            return 1
+        fi
+
+        deleted_count=$((deleted_count + 1))
+    done
+
+    echo "Deleted $deleted_count stale manifest(s) for $repo"
+}
+
+function cleanup_registry_images() {
+    if [ "$REGISTRY_CLEANUP_ENABLED" != "true" ]; then
+        echo "Registry cleanup disabled."
+        return
+    fi
+
+    if ! command -v curl > /dev/null 2>&1 || ! command -v jq > /dev/null 2>&1; then
+        echo "Registry cleanup requires curl and jq." >&2
+        return 1
+    fi
+
+    declare -A keep_tags=()
+    collect_registry_keep_tags keep_tags
+
+    echo "Keeping registry tags: ${!keep_tags[*]}"
+    for image_info in "${IMAGES[@]}"; do
+        IFS=':' read -r dockerfile target name <<< "$image_info"
+        cleanup_registry_repo "blog-$name" keep_tags || return 1
+    done
+}
+
+function cleanup_registry_images_best_effort() {
+    if [ "$REGISTRY_CLEANUP_REQUIRED" = "true" ]; then
+        cleanup_registry_images
+        return
+    fi
+
+    set +e
+    cleanup_registry_images
+    local status=$?
+    set -e
+
+    if [ "$status" -ne 0 ]; then
+        echo "Registry cleanup failed with status $status; image push already completed, continuing."
+    fi
+}
+
 function main() {
     print_builder_info
     setup_podman_cert
@@ -148,6 +330,7 @@ function main() {
     #podman_login
     build_images
     push_images
+    cleanup_registry_images_best_effort
 }
 
 main
