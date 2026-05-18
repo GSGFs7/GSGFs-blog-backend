@@ -34,9 +34,9 @@ steps:
       REDIS_PORT: 6379
       USE_REMOTE_EMBEDDING: "True"
       REMOTE_EMBEDDING_API_BASE:
-        from_secret: REMOTE_EMBEDDING_API_BASE
+        from_secret: EMBEDDING_API_BASE
       REMOTE_EMBEDDING_API_KEY:
-        from_secret: REMOTE_EMBEDDING_API_KEY
+        from_secret: EMBEDDING_API_KEY
       REMOTE_EMBEDDING_MODEL_NAME: embeddinggemma-300m
       API_KEY: woodpecker_test_api_key
       UV_VENV_COPY: "1"
