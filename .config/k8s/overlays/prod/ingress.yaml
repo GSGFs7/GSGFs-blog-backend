@@ -2,6 +2,34 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: blog-litellm-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "100"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - $BACKEND_DOMAIN
+      secretName: blog-django-tls-secret
+  rules:
+    - host: $BACKEND_DOMAIN
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: blog-litellm
+                port:
+                  number: 4000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: blog-ingress
   annotations:
     # the entry point used by the route (WebSecure corresponds to HTTPS port 443).
@@ -25,13 +53,6 @@ spec:
     - host: $BACKEND_DOMAIN
       http:
         paths:
-          - path: /v1
-            pathType: Prefix
-            backend:
-              service:
-                name: blog-litellm
-                port:
-                  number: 4000
           - path: /
             pathType: Prefix
             backend:
