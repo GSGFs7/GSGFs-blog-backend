@@ -10,7 +10,7 @@ from .base import BaseModel
 def music_upload_path(instance: "MusicResource", filename: str) -> str:
     ext = os.path.splitext(filename)[-1].lower()
     return (
-        f"images/"
+        f"musics/"
         f"{instance.checksum[:2]}/"
         f"{instance.checksum[2:4]}/"
         f"{instance.checksum}{ext}"
